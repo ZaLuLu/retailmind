@@ -61,7 +61,7 @@ Target user: A small-to-medium business owner (electronics retailer, apparel sho
 ## Repository Layout
 
 ```
-documind/
+retailmind/
 ├── backend/
 │   ├── app/
 │   │   ├── api/

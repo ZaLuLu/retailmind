@@ -14,7 +14,9 @@ from app.security.auth import get_password_hash
 async def seed_demo_data():
     demo_email = "demo@retailmind.com"
     demo_pass = "demo123"
-    excel_path = r"D:\CODING\documind\Demo_data\demo_retail_data.xlsx"
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_root = os.path.dirname(os.path.dirname(script_dir))
+    excel_path = os.path.join(repo_root, "Demo_data", "demo_retail_data.xlsx")
 
     print(f"Reading data from {excel_path}...")
     df = pd.read_excel(excel_path)

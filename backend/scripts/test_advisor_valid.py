@@ -15,7 +15,7 @@ async def test_valid_questions():
         "How can I detect demand spikes early?"
     ]
     
-    print("\n--- DocuMind AI Advisor VALID Questions Test ---\n")
+    print("\n--- RetailMind AI Advisor VALID Questions Test ---\n")
     
     for q in questions:
         print(f"Question: {q}")

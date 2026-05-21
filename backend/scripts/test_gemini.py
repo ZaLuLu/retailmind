@@ -17,7 +17,7 @@ async def test_questions():
         "Is spending $100 on sneakers a good investment?"
     ]
     
-    print("\n--- DocuMind AI Advisor Test ---\n")
+    print("\n--- RetailMind AI Advisor Test ---\n")
     
     for q in questions:
         print(f"Question: {q}")
