@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: retailmind-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port 10000
+    rootDir: backend
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql+asyncpg://neondb_owner:npg_6wR5NIHQpDUs@ep-dark-unit-ao08r0r8-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+      - key: JWT_SECRET
+        value: 42894b6d5f7564614d696e6450726f6a6563745365637265744b657932303236
+      - key: GEMINI_API_KEY
+        value: AIzaSyAKEiF-ULu2la-gcF1UDDFWjbOI9wZnEXE
+      - key: GEMINI_MODEL
+        value: gemini-1.5-flash
+      - key: ENVIRONMENT
+        value: production
+      - key: ALLOWED_ORIGINS
+        value: "http://localhost:5173,https://frontend-zalulus-projects.vercel.app,https://frontend-q0dbcxdvl-zalulus-projects.vercel.app,https://frontend-6ftn5a8py-zalulus-projects.vercel.app"
