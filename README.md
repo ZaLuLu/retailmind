@@ -32,6 +32,21 @@ Upload your sales data, and get instant AI insights on revenue, margins, demand 
 
 ---
 
+## Demo Account
+
+A pre-seeded demo account is available with a full year of retail sales data:
+
+| | |
+|-|-|
+| **Email** | `demo@retailmind.com` |
+| **Password** | `demo123` |
+| **Store** | RetailMind Demo Store |
+| **Currency** | USD |
+
+> To re-seed from the included Excel file: `python backend/scripts/seed_demo_account.py`
+
+---
+
 ## Quick Start
 
 ### Prerequisites

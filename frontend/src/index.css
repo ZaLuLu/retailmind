@@ -369,6 +369,72 @@ button:active {
   color: var(--ink-red);
 }
 
+/* ── Password show/hide wrapper ── */
+.form-group {
+  margin-bottom: 0;
+}
+
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.password-wrapper input {
+  margin-bottom: 0;
+  padding-right: 2.8rem;
+  flex: 1;
+}
+
+.show-pass-btn {
+  position: absolute;
+  right: 0.5rem;
+  background: none !important;
+  border: none !important;
+  padding: 0.25rem 0.4rem;
+  margin: 0;
+  width: auto;
+  font-size: 1rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.15s ease;
+}
+
+.show-pass-btn:hover {
+  background: none !important;
+  color: var(--ink-black) !important;
+}
+
+/* ── Remember-me row ── */
+.remember-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.remember-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.remember-label input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--ink-black);
+  cursor: pointer;
+}
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar {
   width: 6px;
