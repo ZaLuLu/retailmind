@@ -49,10 +49,15 @@ function AdvisorChat({ summary, onClose }) {
         <header>
           <div className="chat-header-row">
             <div>
-              <p className="mono" style={{ margin: '0 0 0.2rem', color: 'var(--text-muted)' }}>
-                Bureau of Retail Intelligence
+              <p className="mono" style={{ margin: '0 0 0.1rem', color: 'var(--ink-muted)', fontSize: '0.6rem', fontWeight: 800, letterSpacing: '0.12em' }}>
+                DIRECT WIRE TRANSMISSION // CLASSIFIED LEDGER ACCESS
               </p>
-              <h2>Retail Advisor Desk</h2>
+              <h2>Teletype Advisor Dispatch</h2>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.4rem', fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'var(--text-muted)' }}>
+                <span>STATION: RETAILMIND CORE V3.1.0</span>
+                <span>DESK ID: ENG-RAG-902</span>
+                <span>STATUS: ACTIVE ONLINE</span>
+              </div>
             </div>
             <button className="close-btn" onClick={onClose} aria-label="Close advisor">×</button>
           </div>
@@ -62,13 +67,18 @@ function AdvisorChat({ summary, onClose }) {
           {messages.map((msg, i) => (
             <div key={i} className={`chat-message ${msg.role}`}>
               <div className="message-header">
-                {msg.role === 'advisor' ? 'RetailMind Advisor' : 'You'}
+                {msg.role === 'advisor' ? '▲ ADVISOR SYSTEM DISPATCH' : '▼ OPERATOR INQUIRY'}
               </div>
-              <div className="message-content">{msg.content}</div>
+              <div className="message-content">
+                {msg.role === 'advisor' && (
+                  <div className="telex-badge">REPLY STAMP: INTEL-OK</div>
+                )}
+                {msg.content}
+              </div>
             </div>
           ))}
           {loading && (
-            <div className="chat-thinking animate-pulse">Consulting retail intelligence...</div>
+            <div className="chat-thinking">TELEX TRANSCRIPTION IN PROGRESS...</div>
           )}
         </div>
 

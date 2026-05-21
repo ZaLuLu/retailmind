@@ -1,6 +1,6 @@
 # RetailMind — Feature Log
 **Tracks completed, in-progress, and planned features**
-**Last Updated:** 2026-05-19
+**Last Updated:** 2026-05-21
 
 ---
 
@@ -34,6 +34,26 @@
 - [x] JWT auth with access + refresh tokens
 - [x] Sentry error tracking
 - [x] PostgreSQL on Neon.tech (prod)
+
+---
+
+## 🔧 Sprint — Broadsheet Polish & Telex Overhaul (v3.1.0-WIP)
+
+### Visual Polish & Typography
+- [/] Set browser page title to clean professional `RetailMind — Store Analytics Ledger` and add meta descriptions (WIP)
+- [/] Integrate UnifrakturMaguntia calligraphic Google Font for the broadsheet logo masthead (WIP)
+- [/] Create physical paper crease linear-gradient overlay for the broadsheet newspaper layout (WIP)
+- [/] Apply elegant drop-cap typography styling to dashboard highlight insights (WIP)
+- [/] Design double column borders to enhance authentic printed editorial layout (WIP)
+
+### Lively & Interactive SVGs
+- [/] Implement custom SVG Donut chart as a 3rd graph option ("Category Share") (WIP)
+- [/] Animate Sales Trend bezier paths with stroke-dash offsets for drawing effects (WIP)
+- [/] Animate Cost Comparison SVG bars to rise dynamically on load or tab swaps (WIP)
+
+### Telex Telegram Chat Overhaul
+- [/] Redesign the AI Advisor Chat as a confidential telex telegram dispatch desk (WIP)
+- [/] Format chat messages as print paper tape strips with Courier monospace typing (WIP)
 
 ---
 
@@ -90,28 +110,37 @@
 
 ---
 
-## 🔧 Phase 3 — ML Layer
+## ✅ Phase 3 — ML Layer (v3.2.0)
 
 ### Anomaly Detection Upgrade
-- [/] Replace hardcoded 1.5x spike threshold with per-product z-score model
-- [/] Adapts to each product's natural variance (fewer false positives)
-- [/] Handles seasonality via rolling window normalization
+- [x] Replace hardcoded 1.5x spike threshold with per-product adaptive Z-score model
+- [x] Adapts to each product's natural variance (fewer false positives for volatile items)
+- [x] Handles seasonality via rolling 12-week window normalization
+- [x] Frontend Z-score + deviation % rendered in DemandSignals spike cards
 
-### Product Clustering
-- [/] K-means clustering on (revenue, margin_pct, qty_sold, days_since_last_sale)
-- [/] Auto-segment products: Stars / Cash Cows / Dead Weight / Hidden Gems
-- [/] 2×2 matrix visualization on dashboard
+### Product Clustering (K-Means)
+- [x] K-Means clustering on (revenue, margin_pct, qty_sold, recency_days) with StandardScaler
+- [x] Auto-segment products: Stars / Cash Cows / Dead Weight / Hidden Gems via centroid mapping
+- [x] `GET /api/v1/retail/portfolio-clusters` endpoint
+- [x] Interactive 2×2 SVG scatter `PortfolioMatrix.jsx` with hover tooltips and quadrant click-to-filter
+- [x] Quadrant node click filters SalesLedger table in-place
 
-### Demand Forecasting v2
-- [/] Swap rolling average for statsmodels Holt-Winters Exponential Smoothing per-product model
-- [/] Handles weekly seasonality automatically
-- [/] Return 14-day forecast
-- [/] Requires 90+ days of data per product to activate
+### Demand Forecasting v2 (Holt-Winters)
+- [x] Swap rolling average for statsmodels Holt-Winters Exponential Smoothing
+- [x] Weekly seasonality (`seasonal_periods=7`), additive trend + additive seasonal
+- [x] 14-day per-product forecast with dense time-series reconstruction (0.0 fill gaps)
+- [x] Defensive fallback for products with < 90 days history or < 15 active days
+- [x] Dashed forecast path rendered in `SalesTrendGraph.jsx` with halftone projection area
 
 ### Customer Segment Analytics
-- [/] Break down Walk-in vs Online vs B2B performance
-- [/] Revenue, margin, and avg order value per segment
-- [/] Segment trend over time (MoM per segment)
+- [x] SQL group-by `customer_segment` (Walk-in / Online / B2B) with blended margin + AOV
+- [x] Revenue contribution share % and MoM growth per segment
+- [x] `CustomerSegmentsPanel.jsx` vintage broadsheet ledger panel with progress bars
+- [x] Mounted on dashboard sidebar
+
+### Automated Test Suite
+- [x] `backend/scripts/test_ml_layer.py` — 165-record seeded integration test suite
+- [x] All 4 test cases (Z-Score, K-Means, Holt-Winters, Segments) GREEN ✅
 
 ---
 

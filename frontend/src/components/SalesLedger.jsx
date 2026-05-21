@@ -16,17 +16,22 @@ const getCategories = (sales) => {
   return ['All', ...cats.sort()]
 }
 
-const SalesLedger = ({ sales = [], currency = 'INR', onBack }) => {
+const SalesLedger = ({ sales = [], currency = 'INR', onBack, initialProductNames = null }) => {
   const { showToast } = useToast()
   const [search, setSearch]               = useState('')
   const [categoryFilter, setCategoryFilter] = useState('All')
   const [dateFrom, setDateFrom]           = useState('')
   const [dateTo, setDateTo]               = useState('')
+  const [productNamesFilter, setProductNamesFilter] = useState(initialProductNames)
   const [sortCol, setSortCol]             = useState('sale_date')
   const [sortDir, setSortDir]             = useState('desc')
   const [page, setPage]                   = useState(0)
   const [exporting, setExporting]         = useState(false)
   const PAGE_SIZE = 20
+
+  React.useEffect(() => {
+    setProductNamesFilter(initialProductNames)
+  }, [initialProductNames])
 
   const categories = getCategories(sales)
 
@@ -40,7 +45,8 @@ const SalesLedger = ({ sales = [], currency = 'INR', onBack }) => {
     const matchCat = categoryFilter === 'All' || s.product_category === categoryFilter
     const matchFrom = !dateFrom || s.sale_date >= dateFrom
     const matchTo   = !dateTo   || s.sale_date <= dateTo
-    return matchSearch && matchCat && matchFrom && matchTo
+    const matchProductNames = !productNamesFilter || productNamesFilter.includes(s.product_name)
+    return matchSearch && matchCat && matchFrom && matchTo && matchProductNames
   })
 
   // ── Sorting ────────────────────────────────────────────────────────────────
@@ -110,10 +116,11 @@ const SalesLedger = ({ sales = [], currency = 'INR', onBack }) => {
     setCategoryFilter('All')
     setDateFrom('')
     setDateTo('')
+    setProductNamesFilter(null)
     setPage(0)
   }
 
-  const hasActiveFilters = search || categoryFilter !== 'All' || dateFrom || dateTo
+  const hasActiveFilters = search || categoryFilter !== 'All' || dateFrom || dateTo || productNamesFilter
 
   return (
     <div className="sales-ledger">
@@ -175,6 +182,11 @@ const SalesLedger = ({ sales = [], currency = 'INR', onBack }) => {
             <button className="mono-btn clear-btn" onClick={resetFilters} aria-label="Clear all filters">
               ✕ Clear
             </button>
+          )}
+          {productNamesFilter && (
+            <span className="telex-stamp-badge red-stamp mono" style={{ alignSelf: 'center', margin: '0 0 0 1rem' }}>
+              Quadrant filter active ({productNamesFilter.length} products)
+            </span>
           )}
         </div>
 

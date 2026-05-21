@@ -139,6 +139,18 @@
   box-shadow: -5px 5px 0px rgba(0,0,0,0.2);
 }
 
+.ml-schematic-area .ml-node:hover h3,
+.ml-schematic-area .ml-node.active h3 {
+  color: var(--bg-paper) !important;
+}
+
+.ml-schematic-area .ml-node:hover p,
+.ml-schematic-area .ml-node.active p {
+  color: var(--bg-paper) !important;
+  opacity: 0.9 !important;
+}
+
+
 .ml-node-header {
   display: flex;
   justify-content: space-between;

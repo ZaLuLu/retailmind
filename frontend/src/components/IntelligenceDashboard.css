@@ -40,7 +40,7 @@
 
 /* ── Masthead ─────────────────────────────────────────────────────────────── */
 .masthead {
-  border-bottom: 3px solid var(--rule-heavy);
+  border-bottom: 5px double var(--ink);
   padding-bottom: 0;
 }
 
@@ -77,13 +77,13 @@
 }
 
 .masthead-title {
-  font-family: var(--display);
-  font-size: clamp(2.4rem, 5vw, 4rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-family: 'UnifrakturMaguntia', Georgia, serif;
+  font-size: clamp(3rem, 6vw, 4.8rem);
+  font-weight: 400;
+  letter-spacing: 0.03em;
   color: var(--ink);
   margin: 0;
-  line-height: 1;
+  line-height: 0.95;
 }
 
 .masthead-tagline {
@@ -128,7 +128,7 @@
   display: flex;
   gap: 0;
   padding: 0 24px;
-  border-bottom: 2px solid var(--rule-heavy);
+  border-bottom: 4px double var(--ink);
 }
 
 .view-nav-btn {
@@ -517,10 +517,23 @@
 .insight-quote {
   font-family: var(--display);
   font-style: italic;
-  font-size: 1rem;
-  line-height: 1.5;
+  font-size: 1.1rem;
+  line-height: 1.6;
   margin: 0 0 14px;
   color: var(--paper);
+}
+
+.insight-quote::first-letter {
+  font-family: 'UnifrakturMaguntia', 'Playfair Display', Georgia, serif;
+  font-size: 3.8rem;
+  font-weight: 400;
+  float: left;
+  line-height: 0.75;
+  margin-right: 8px;
+  margin-top: 6px;
+  color: var(--gold);
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.25);
+  text-transform: uppercase;
 }
 .ask-btn {
   background: var(--gold);
@@ -953,3 +966,14 @@
   to { transform: translateY(0); opacity: 1; }
 }
 
+/* ── Briefing Period Bar (Date filters full-width) ── */
+.briefing-period-bar {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  background-color: var(--paper-dark);
+}

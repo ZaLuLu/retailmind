@@ -7,6 +7,8 @@ import DemandSignals from './DemandSignals'
 import TopProductsTable from './TopProductsTable'
 import SalesTrendGraph from './SalesTrendGraph'
 import DateRangeToggle from './DateRangeToggle'
+import PortfolioMatrix from './PortfolioMatrix'
+import CustomerSegmentsPanel from './CustomerSegmentsPanel'
 import { api } from '../services/api'
 import { useToast } from './Toast'
 
@@ -32,6 +34,7 @@ const IntelligenceDashboard = ({
   const [period, setPeriod] = useState('mtd')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [ledgerProductFilter, setLedgerProductFilter] = useState(null)
   const fileInputRef = React.useRef(null)
 
   const [showStoreModal, setShowStoreModal] = useState(false)
@@ -158,8 +161,7 @@ const IntelligenceDashboard = ({
       {/* ── Main Content ── */}
       <main>
         {activeView === 'briefing' ? (
-          <div className="briefing-grid">
-
+          <>
             {/* Date range toggle — full width above columns */}
             <div className="briefing-period-bar">
               <DateRangeToggle
@@ -175,8 +177,9 @@ const IntelligenceDashboard = ({
               )}
             </div>
 
-            {/* LEFT — main analytics column */}
-            <div className="briefing-col-main">
+            <div className="briefing-grid">
+              {/* LEFT — main analytics column */}
+              <div className="briefing-col-main">
               {loading ? (
                 <div className="broadsheet-skeleton">
                   {/* Revenue hero skeleton */}
@@ -210,10 +213,24 @@ const IntelligenceDashboard = ({
                     <RevenueHero summary={summary} currency={currency} />
                   </div>
                   <div className="section-pad">
-                    <SalesTrendGraph sales={sales} categoryBreakdown={summary?.category_breakdown} currency={currency} />
+                    <SalesTrendGraph sales={sales} categoryBreakdown={summary?.category_breakdown} forecast={summary?.revenue_forecast_14d ?? []} currency={currency} />
                   </div>
                   <div className="section-pad">
                     <TopProductsTable products={summary?.top_products ?? []} currency={currency} />
+                  </div>
+                  <div className="section-pad">
+                    <PortfolioMatrix
+                      period={period}
+                      dateFrom={dateFrom}
+                      dateTo={dateTo}
+                      storeId={selectedStore?.id}
+                      currency={currency}
+                      onQuadrantSelect={(productNames, quadName) => {
+                        setLedgerProductFilter(productNames)
+                        setActiveView('ledger')
+                        showToast('success', `Filtered ledger by ${quadName} quadrant`)
+                      }}
+                    />
                   </div>
 
                   {/* Category Breakdown */}
@@ -285,6 +302,14 @@ const IntelligenceDashboard = ({
                     />
                   </div>
 
+                  {/* Customer Segment Analytics Panel */}
+                  <div className="section-pad">
+                    <CustomerSegmentsPanel
+                      customerSegments={summary?.customer_segments ?? []}
+                      currency={currency}
+                    />
+                  </div>
+
                   {/* CSV Upload */}
                   <div className="section-pad upload-section">
                     <div className="section-kicker">
@@ -330,12 +355,17 @@ const IntelligenceDashboard = ({
               )}
             </div>
           </div>
+          </>
         ) : (
           <div className="full-view-container">
             <SalesLedger
               sales={sales}
               currency={currency}
-              onBack={() => setActiveView('briefing')}
+              initialProductNames={ledgerProductFilter}
+              onBack={() => {
+                setLedgerProductFilter(null)
+                setActiveView('briefing')
+              }}
             />
           </div>
         )}

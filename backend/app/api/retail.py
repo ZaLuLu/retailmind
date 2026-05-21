@@ -247,6 +247,55 @@ async def get_demand_forecast(
         )
 
 
+# ── Portfolio Clustering (K-Means) ──────────────────────────────────────────
+
+@router.get("/portfolio-clusters")
+async def get_portfolio_clusters(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    period: str = Query(default="mtd", description="mtd | 7d | 30d | 90d | custom"),
+    date_from: Optional[date] = Query(default=None, description="Start date for custom range (YYYY-MM-DD)"),
+    date_to: Optional[date] = Query(default=None, description="End date for custom range (YYYY-MM-DD)"),
+    store_id: Optional[str] = Query(default=None, description="Optional store ID to filter by"),
+):
+    """
+    K-Means clustering portfolio analysis, grouping products into 4 performance quadrants:
+    Stars, Cash Cows, Hidden Gems, Dead Weight.
+    """
+    if period == "custom" and (not date_from or not date_to):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="date_from and date_to are required when period=custom",
+        )
+    if period == "custom" and date_from > date_to:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="date_from must be before date_to",
+        )
+
+    parsed_store_id = None
+    if store_id:
+        try:
+            import uuid
+            parsed_store_id = uuid.UUID(store_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid store_id format",
+            )
+
+    try:
+        return await retail_intelligence_service.get_portfolio_clusters(
+            db, current_user.id, period=period, date_from=date_from, date_to=date_to, store_id=parsed_store_id
+        )
+    except Exception as e:
+        logger.exception("Failed to generate portfolio clusters")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate portfolio clusters",
+        )
+
+
 # ── Export CSV (Phase 2) ──────────────────────────────────────────────────────
 
 @router.get("/export-csv")

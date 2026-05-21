@@ -10,7 +10,7 @@
 |---|---|---|
 | Phase 1 | Foundation Fixes (cleanup, token refresh, toasts, error boundary) | ✅ Completed |
 | Phase 2 | Core Product Completion (date range, multi-store, forecasting v1, export) | ✅ Completed |
-| Phase 3 | ML Layer (z-score anomaly, product clustering, statsmodels forecasting) | 🔧 Active |
+| Phase 3 | ML Layer (z-score anomaly, product clustering, statsmodels forecasting) | ✅ Completed |
 | Phase 4 | Distribution & Monetisation (WhatsApp digest, PDF export, Razorpay) | ⏳ Queued |
 
 ---

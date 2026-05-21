@@ -39,7 +39,7 @@ class GeminiService:
     @gemini_retry
     async def extract_transaction(self, file_content: bytes, mime_type: str) -> Optional[ExtractionResult]:
         """
-        Extract transaction data from a document using Gemini 1.5.
+        Extract transaction data from a document using Gemini 3 Flash.
         """
         prompt = """
         You are an Indian financial intelligence expert. Analyze the attached document (receipt/invoice from India) and extract the following in JSON format:

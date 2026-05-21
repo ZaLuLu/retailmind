@@ -81,9 +81,26 @@ const DemandSignals = ({
             : demandSignals.map((s, i) => (
                 <div className="signal-card spike" key={i}>
                   <div className="signal-icon">🚀</div>
-                  <div className="signal-content">
-                    <span className="signal-product">{s.product_name}</span>
-                    <span className="signal-message">{s.message}</span>
+                  <div className="signal-content" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {s.z_score && s.z_score > 0 ? (
+                      <>
+                        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                          <span className="telex-stamp-badge red-stamp">SPIKE ALERT</span>
+                          <span className="signal-product" style={{ margin: 0 }}>{s.product_name}</span>
+                        </div>
+                        <span className="monospace-text signal-message" style={{ fontSize: '0.8rem', lineHeight: '1.4' }}>
+                          Surge detected: Z-score of {s.z_score.toFixed(2)} (+{s.deviation_pct}% deviation).
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                          <span className="telex-stamp-badge red-stamp" style={{ borderColor: 'var(--ink-yellow)', color: 'var(--ink-yellow)', backgroundColor: 'rgba(184, 134, 11, 0.05)' }}>SPIKE</span>
+                          <span className="signal-product" style={{ margin: 0 }}>{s.product_name}</span>
+                        </div>
+                        <span className="signal-message">{s.message}</span>
+                      </>
+                    )}
                   </div>
                   <span className="signal-qty">+{s.recent_qty} units</span>
                 </div>

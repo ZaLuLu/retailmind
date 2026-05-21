@@ -3,6 +3,69 @@
 
 ---
 
+## [3.2.0] — 2026-05-21 · Phase 3 ML Layer Complete
+
+### 🤖 Adaptive Z-Score Anomaly Engine
+- Replaced the hardcoded `1.5×` demand spike threshold with a **per-product adaptive Z-score model** using a rolling 12-week window of historical volumes.
+- Anomaly is flagged when `Z > 2.0` (≈95th percentile of natural product volatility).
+- Graceful fallback to rolling average for products with `< 4 active weeks` of data or `σ ≤ 0.1`.
+- Frontend `DemandSignals.jsx` updated to render Z-score and deviation % alongside each spike alert.
+
+### 📊 K-Means Product Portfolio Clustering
+- Implemented `sklearn.cluster.KMeans(n_clusters=4)` clustering over 4 normalized features: **Revenue, Gross Margin %, Velocity, Recency** (using `StandardScaler`).
+- K-Means centroids auto-mapped to four business quadrants: **🌟 Stars**, **💎 Hidden Gems**, **🐄 Cash Cows**, **🪨 Dead Weight**.
+- New API endpoint: `GET /api/v1/retail/portfolio-clusters` returning product nodes with SVG coordinates and cluster assignments.
+- New component: **`PortfolioMatrix.jsx`** — interactive 2×2 SVG scatter grid with broadsheet double-ruled axes, hoverable Courier typewriter tooltips, and click-to-filter ledger integration.
+- `PortfolioMatrix.css` — newspaper quadrant background styles with halftone fills.
+
+### 📈 Holt-Winters Seasonal Forecasting
+- Upgraded demand forecasting from weighted rolling average to **statsmodels `ExponentialSmoothing`** with additive trend and additive weekly seasonality (`seasonal_periods=7`).
+- Forecasts **14 days** into the future for products with ≥ 90 days of dense history (≥ 15 active days).
+- Dense time-series reconstruction: fills missing sale days with `0.0` to preserve continuity.
+- Defensive fallback to rolling average for products with insufficient history.
+- 14-day store-level aggregate revenue forecast exposed via `summary.revenue_forecast_14d`.
+- `SalesTrendGraph.jsx` updated to render dashed forecast path with halftone shade projection area.
+
+### 👥 Customer Segment Analytics
+- SQL group-by aggregations by `customer_segment` (Walk-in / Online / B2B) computing:
+  - Revenue & COGS totals, blended margin %, AOV (`revenue / num_orders`), contribution share %, MoM growth.
+- New component: **`CustomerSegmentsPanel.jsx`** — vintage broadsheet ledger panel with progress bars per segment and telex-stamped metric cards.
+- Mounted on dashboard sidebar below Demand Signals.
+
+### 🧪 Automated Test Suite
+- Created `backend/scripts/test_ml_layer.py` — 165-record seeded isolated test against live PostgreSQL.
+- **Test Case A (Z-Score):** Z-spike, high-variance fallback, and rolling-average fallback — all passing.
+- **Test Case B (K-Means):** All 4 quadrants assigned, coordinates clamped `[-2.5, 2.5]`, metric structure verified.
+- **Test Case C (Holt-Winters):** Dense product uses holt-winters, valid 14-day store forecast — passing.
+- **Test Case D (Segments):** 3 segments present, shares sum to 100%, AOV & margin formulas correct — passing.
+- **All 4 test cases GREEN ✅**
+
+### 📦 Dependencies Added
+- `statsmodels==0.14.6` — Holt-Winters exponential smoothing
+- `scikit-learn==1.8.0` — KMeans clustering and StandardScaler
+
+---
+
+
+### 🎨 Visual & Typography
+- Added Google Fonts calligraphic blackletter **UnifrakturMaguntia** to the main `RetailMind` masthead logo.
+- Added a tactile physical broadsheet paper fold crease overlay on `#root` via custom linear-gradients.
+- Added printed hatch and halftone pattern utility classes (`.hatch-bg`, `.halftone-bg`).
+- Configured a golddropped capital initial letter drop-cap style on the main dashboard highlights `.insight-quote`.
+- Implemented authentic printed broadsheet double rules.
+- Hardened page SEO: updated index title to `RetailMind — Store Analytics Ledger` and added clear meta tags.
+
+### 📈 Lively SVG Charts & Donut View
+- Added a third chart visualization: **Category Share** custom SVG Donut chart, showing relative percentage contributions of store revenue.
+- Added smooth keyframe animations to trend lines (`drawPath` drawing effect) and bar charts (`riseBar` vertical transition) for high visual feedback.
+- Configured interactive hover tags and tooltips detailing category margins on segment hovers.
+
+### 📠 Telex Telegram chat
+- Redesigned the AI Advisor overlay as an authentic, heavy-bordered **Confidential Telex Telegram Dispatch Desk** using monospace Courier.
+- Formatted messages as simulated Courier print paper tape strips with dotted borders.
+
+---
+
 ## [3.0.0] — 2026-05-19 · Phase 1 Foundation Fixes
 
 ### 🧹 Cleanup

@@ -296,6 +296,17 @@ export const api = {
     return request('GET', `/retail/forecast${query}`)
   },
 
+  /** K-Means clustering portfolio analysis (Phase 3) */
+  getPortfolioClusters: (period, dateFrom, dateTo, storeId) => {
+    let params = []
+    if (period) params.push(`period=${period}`)
+    if (dateFrom) params.push(`date_from=${dateFrom}`)
+    if (dateTo) params.push(`date_to=${dateTo}`)
+    if (storeId) params.push(`store_id=${storeId}`)
+    const query = params.length ? `?${params.join('&')}` : ''
+    return request('GET', `/retail/portfolio-clusters${query}`)
+  },
+
   /** Export filtered ledger as CSV (Phase 2) */
   getExportCsvUrl: (params = '', storeId = '') => {
     let finalParams = params || ''

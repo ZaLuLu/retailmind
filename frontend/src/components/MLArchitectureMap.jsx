@@ -5,49 +5,49 @@ const ML_NODES = [
   {
     id: 'NODE-01',
     title: 'Ingestion Engine',
-    model: 'Gemini 1.5 Flash Vision',
-    desc: 'Spatial OCR & Key-Value Extraction',
+    model: 'Gemini 3 Flash (Vision/Multimodal)',
+    desc: 'Multimodal OCR & Data Structuring',
     details: {
-      input: 'Raw Image / PDF Receipt',
-      output: 'Structured JSON (Vendor, Date, Amount)',
+      input: 'Raw JPG/PNG Image or Multi-page PDF Receipt',
+      output: 'Structured Extraction JSON',
       latency: '~2.5s',
-      context: 'Utilizes multimodal vision capabilities to spatially locate line items and total amounts regardless of receipt format.'
+      context: "Utilizes Gemini's native multimodal capabilities to analyze uploaded JPG, PNG, or PDF receipts. Applies spatial coordinates reasoning to parse raw text and return standard structured JSON containing vendor_name, amount, category, transaction_date, and confidence score."
     }
   },
   {
     id: 'NODE-02',
     title: 'Categorization Engine',
-    model: 'Gemini 1.5 Flash',
-    desc: 'Zero-shot Semantic Classification',
+    model: 'Gemini 3 Flash (Zero-shot NLP)',
+    desc: 'Zero-shot Semantic Mapping',
     details: {
-      input: 'Extracted Vendor Name & Context',
-      output: 'Standardized Taxonomy Category',
+      input: 'Extracted Vendor Name & Context Metadata',
+      output: 'Standardized Retail Category Tag',
       latency: '~800ms',
-      context: 'Uses zero-shot prompting to map arbitrary vendor names (e.g., "Starbucks") to a strict internal taxonomy (e.g., "Food").'
+      context: 'Implements a zero-shot prompting strategy. Matches arbitrary extracted merchant/vendor strings (e.g. "Starbucks India") to a strict pre-defined retail taxonomy list (Food, Transport, Utilities, Entertainment, Health, Shopping, Other) without needing custom training data.'
     }
   },
   {
     id: 'NODE-03',
     title: 'Anomaly Analysis',
-    model: 'Gemini 1.5 Flash',
+    model: 'Gemini 3 Flash (Few-shot Prompting)',
     desc: 'Contextual Spending Spike Detection',
     details: {
-      input: 'Current Tx + Last 10 Txs Baseline',
-      output: 'Boolean Flag + Newsprint Reason',
+      input: 'Current Transaction + Last 10 Transactions Baseline',
+      output: 'Anomaly Boolean & Explanation',
       latency: '~1.2s',
-      context: 'Dynamically analyzes recent history to determine if a new transaction represents an unusual spending spike or behavioral anomaly.'
+      context: 'Implements sliding window history injection. Passes the currently uploaded transaction along with a rolling few-shot baseline of the last 10 store transactions. The model performs in-context reasoning to flag outliers, spike triggers, or margin erosion signals.'
     }
   },
   {
     id: 'NODE-04',
     title: 'Advisory Intelligence',
-    model: 'Gemini 1.5 Flash',
-    desc: 'RAG Conversational Agent',
+    model: 'Gemini 3 Flash (RAG Conversational)',
+    desc: 'Retrieval-Augmented Generation Agent',
     details: {
-      input: 'User Query + Complete Ledger Data',
-      output: 'Plain-English Financial Guidance',
+      input: 'User Prompt + Dynamic Financial Context JSON',
+      output: 'Insightful Plain-English Advisory Advice',
       latency: '~1.5s',
-      context: 'Injects the user\'s full monthly summary and budget constraints into the prompt context to provide highly personalized financial advice.'
+      context: 'Implements a RAG pipeline. Collects real-time sales summaries, category metrics, and budget parameters, injecting them as retrieval-context into the chat prompt. This enables a natural language conversational assistant to deliver highly customized retail tips.'
     }
   }
 ];
