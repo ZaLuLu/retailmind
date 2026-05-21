@@ -7,22 +7,22 @@
 
 /* ── CSS Variables ──────────────────────────────────────────────────────────── */
 :root {
-  --ink:         #0D1B2A;      /* deep navy ink */
-  --ink-muted:   #3A4A5C;
-  --gold:        #C9A84C;
+  --ink:         var(--ink-black);
+  --ink-muted:   var(--text-muted);
+  --gold:        var(--ink-yellow);
   --gold-light:  #E8C97A;
-  --paper:       #F5F0E8;      /* warm newsprint paper */
-  --paper-dark:  #EDE8D8;
-  --rule:        #C4B99A;      /* column rule lines */
-  --rule-heavy:  #0D1B2A;
-  --green:       #2E7D52;
+  --paper:       var(--bg-paper);
+  --paper-dark:  var(--bg-tint);
+  --rule:        rgba(26, 26, 26, 0.15);      /* column rule lines */
+  --rule-heavy:  var(--ink-black);
+  --green:       var(--ink-green);
   --green-light: #4CAF50;
-  --red:         #C62828;
+  --red:         var(--ink-red);
   --red-light:   #E57373;
-  --amber:       #C9A84C;
-  --mono:        'JetBrains Mono', monospace;
-  --serif:       'Source Serif 4', Georgia, serif;
-  --display:     'Playfair Display', Georgia, serif;
+  --amber:       var(--ink-yellow);
+  --mono:        var(--font-mono);
+  --serif:       var(--font-serif);
+  --display:     var(--font-display);
 }
 
 /* ── Base ───────────────────────────────────────────────────────────────────── */
@@ -249,7 +249,7 @@
 
 .kpi-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(13, 27, 42, 0.1);
+  box-shadow: 4px 4px 0 var(--ink);
 }
 
 .kpi-label {

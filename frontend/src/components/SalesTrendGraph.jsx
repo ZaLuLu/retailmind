@@ -130,12 +130,12 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
   }, [comparisonData])
 
   // ── SVG Constants & Scaling for Line Chart ───────────────────────────────
-  const svgWidth = 700
-  const svgHeight = 240
-  const paddingLeft = 60
+  const svgWidth = 800
+  const svgHeight = 320
+  const paddingLeft = 75
   const paddingRight = 30
-  const paddingTop = 20
-  const paddingBottom = 40
+  const paddingTop = 30
+  const paddingBottom = 50
 
   const maxRevenue = useMemo(() => {
     if (activeTab === 'trend') {
@@ -249,24 +249,43 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
   }, [comparisonData, maxRevenue, activeTab])
 
   return (
-    <div className="card newsprint-chart-card" style={{ padding: '1.25rem', marginBottom: '1.5rem', position: 'relative' }}>
+    <div className="card newsprint-chart-card" style={{
+      padding: '1.5rem',
+      marginBottom: '1.5rem',
+      position: 'relative',
+      border: '4px double var(--ink-black)',
+      background: 'var(--bg-paper)',
+      boxShadow: '6px 6px 0 rgba(26, 26, 26, 0.05)',
+      transition: 'all 0.2s ease'
+    }}>
       {/* Chart Tabs */}
-      <div className="chart-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid rgba(0,0,0,0.12)', paddingBottom: '0.75rem' }}>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span className="mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>Intelligence Analytics</span>
-          <h4 className="serif" style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>
+      <div className="chart-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid rgba(0,0,0,0.12)', paddingBottom: '0.75rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+          <span className="mono" style={{ fontSize: '0.7rem', color: 'var(--ink-red)', letterSpacing: '0.12em', fontWeight: 700, textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>
+            ✦ Intelligence Analytics ✦
+          </span>
+          <h4 style={{ margin: 0, fontSize: '1.35rem', fontFamily: 'var(--font-display)', fontWeight: 800, color: 'var(--ink-black)', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
             {activeTab === 'trend' ? 'Daily Revenue History (MTD)' : activeTab === 'comparison' ? 'Revenue vs Cost Breakdown by Category' : 'Revenue Share Contribution by Product Category'}
           </h4>
         </div>
-        <div className="tab-group" style={{ display: 'flex', gap: '0.25rem' }}>
+        <div className="tab-group" style={{ display: 'flex', gap: '0.3rem' }}>
           <button
             onClick={() => { setActiveTab('trend'); setHoveredPoint(null) }}
             style={{
-              padding: '0.35rem 0.75rem',
-              fontSize: '0.65rem',
+              padding: '0.4rem 0.9rem',
+              fontSize: '0.68rem',
+              fontFamily: 'var(--font-mono)',
+              textTransform: 'uppercase',
+              fontWeight: 700,
               background: activeTab === 'trend' ? 'var(--ink-black)' : 'transparent',
               color: activeTab === 'trend' ? 'var(--bg-paper)' : 'var(--ink-black)',
-              border: '1px solid var(--ink-black)'
+              border: '1px solid var(--ink-black)',
+              boxShadow: activeTab === 'trend' ? 'inset 2px 2px 0 rgba(255,255,255,0.1)' : 'none',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.3rem'
             }}
           >
             📈 Sales Trend
@@ -274,11 +293,20 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
           <button
             onClick={() => { setActiveTab('comparison'); setHoveredPoint(null) }}
             style={{
-              padding: '0.35rem 0.75rem',
-              fontSize: '0.65rem',
+              padding: '0.4rem 0.9rem',
+              fontSize: '0.68rem',
+              fontFamily: 'var(--font-mono)',
+              textTransform: 'uppercase',
+              fontWeight: 700,
               background: activeTab === 'comparison' ? 'var(--ink-black)' : 'transparent',
               color: activeTab === 'comparison' ? 'var(--bg-paper)' : 'var(--ink-black)',
-              border: '1px solid var(--ink-black)'
+              border: '1px solid var(--ink-black)',
+              boxShadow: activeTab === 'comparison' ? 'inset 2px 2px 0 rgba(255,255,255,0.1)' : 'none',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.3rem'
             }}
           >
             📊 Cost Comparison
@@ -286,11 +314,20 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
           <button
             onClick={() => { setActiveTab('share'); setHoveredPoint(null) }}
             style={{
-              padding: '0.35rem 0.75rem',
-              fontSize: '0.65rem',
+              padding: '0.4rem 0.9rem',
+              fontSize: '0.68rem',
+              fontFamily: 'var(--font-mono)',
+              textTransform: 'uppercase',
+              fontWeight: 700,
               background: activeTab === 'share' ? 'var(--ink-black)' : 'transparent',
               color: activeTab === 'share' ? 'var(--bg-paper)' : 'var(--ink-black)',
-              border: '1px solid var(--ink-black)'
+              border: '1px solid var(--ink-black)',
+              boxShadow: activeTab === 'share' ? 'inset 2px 2px 0 rgba(255,255,255,0.1)' : 'none',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.3rem'
             }}
           >
             🍩 Category Share
@@ -299,12 +336,10 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
       </div>
 
       {/* SVG Graphics Container */}
-      <div className="svg-container" style={{ position: 'relative', width: '100%', overflowX: 'auto' }}>
+      <div className="sales-trend-svg-container" style={{ position: 'relative', width: '100%', display: 'block', overflow: 'visible' }}>
         <svg
           viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-          width="100%"
-          height="100%"
-          style={{ display: 'block', background: 'transparent' }}
+          style={{ width: '100%', height: 'auto', display: 'block', background: 'transparent' }}
           onMouseLeave={() => setHoveredPoint(null)}
         >
           {/* Fills & Definitions */}
@@ -337,8 +372,12 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
                   x={paddingLeft - 8}
                   y={y + 4}
                   textAnchor="end"
-                  className="mono"
-                  style={{ fontSize: '0.55rem', fill: 'var(--text-muted)' }}
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.62rem',
+                    fontWeight: 500,
+                    fill: 'var(--text-muted)'
+                  }}
                 >
                   {formatMoneyCompact(gridVal, currency)}
                 </text>
@@ -446,10 +485,14 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
                   <text
                     key={i}
                     x={c.x}
-                    y={svgHeight - paddingBottom + 18}
+                    y={svgHeight - paddingBottom + 22}
                     textAnchor="middle"
-                    className="mono"
-                    style={{ fontSize: '0.55rem', fill: 'var(--text-muted)' }}
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.62rem',
+                      fontWeight: 500,
+                      fill: 'var(--text-muted)'
+                    }}
                   >
                     {c.data.date}
                   </text>
@@ -516,10 +559,14 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
                     {/* Bottom Category Label */}
                     <text
                       x={group.groupCenterX}
-                      y={svgHeight - paddingBottom + 18}
+                      y={svgHeight - paddingBottom + 22}
                       textAnchor="middle"
-                      className="mono"
-                      style={{ fontSize: '0.55rem', fill: 'var(--text-muted)' }}
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.62rem',
+                        fontWeight: 500,
+                        fill: 'var(--text-muted)'
+                      }}
                     >
                       {group.data.category}
                     </text>
@@ -531,27 +578,27 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
 
           {/* Render Tab 3: Category Share Donut Chart */}
           {activeTab === 'share' && shareData.length > 0 && (
-            <g className="animate-scale" style={{ transformOrigin: '250px 120px' }}>
+            <g className="animate-scale" style={{ transformOrigin: '280px 160px' }}>
               {/* Donut Segments with offset mathematics and starting rotation */}
-              <g transform="rotate(-90 250 120)">
+              <g transform="rotate(-90 280 160)">
                 {shareData.map((d, i) => {
                   const color = colors[i % colors.length]
                   const isHovered = hoveredPoint?.label === d.category
                   
-                  const r = 65
-                  const C = 408.4 // 2 * pi * r
+                  const r = 75
+                  const C = 471.2 // 2 * pi * r
                   const strokeLength = (d.percent / 100) * C
                   const strokeOffset = C - (d.startPercent / 100) * C
 
                   return (
                     <circle
                       key={i}
-                      cx="250"
-                      cy="120"
+                      cx="280"
+                      cy="160"
                       r={r}
                       fill="transparent"
                       stroke={color}
-                      strokeWidth={isHovered ? 34 : 26}
+                      strokeWidth={isHovered ? 40 : 30}
                       strokeDasharray={`${strokeLength} ${C}`}
                       strokeDashoffset={strokeOffset}
                       strokeLinecap={d.percent > 2.5 ? 'round' : 'butt'}
@@ -562,8 +609,8 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
                       }}
                       onMouseEnter={() => {
                         setHoveredPoint({
-                          x: 250,
-                          y: 90,
+                          x: 280,
+                          y: 160,
                           label: d.category,
                           val1: d.revenue,
                           val2: d.percent
@@ -575,52 +622,52 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
               </g>
 
               {/* Donut Center Hole Text */}
-              <circle cx="250" cy="120" r="46" fill="var(--bg-paper)" stroke="var(--ink-black)" strokeWidth="0.5" />
-              <text x="250" y="114" textAnchor="middle" className="mono" style={{ fontSize: '0.45rem', fill: 'var(--text-muted)' }}>
+              <circle cx="280" cy="160" r="54" fill="var(--bg-paper)" stroke="var(--ink-black)" strokeWidth="0.5" />
+              <text x="280" y="152" textAnchor="middle" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', fontWeight: 600, fill: 'var(--text-muted)', letterSpacing: '0.05em' }}>
                 TOTAL REVENUE
               </text>
-              <text x="250" y="130" textAnchor="middle" style={{ fontFamily: 'var(--font-serif)', fontSize: '0.9rem', fontWeight: 800, fill: 'var(--ink-black)' }}>
+              <text x="280" y="174" textAnchor="middle" style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 800, fill: 'var(--ink-black)' }}>
                 {formatMoneyCompact(shareData.reduce((acc, curr) => acc + curr.revenue, 0), currency)}
               </text>
 
               {/* Broadsheet Style Legend Table with dotted leaders */}
-              <g transform="translate(440, 20)">
+              <g transform="translate(485, 40)">
                 {/* Vintage Border around Legend */}
-                <rect x="-15" y="-12" width="245" height={shareData.length * 22 + 26} fill="var(--bg-tint)" stroke="var(--ink-black)" strokeWidth="1" />
-                <line x1="-15" y1="12" x2="230" y2="12" stroke="var(--ink-black)" strokeWidth="1" />
+                <rect x="-15" y="-12" width="265" height={shareData.length * 24 + 30} fill="var(--bg-tint)" stroke="var(--ink-black)" strokeWidth="1" />
+                <line x1="-15" y1="16" x2="250" y2="16" stroke="var(--ink-black)" strokeWidth="1" />
                 
-                <text x="0" y="3" className="mono" style={{ fontSize: '0.55rem', fontWeight: 800 }}>CATEGORY CONTRIBUTION</text>
-                <text x="215" y="3" className="mono" style={{ fontSize: '0.55rem', fontWeight: 800, textAnchor: 'end' }}>SHARE</text>
+                <text x="0" y="4" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', fontWeight: 700, fill: 'var(--ink-black)', letterSpacing: '0.04em' }}>CATEGORY CONTRIBUTION</text>
+                <text x="235" y="4" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', fontWeight: 700, textAnchor: 'end', fill: 'var(--ink-black)', letterSpacing: '0.04em' }}>SHARE</text>
 
                 {shareData.map((d, i) => {
                   const color = colors[i % colors.length]
-                  const y = 30 + i * 22
+                  const y = 38 + i * 24
                   const isHovered = hoveredPoint?.label === d.category
 
                   return (
                     <g key={i} style={{ cursor: 'pointer' }}
                        onMouseEnter={() => setHoveredPoint({
-                         x: 250,
-                         y: 90,
+                         x: 280,
+                         y: 160,
                          label: d.category,
                          val1: d.revenue,
                          val2: d.percent
                        })}>
                       {/* Color bullet */}
-                      <circle cx="2" cy={y - 4} r="5" fill={color} stroke="var(--ink-black)" strokeWidth="1" />
+                      <circle cx="2" cy={y - 4} r="6" fill={color} stroke="var(--ink-black)" strokeWidth="1" />
                       
                       {/* Category Label */}
-                      <text x="14" y={y} style={{ fontSize: '0.65rem', fontWeight: isHovered ? 'bold' : 'normal', fill: 'var(--ink-black)' }}>
-                        {d.category.substring(0, 14)}
+                      <text x="16" y={y} style={{ fontFamily: 'var(--font-serif)', fontSize: '0.72rem', fontWeight: isHovered ? 700 : 500, fill: 'var(--ink-black)' }}>
+                        {d.category.substring(0, 16)}
                       </text>
                       
                       {/* Dotted Leader */}
-                      <text x="82" y={y} className="mono" style={{ fontSize: '0.55rem', fill: 'rgba(0,0,0,0.22)' }}>
+                      <text x="96" y={y} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fill: 'rgba(0,0,0,0.18)' }}>
                         ...................................
                       </text>
                       
                       {/* Percentage Share */}
-                      <text x="215" y={y} className="mono" style={{ fontSize: '0.65rem', fontWeight: 700, textAnchor: 'end', fill: isHovered ? 'var(--ink-red)' : 'var(--ink-black)' }}>
+                      <text x="235" y={y} style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', fontWeight: 700, textAnchor: 'end', fill: isHovered ? 'var(--ink-red)' : 'var(--ink-black)' }}>
                         {d.percent.toFixed(1)}%
                       </text>
                     </g>
@@ -652,37 +699,37 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
               left: `${Math.min(Math.max((hoveredPoint.x / svgWidth) * 100, 15), 85)}%`,
               top: `${(hoveredPoint.y / svgHeight) * 100 - 32}%`,
               transform: 'translate(-50%, -100%)',
-              background: '#0D1B2A',
-              color: '#FDFCF0',
-              padding: '0.5rem 0.75rem',
-              border: '1px solid #C9A84C',
-              borderRadius: '3px',
+              background: 'var(--bg-paper)',
+              color: 'var(--ink-black)',
+              padding: '0.55rem 0.85rem',
+              border: '2px solid var(--ink-black)',
+              borderRadius: '0px',
               fontFamily: 'var(--font-mono)',
-              fontSize: '0.65rem',
-              boxShadow: '4px 4px 0 rgba(0,0,0,0.15)',
+              fontSize: '0.68rem',
+              boxShadow: '4px 4px 0 var(--ink-black)',
               pointerEvents: 'none',
               zIndex: 5,
               whiteSpace: 'nowrap'
             }}
           >
-            <div style={{ fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.15)', paddingBottom: '0.2rem', marginBottom: '0.2rem', color: '#C9A84C' }}>
+            <div style={{ fontWeight: 'bold', borderBottom: '1px dashed var(--ink-black)', paddingBottom: '0.2rem', marginBottom: '0.2rem', color: 'var(--ink-red)' }}>
               {hoveredPoint.label}
             </div>
             <div>
-              {hoveredPoint.isForecast ? 'Projected Rev: ' : 'Revenue: '}<span style={{ color: '#fff', fontWeight: 600 }}>{formatMoneyDetailed(hoveredPoint.val1, currency)}</span>
+              {hoveredPoint.isForecast ? 'Projected Rev: ' : 'Revenue: '}<span style={{ color: 'var(--ink-blue)', fontWeight: 700 }}>{formatMoneyDetailed(hoveredPoint.val1, currency)}</span>
             </div>
             {activeTab !== 'share' && hoveredPoint.val2 !== undefined && (
               <div style={{ marginTop: '0.1rem' }}>
-                COGS: <span style={{ color: '#FCD34D' }}>{formatMoneyDetailed(hoveredPoint.val2, currency)}</span>
+                COGS: <span style={{ color: 'var(--ink-yellow)', fontWeight: 700 }}>{formatMoneyDetailed(hoveredPoint.val2, currency)}</span>
               </div>
             )}
             {activeTab !== 'share' && hoveredPoint.val2 !== undefined && (
-              <div style={{ marginTop: '0.1rem', color: '#34D399', fontWeight: 'bold' }}>
+              <div style={{ marginTop: '0.1rem', color: 'var(--ink-green)', fontWeight: 'bold' }}>
                 Margin: {((hoveredPoint.val1 - hoveredPoint.val2) / Math.max(hoveredPoint.val1, 1) * 100).toFixed(1)}%
               </div>
             )}
             {activeTab === 'share' && hoveredPoint.val2 !== undefined && (
-              <div style={{ marginTop: '0.1rem', color: '#60A5FA', fontWeight: 'bold' }}>
+              <div style={{ marginTop: '0.1rem', color: 'var(--ink-red)', fontWeight: 'bold' }}>
                 Share: {hoveredPoint.val2.toFixed(1)}%
               </div>
             )}
@@ -692,28 +739,28 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
 
       {/* Legend strip (Only for comparison chart) */}
       {activeTab === 'comparison' && (
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '0.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <span style={{ display: 'inline-block', width: '10px', height: '10px', background: 'var(--ink-blue)', border: '1px solid #000' }} />
-            <span className="mono" style={{ fontSize: '0.55rem' }}>Total Revenue</span>
+        <div style={{ display: 'flex', gap: '1.25rem', justifyContent: 'center', marginTop: '0.75rem', borderTop: '1px dashed rgba(0,0,0,0.1)', paddingTop: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ display: 'inline-block', width: '12px', height: '12px', background: 'var(--ink-blue)', border: '1px solid var(--ink-black)' }} />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--ink-black)' }}>Total Revenue</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <span style={{ display: 'inline-block', width: '10px', height: '10px', background: 'var(--ink-yellow)', border: '1px solid #000' }} />
-            <span className="mono" style={{ fontSize: '0.55rem' }}>Cost of Goods Sold (COGS)</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ display: 'inline-block', width: '12px', height: '12px', background: 'var(--ink-yellow)', border: '1px solid var(--ink-black)' }} />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--ink-black)' }}>Cost of Goods Sold (COGS)</span>
           </div>
         </div>
       )}
 
       {/* Legend strip (Only for trend chart) */}
       {activeTab === 'trend' && forecastData.length > 0 && (
-        <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', marginTop: '0.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span style={{ display: 'inline-block', width: '16px', height: '0px', borderTop: '2.5px solid var(--ink-blue)' }} />
-            <span className="mono" style={{ fontSize: '0.55rem' }}>Historical Revenue</span>
+        <div style={{ display: 'flex', gap: '1.75rem', justifyContent: 'center', marginTop: '0.75rem', borderTop: '1px dashed rgba(0,0,0,0.1)', paddingTop: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ display: 'inline-block', width: '18px', height: '0px', borderTop: '2.5px solid var(--ink-blue)' }} />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--ink-black)' }}>Historical Revenue</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span style={{ display: 'inline-block', width: '16px', height: '0px', borderTop: '2.5px dashed var(--ink-blue)' }} />
-            <span className="mono" style={{ fontSize: '0.55rem' }}>14-Day Holt-Winters Projection</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ display: 'inline-block', width: '18px', height: '0px', borderTop: '2.5px dashed var(--ink-blue)' }} />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--ink-black)' }}>14-Day Holt-Winters Projection</span>
           </div>
         </div>
       )}

@@ -71,7 +71,7 @@
   position: relative;
 }
 
-.svg-container {
+.portfolio-matrix-svg-wrap .svg-container {
   width: 100%;
   max-width: 400px;
   aspect-ratio: 1 / 1;
