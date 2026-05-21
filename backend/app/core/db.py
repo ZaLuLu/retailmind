@@ -2,13 +2,18 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy.orm import DeclarativeBase
 from .config import settings
 
-# asyncpg compatibility: strip query params (like sslmode) that it doesn't support as kwargs
+import re
+
+# asyncpg compatibility: strip sslmode param (not supported as a query kwarg)
+# and pass ssl=True via connect_args instead
 db_url = settings.DATABASE_URL
 connect_args = {}
 if "sslmode=require" in db_url:
     connect_args["ssl"] = True
-    # Strip the parameter to avoid SQLAlchemy passing it as a kwarg
-    db_url = db_url.replace("sslmode=require", "").replace("??", "?").rstrip("?")
+    # Remove sslmode=require (handles ?, &, trailing ? cleanup)
+    db_url = re.sub(r"[?&]sslmode=require", "", db_url)
+    db_url = re.sub(r"\?&", "?", db_url)
+    db_url = db_url.rstrip("?")
 
 engine = create_async_engine(
     db_url,

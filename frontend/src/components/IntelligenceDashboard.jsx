@@ -373,7 +373,7 @@ const IntelligenceDashboard = ({
 
       {/* ── Footer ── */}
       <footer className="newsprint-footer">
-        <p>© 2024 RetailMind Intel Corp. · Powered by Gemini AI · All Rights Reserved</p>
+        <p>© 2025 RetailMind Intel Corp. · Powered by Gemini AI · All Rights Reserved</p>
         <div className="footer-links">
           <span>Terms</span>
           <span>Privacy</span>

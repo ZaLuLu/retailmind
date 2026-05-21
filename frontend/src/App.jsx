@@ -146,8 +146,6 @@ function App() {
     setIsAuthenticated(true)
   }
 
-
-
   const handleRegister = async (email, password) => {
     await api.register(email, password)
     setAuthView('login')

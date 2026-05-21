@@ -1,11 +1,35 @@
 node_modules/
+
+# Python cache
 __pycache__/
 *.pyc
-__pycache__
+*.pyo
+*.pyd
+
+# Environment files — keep .env.example tracked
 .env
-.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Backend storage
 storage/
+
+# Build output
 dist/
+build/
+
+# Virtual environments
 .venv/
 venv/
+env/
+
+# IDE / tooling
 .kiro/
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db

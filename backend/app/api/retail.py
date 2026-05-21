@@ -7,7 +7,7 @@ from ..models.db import User, SaleRecord, Store
 from ..api.deps import get_current_user
 from ..services.retail_intelligence import retail_intelligence_service
 from datetime import date
-from typing import Optional
+from typing import Optional, Any
 from pydantic import BaseModel
 import csv
 import io

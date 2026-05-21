@@ -13,7 +13,7 @@ from ..security.auth import (
     decode_token
 )
 from ..core.config import settings
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -54,7 +54,7 @@ async def login(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
     
     # Store refresh token
-    expires_at = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    expires_at = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     new_refresh = RefreshToken(
         user_id=user.id,
         token_hash=hash_token(refresh_token),
@@ -86,7 +86,7 @@ async def refresh(refresh_data: TokenRefreshRequest, db: AsyncSession = Depends(
     result = await db.execute(
         select(RefreshToken).where(
             RefreshToken.token_hash == token_hash,
-            RefreshToken.expires_at > datetime.utcnow()
+            RefreshToken.expires_at > datetime.now(timezone.utc)
         )
     )
     db_token = result.scalars().first()
@@ -103,7 +103,7 @@ async def refresh(refresh_data: TokenRefreshRequest, db: AsyncSession = Depends(
     
     # Replace old refresh token with new one (Rotate)
     db_token.token_hash = hash_token(new_refresh)
-    db_token.expires_at = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    db_token.expires_at = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     
     await db.commit()
     
