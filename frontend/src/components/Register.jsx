@@ -45,93 +45,132 @@ function Register({ onRegister, onSwitch }) {
 
   return (
     <div className="auth-page">
-      <div className="auth-card">
-        <div style={{ marginBottom: '2rem', borderBottom: 'var(--border-heavy)', paddingBottom: '1.5rem' }}>
-          <p className="mono" style={{ margin: '0 0 0.25rem', color: 'var(--text-muted)', fontSize: '0.65rem' }}>
-            Join the Network
-          </p>
-          <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 800 }}>
-            Establish Identity
-          </h2>
+      <div className="auth-container">
+        <div className="auth-broadsheet animate-scale">
+          {/* Left Column: Broadside Editorial */}
+          <div className="editorial-column">
+            <div className="editorial-masthead">
+              <span className="editorial-masthead-kicker">LATEST EDITION</span>
+              <h1 className="editorial-masthead-title">RetailMind</h1>
+              <div className="editorial-tagline">
+                THE INDEPENDENT BUSINESS JOURNAL FOR SMB RETAILERS
+              </div>
+            </div>
+
+            <div className="editorial-bulletin">
+              <h3 className="editorial-bulletin-title">Intelligence Bulletin</h3>
+              <p className="editorial-bulletin-text">
+                "By establishing your identity in our records, you gain deep analytical command over gross margins, sales trends, and AI forecasting."
+              </p>
+            </div>
+
+            {/* Vintage ink stamp */}
+            <div className="editorial-stamp">
+              <div className="editorial-stamp-inner">
+                SECURE
+                <br />
+                REGISTRY
+                <br />
+                DESK #1
+              </div>
+            </div>
+
+            <div className="editorial-footer">
+              <span>VOL. XXIV — NO. 142</span>
+              <span>ONE SHILLING</span>
+            </div>
+          </div>
+
+          {/* Right Column: Active Card */}
+          <div className="auth-card">
+            <div style={{ marginBottom: '1.75rem', borderBottom: 'var(--border-mid)', paddingBottom: '1rem' }}>
+              <p className="mono" style={{ margin: '0 0 0.2rem', color: 'var(--ink-red)', fontSize: '0.65rem', fontWeight: 700 }}>
+                ESTABLISHED MMXXVI — CORRESPONDENT REGISTRY
+              </p>
+              <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 800, color: 'var(--ink-black)' }}>
+                Establish Identity
+              </h2>
+            </div>
+
+            <form onSubmit={handleSubmit}>
+              {error && <div className="auth-error">{error}</div>}
+
+              <div className="form-group">
+                <label htmlFor="register-email">Correspondence Email</label>
+                <input
+                  id="register-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="register-password">Secure Access Code</label>
+                <div className="password-wrapper">
+                  <input
+                    id="register-password"
+                    type={showPass ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="new-password"
+                    placeholder="min. 6 characters"
+                  />
+                  <button
+                    type="button"
+                    className="show-pass-btn"
+                    onClick={() => setShowPass(v => !v)}
+                    aria-label={showPass ? 'Hide password' : 'Show password'}
+                    tabIndex={-1}
+                  >
+                    {showPass ? '🙈' : '👁'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="register-confirm">Confirm Access Code</label>
+                <div className="password-wrapper">
+                  <input
+                    id="register-confirm"
+                    type={showConfirm ? 'text' : 'password'}
+                    value={confirm}
+                    onChange={(e) => setConfirm(e.target.value)}
+                    required
+                    autoComplete="new-password"
+                    placeholder="repeat password"
+                  />
+                  <button
+                    type="button"
+                    className="show-pass-btn"
+                    onClick={() => setShowConfirm(v => !v)}
+                    aria-label={showConfirm ? 'Hide password' : 'Show password'}
+                    tabIndex={-1}
+                  >
+                    {showConfirm ? '🙈' : '👁'}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1.5rem' }}>
+                <button type="submit" disabled={loading} id="register-submit">
+                  {loading ? 'INITIALIZING CORRESPONDENT...' : 'INITIALIZE ACCOUNT →'}
+                </button>
+                <button
+                  type="button"
+                  onClick={onSwitch}
+                  className="switch-btn"
+                >
+                  Already a correspondent? Login with secure credentials
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-
-        <form onSubmit={handleSubmit}>
-          {error && <div className="auth-error">{error}</div>}
-
-          <div className="form-group">
-            <label>Correspondence Email</label>
-            <input
-              id="register-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              placeholder="you@example.com"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Secure Access Code</label>
-            <div className="password-wrapper">
-              <input
-                id="register-password"
-                type={showPass ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="new-password"
-                placeholder="min. 6 characters"
-              />
-              <button
-                type="button"
-                className="show-pass-btn"
-                onClick={() => setShowPass(v => !v)}
-                aria-label={showPass ? 'Hide password' : 'Show password'}
-                tabIndex={-1}
-              >
-                {showPass ? '🙈' : '👁'}
-              </button>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Confirm Access Code</label>
-            <div className="password-wrapper">
-              <input
-                id="register-confirm"
-                type={showConfirm ? 'text' : 'password'}
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                required
-                autoComplete="new-password"
-                placeholder="repeat password"
-              />
-              <button
-                type="button"
-                className="show-pass-btn"
-                onClick={() => setShowConfirm(v => !v)}
-                aria-label={showConfirm ? 'Hide password' : 'Show password'}
-                tabIndex={-1}
-              >
-                {showConfirm ? '🙈' : '👁'}
-              </button>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
-            <button type="submit" disabled={loading} id="register-submit">
-              {loading ? 'Initializing...' : 'Initialize Account →'}
-            </button>
-            <button
-              type="button"
-              onClick={onSwitch}
-              className="switch-btn"
-            >
-              Already a correspondent? Login here
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   )

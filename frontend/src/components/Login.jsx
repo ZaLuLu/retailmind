@@ -50,81 +50,120 @@ function Login({ onLogin, onSwitch }) {
 
   return (
     <div className="auth-page">
-      <div className="auth-card">
-        <div style={{ marginBottom: '2rem', borderBottom: 'var(--border-heavy)', paddingBottom: '1.5rem' }}>
-          <p className="mono" style={{ margin: '0 0 0.25rem', color: 'var(--text-muted)', fontSize: '0.65rem' }}>
-            The Morning Edition
-          </p>
-          <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 800 }}>
-            RetailMind Platform
-          </h2>
-        </div>
+      <div className="auth-container">
+        <div className="auth-broadsheet animate-scale">
+          {/* Left Column: Broadside Editorial */}
+          <div className="editorial-column">
+            <div className="editorial-masthead">
+              <span className="editorial-masthead-kicker">LATEST EDITION</span>
+              <h1 className="editorial-masthead-title">RetailMind</h1>
+              <div className="editorial-tagline">
+                THE INDEPENDENT BUSINESS JOURNAL FOR SMB RETAILERS
+              </div>
+            </div>
 
-        <form onSubmit={handleSubmit}>
-          {error && <div className="auth-error">{error}</div>}
+            <div className="editorial-bulletin">
+              <h3 className="editorial-bulletin-title">Intelligence Bulletin</h3>
+              <p className="editorial-bulletin-text">
+                "Without reliable data, a merchant merely walks through the dark. Light up your revenue, stock margins, and customer dynamics today."
+              </p>
+            </div>
 
-          <div className="form-group">
-            <label>Correspondence Email</label>
-            <input
-              id="login-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              placeholder="you@example.com"
-            />
-          </div>
+            {/* Vintage ink stamp */}
+            <div className="editorial-stamp">
+              <div className="editorial-stamp-inner">
+                SECURE
+                <br />
+                DESK ACCESS
+                <br />
+                DESK #1
+              </div>
+            </div>
 
-          <div className="form-group">
-            <label>Secure Access Code</label>
-            <div className="password-wrapper">
-              <input
-                id="login-password"
-                type={showPass ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                className="show-pass-btn"
-                onClick={() => setShowPass(v => !v)}
-                aria-label={showPass ? 'Hide password' : 'Show password'}
-                tabIndex={-1}
-              >
-                {showPass ? '🙈' : '👁'}
-              </button>
+            <div className="editorial-footer">
+              <span>VOL. XXIV — NO. 142</span>
+              <span>ONE SHILLING</span>
             </div>
           </div>
 
-          <div className="remember-row">
-            <label className="remember-label">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={e => setRemember(e.target.checked)}
-              />
-              Remember email
-            </label>
-          </div>
+          {/* Right Column: Active Card */}
+          <div className="auth-card">
+            <div style={{ marginBottom: '1.75rem', borderBottom: 'var(--border-mid)', paddingBottom: '1rem' }}>
+              <p className="mono" style={{ margin: '0 0 0.2rem', color: 'var(--ink-red)', fontSize: '0.65rem', fontWeight: 700 }}>
+                ESTABLISHED MMXXVI — DESK LOG
+              </p>
+              <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 800, color: 'var(--ink-black)' }}>
+                Correspondent Login
+              </h2>
+            </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
-            <button type="submit" disabled={loading} id="login-submit">
-              {loading ? 'Authenticating...' : 'Enter Desk →'}
-            </button>
+            <form onSubmit={handleSubmit}>
+              {error && <div className="auth-error">{error}</div>}
 
-            <button
-              type="button"
-              onClick={onSwitch}
-              className="switch-btn"
-            >
-              New correspondent? Register here
-            </button>
+              <div className="form-group">
+                <label htmlFor="login-email">Correspondence Email</label>
+                <input
+                  id="login-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="login-password">Secure Access Code</label>
+                <div className="password-wrapper">
+                  <input
+                    id="login-password"
+                    type={showPass ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    className="show-pass-btn"
+                    onClick={() => setShowPass(v => !v)}
+                    aria-label={showPass ? 'Hide password' : 'Show password'}
+                    tabIndex={-1}
+                  >
+                    {showPass ? '🙈' : '👁'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="remember-row">
+                <label className="remember-label">
+                  <input
+                    type="checkbox"
+                    checked={remember}
+                    onChange={e => setRemember(e.target.checked)}
+                  />
+                  <span>Remember my terminal email</span>
+                </label>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <button type="submit" disabled={loading} id="login-submit">
+                  {loading ? 'AUTHENTICATING CORRESPONDENT...' : 'ENTER OFFICE DESK →'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={onSwitch}
+                  className="switch-btn"
+                >
+                  New correspondent? Register secure credentials here
+                </button>
+              </div>
+            </form>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   )
