@@ -47,14 +47,6 @@ function clearTokens() {
   localStorage.removeItem('refresh_token')
 }
 
-// ── Auth header builder ────────────────────────────────────────────────────
-function authHeaders(contentType = 'application/json') {
-  const token = getToken()
-  return {
-    ...(contentType ? { 'Content-Type': contentType } : {}),
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-  }
-}
 
 // ── Error normalization ────────────────────────────────────────────────────
 async function parseError(res) {
@@ -235,16 +227,7 @@ export const api = {
     return data
   },
 
-  demoLogin: async () => {
-    const res = await fetch(`${BASE_URL}/auth/demo-login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    })
-    if (!res.ok) throw new Error('Demo login failed')
-    const data = await res.json()
-    storeTokens(data.access_token, data.refresh_token)
-    return data
-  },
+
 
   register: async (email, password) => {
     const res = await fetch(`${BASE_URL}/auth/register`, {

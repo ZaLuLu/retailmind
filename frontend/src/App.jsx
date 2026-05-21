@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import OnboardingWizard from './components/OnboardingWizard'
 import AdvisorChat from './components/AdvisorChat'
 import Login from './components/Login'
@@ -28,7 +28,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'))
   const [authView, setAuthView] = useState('login') // 'login' | 'register'
   const [isOnboarded, setIsOnboarded] = useState(false)
-  const [isDemoMode, setIsDemoMode] = useState(false)
+
   const [showSettings, setShowSettings] = useState(false)
   const [showChat, setShowChat] = useState(false)
   const [user, setUser] = useState({ fullName: '', storeName: '', currency: 'INR' })
@@ -49,10 +49,10 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (isAuthenticated && !isDemoMode) {
+    if (isAuthenticated) {
       fetchUserData()
     }
-  }, [isAuthenticated, isDemoMode])
+  }, [isAuthenticated])
 
   const fetchUserData = async (period, dateFrom, dateTo, storeIdOverride) => {
     setLoading(true)
@@ -146,18 +146,7 @@ function App() {
     setIsAuthenticated(true)
   }
 
-  const handleDemoLogin = async () => {
-    try {
-      await api.demoLogin()
-      setIsDemoMode(true)
-      setIsAuthenticated(true)
-      setIsOnboarded(true)
-      await fetchUserData()
-    } catch (err) {
-      console.error('Demo login failed', err)
-      showToast('error', 'Failed to initialize Portfolio Demo Mode.')
-    }
-  }
+
 
   const handleRegister = async (email, password) => {
     await api.register(email, password)
@@ -167,7 +156,6 @@ function App() {
   const handleLogout = () => {
     api.logout()
     setIsAuthenticated(false)
-    setIsDemoMode(false)
     setUser({ fullName: '', storeName: '', currency: 'INR' })
     setSales([])
     setSummary(EMPTY_SUMMARY)
@@ -208,7 +196,7 @@ function App() {
   // ── Routing ────────────────────────────────────────────────────────────────
   if (!isAuthenticated) {
     return authView === 'login'
-      ? <Login onLogin={handleLogin} onDemoLogin={handleDemoLogin} onSwitch={() => setAuthView('register')} />
+      ? <Login onLogin={handleLogin} onSwitch={() => setAuthView('register')} />
       : <Register onRegister={handleRegister} onSwitch={() => setAuthView('login')} />
   }
 

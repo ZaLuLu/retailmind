@@ -16,10 +16,11 @@ class AdvisorResponse(BaseModel):
 
 @router.post("/ask", response_model=AdvisorResponse)
 async def ask_advisor(
-    request: AdvisorRequest
+    request: AdvisorRequest,
+    current_user: User = Depends(get_current_user)
 ):
     """
-    Ask the AI advisor a financial question (Public for Demo Mode).
+    Ask the AI advisor a financial question.
     """
     if not request.question:
         raise HTTPException(

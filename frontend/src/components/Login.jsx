@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-function Login({ onLogin, onDemoLogin, onSwitch }) {
+function Login({ onLogin, onSwitch }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -59,17 +59,7 @@ function Login({ onLogin, onDemoLogin, onSwitch }) {
             <button type="submit" disabled={loading}>
               {loading ? 'Authenticating...' : 'Enter Desk →'}
             </button>
-            <button
-              type="button"
-              onClick={onDemoLogin}
-              style={{
-                backgroundColor: 'var(--ink-black)',
-                color: 'var(--bg-paper)',
-                borderColor: 'var(--ink-black)'
-              }}
-            >
-              Portfolio Demo (Skip Login)
-            </button>
+
             <button
               type="button"
               onClick={onSwitch}

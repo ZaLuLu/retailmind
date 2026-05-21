@@ -12,7 +12,6 @@ from ..security.auth import (
     hash_token,
     decode_token
 )
-from ..services.demo import seed_demo_user
 from ..core.config import settings
 from datetime import datetime, timedelta
 
@@ -128,30 +127,4 @@ async def logout(refresh_data: TokenRefreshRequest, db: AsyncSession = Depends(g
     
     return None
 
-@router.post("/demo-login", response_model=Token)
-async def demo_login(db: AsyncSession = Depends(get_db)):
-    """
-    Creates or retrieves the demo user and seeds their data, 
-    then returns a valid JWT token for the frontend to use.
-    """
-    user = await seed_demo_user(db)
-    
-    # Create tokens
-    access_token = create_access_token(data={"sub": str(user.id)})
-    refresh_token = create_refresh_token(data={"sub": str(user.id)})
-    
-    # Store refresh token
-    expires_at = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    new_refresh = RefreshToken(
-        user_id=user.id,
-        token_hash=hash_token(refresh_token),
-        expires_at=expires_at
-    )
-    db.add(new_refresh)
-    await db.commit()
-    
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer"
-    }
+
