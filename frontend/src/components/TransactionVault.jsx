@@ -33,7 +33,7 @@ function TransactionVault({ transactions, loading, onSelectTransaction, onBack }
     const encodedUri = encodeURI(csvContent)
     const link = document.createElement('a')
     link.setAttribute('href', encodedUri)
-    link.setAttribute('download', 'documind_ledger.csv')
+    link.setAttribute('download', 'retailmind_ledger.csv')
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
