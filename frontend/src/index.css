@@ -1,0 +1,302 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,800;0,900;1,400;1,700&family=Newsreader:ital,wght@0,400;0,700;0,800;1,400&family=Source+Serif+4:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+  /* ── Color Palette ── Broadsheet Newspaper */
+  --bg-paper: #FDFCF0;        /* Warm newsprint */
+  --bg-backdrop: #EAE9DA;     /* Slightly darker for body/page */
+  --bg-tint: #F5F4E6;         /* Section tint */
+  --text-main: #1A1A1A;
+  --text-muted: #6B6B6B;
+  --ink-black: #1A1A1A;
+  --ink-red: #8B0000;         /* Dark editorial red */
+  --ink-blue: #003366;        /* Dark editorial navy */
+  --ink-yellow: #B8860B;      /* Muted gold */
+  --ink-green: #1A4D2E;       /* Dark editorial green */
+  
+  /* Alias (backwards compat) */
+  --newsprint-black: #1A1A1A;
+  --newsprint-bg: #FDFCF0;
+
+  /* ── Borders ── */
+  --border-heavy: 3px double var(--ink-black);
+  --border-mid: 2px solid var(--ink-black);
+  --border-light: 1px solid var(--ink-black);
+  --border-hair: 1px solid rgba(0,0,0,0.15);
+  --shadow-heavy: none;
+  --shadow-light: none;
+  --shadow-accent: none;
+  
+  /* ── Typography ── */
+  --font-display: 'Playfair Display', 'Newsreader', serif;  /* Large headlines */
+  --font-serif: 'Newsreader', 'Playfair Display', serif;    /* Body headings */
+  --font-body: 'Source Serif 4', serif;                     /* Body text */
+  --font-sans: 'Source Serif 4', serif;                     /* Legacy alias */
+  --font-mono: 'JetBrains Mono', monospace;                 /* Data, labels, tags */
+
+  font-family: var(--font-body);
+  line-height: 1.65;
+  font-weight: 400;
+  color: var(--text-main);
+  background-color: var(--bg-paper);
+}
+
+/* ── Reset & Base ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-backdrop);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+#root {
+  width: 100%;
+  max-width: 1300px;
+  background-color: var(--bg-paper);
+  min-height: 100vh;
+  border-left: 1px solid rgba(0,0,0,0.12);
+  border-right: 1px solid rgba(0,0,0,0.12);
+  box-shadow: 0 0 60px rgba(0,0,0,0.1);
+}
+
+/* ── Global Typography ── */
+h1, h2, h3, h4 {
+  font-family: var(--font-serif);
+  margin-top: 0;
+  color: var(--ink-black);
+  font-weight: 700;
+}
+
+h1 {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 8vw, 5.5rem);
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+p {
+  margin: 0 0 1rem;
+  line-height: 1.7;
+}
+
+/* ── Utility Classes ── */
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+.serif {
+  font-family: var(--font-serif);
+}
+
+.italic {
+  font-style: italic;
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-red {
+  color: var(--ink-red);
+}
+
+.text-blue {
+  color: var(--ink-blue);
+}
+
+.text-green {
+  color: var(--ink-green);
+}
+
+/* ── Section Rule / Divider ── */
+.section-rule {
+  border: none;
+  border-top: var(--border-heavy);
+  margin: 0;
+}
+
+.hair-rule {
+  border: none;
+  border-top: var(--border-hair);
+  margin: 0;
+}
+
+/* ── Cards ── */
+.card {
+  border: var(--border-light);
+  padding: 1.5rem;
+  background: var(--bg-paper);
+  transition: background-color 0.2s ease;
+}
+
+.card:hover {
+  background: var(--bg-tint);
+}
+
+/* ── Buttons ── */
+button {
+  font-family: var(--font-mono);
+  background: var(--bg-paper);
+  color: var(--ink-black);
+  border: var(--border-light);
+  padding: 0.6rem 1.25rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+button:hover {
+  background: var(--ink-black);
+  color: var(--bg-paper);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+/* ── Custom Close Button ── */
+.close-btn {
+  background: transparent;
+  color: var(--ink-black);
+  border: var(--border-light);
+  font-size: 1.25rem;
+  line-height: 1;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--font-sans);
+  flex-shrink: 0;
+}
+
+.close-btn:hover {
+  background: var(--ink-red);
+  color: white;
+  border-color: var(--ink-red);
+}
+
+/* ── Auth Pages ── */
+.auth-page {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--bg-backdrop);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.auth-card {
+  width: 460px;
+  max-width: 100%;
+  background: var(--bg-paper);
+  border: var(--border-heavy);
+  padding: 3rem;
+  box-shadow: 8px 8px 0 rgba(0,0,0,0.08);
+}
+
+.auth-error {
+  color: var(--ink-red);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  border: 1px solid var(--ink-red);
+  background: rgba(139,0,0,0.05);
+  text-align: center;
+}
+
+.auth-card label {
+  display: block;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  color: var(--ink-black);
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+}
+
+.auth-card input {
+  width: 100%;
+  padding: 0.75rem;
+  border: var(--border-light);
+  font-family: var(--font-body);
+  background: transparent;
+  margin-bottom: 1.25rem;
+  font-size: 1rem;
+  box-sizing: border-box;
+  color: var(--ink-black);
+}
+
+.auth-card input:focus {
+  outline: none;
+  border-color: var(--ink-blue);
+  background: rgba(0,0,0,0.02);
+}
+
+.auth-card button {
+  width: 100%;
+  font-size: 0.85rem;
+  padding: 0.9rem;
+  margin-top: 0.75rem;
+  border: var(--border-mid);
+}
+
+.auth-card .switch-btn {
+  background: none;
+  color: var(--text-muted);
+  border: none;
+  margin-top: 1.25rem;
+  font-size: 0.8rem;
+  font-family: var(--font-body);
+  font-style: italic;
+  text-transform: none;
+  padding: 0;
+  text-decoration: underline;
+  width: auto;
+}
+
+.auth-card .switch-btn:hover {
+  background: none;
+  color: var(--ink-red);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-tint);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ink-black);
+}

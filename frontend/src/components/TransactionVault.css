@@ -1,0 +1,323 @@
+/* ═══════════════════════════════════════════
+   TRANSACTION VAULT CSS — Uses CSS Variables
+   ═══════════════════════════════════════════ */
+
+.transaction-vault {
+  padding: 2rem;
+  padding-bottom: 5rem;
+}
+
+/* ── Header ── */
+.vault-page-header {
+  margin-bottom: 2rem;
+  border-bottom: var(--border-heavy);
+  padding-bottom: 1rem;
+}
+
+.vault-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.text-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+}
+
+.text-btn:hover {
+  background: transparent;
+  color: var(--ink-black);
+}
+
+.vault-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+
+.vault-title {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-style: italic;
+  font-weight: 700;
+  margin: 0.25rem 0 0;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+/* ── Controls ── */
+.vault-controls-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .vault-controls-grid {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.search-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.65rem 1rem 0.65rem 2.25rem;
+  border: var(--border-light);
+  background: var(--bg-tint);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-black);
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--ink-blue);
+  background: transparent;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  border: var(--border-light);
+  padding: 0.55rem 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  color: var(--ink-black);
+  transition: all 0.12s ease;
+  white-space: nowrap;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.action-btn:hover {
+  background: var(--ink-black);
+  color: var(--bg-paper);
+  border-color: var(--ink-black);
+}
+
+/* ── Double Rule Divider ── */
+.double-rule {
+  border-top: var(--border-mid);
+  border-bottom: var(--border-light);
+  height: 4px;
+  margin-bottom: 0;
+}
+
+/* ── Loading / Empty ── */
+.vault-loading {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding: 3rem 0;
+  text-align: center;
+}
+
+/* ── Ledger Table ── */
+.ledger-table-wrapper {
+  overflow-x: auto;
+  border-bottom: var(--border-mid);
+}
+
+.news-ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.news-ledger-table th {
+  background: var(--ink-black);
+  color: var(--bg-paper);
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-right: 1px solid rgba(255,255,255,0.12);
+  white-space: nowrap;
+}
+
+.news-ledger-table th:last-child { border-right: none; }
+
+.news-ledger-table td {
+  padding: 0.85rem 0.75rem;
+  font-size: 0.85rem;
+  border-bottom: var(--border-hair);
+  border-right: var(--border-hair);
+  font-family: var(--font-body);
+  color: var(--text-main);
+}
+
+.news-ledger-table td:last-child { border-right: none; }
+
+.news-ledger-table tr:last-child td { border-bottom: none; }
+
+.clickable-row { cursor: pointer; }
+.clickable-row:hover td { background: var(--bg-tint); }
+
+.font-bold { font-weight: 700; }
+.text-right { text-align: right; }
+
+.mono { font-family: var(--font-mono); font-size: 0.75rem; }
+
+/* ── Status Cell ── */
+.status-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.status-icon { font-size: 0.8rem; }
+
+.verified { color: var(--ink-green); }
+.flagged { color: var(--ink-red); }
+.pending { color: var(--text-muted); }
+
+/* ── Category Tag ── */
+.cat-tag {
+  border: 1px solid var(--ink-blue);
+  color: var(--ink-blue);
+  padding: 0.1rem 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* ── Bottom Stats ── */
+.vault-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  margin-top: 2rem;
+  border: var(--border-light);
+}
+
+@media (min-width: 640px) {
+  .vault-stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.stat-card {
+  border-right: var(--border-light);
+  padding: 1.25rem 1.5rem;
+  border-bottom: var(--border-light);
+}
+
+.stat-card:last-child {
+  border-right: none;
+}
+
+@media (min-width: 640px) {
+  .stat-card { border-bottom: none; }
+}
+
+.stat-card.dark {
+  background: var(--ink-black);
+  color: var(--bg-paper);
+}
+
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.5rem;
+}
+
+.stat-card.dark .stat-label { color: rgba(255,255,255,0.5); }
+
+.stat-value-group {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.stat-val {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.stat-sub {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── Divergence Box ── */
+.divergence-box {
+  margin-top: 1.5rem;
+  border: var(--border-light);
+  border-left: 3px solid var(--ink-blue);
+  padding: 1.25rem 1.5rem;
+  background: var(--bg-tint);
+}
+
+.divergence-text h3 {
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  font-style: italic;
+  margin: 0 0 0.5rem;
+  border: none;
+  padding: 0;
+}
+
+.divergence-text p {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  font-family: var(--font-body);
+  color: var(--text-muted);
+  margin: 0;
+}

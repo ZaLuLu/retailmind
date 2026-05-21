@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     
     # Gemini
     GEMINI_API_KEY: Optional[str] = None
-    GEMINI_MODEL: str = "gemini-1.5-flash"
+    GEMINI_MODEL: str = "gemini-3-flash-preview"
     GEMINI_TIMEOUT_SECONDS: int = 30
     
     # Uploads
