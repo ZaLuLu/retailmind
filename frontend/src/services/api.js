@@ -8,7 +8,17 @@
  *  - Structured error normalization (network vs server vs client)
  */
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
+let RESOLVED_BASE_URL = import.meta.env.VITE_API_BASE_URL
+
+if (!RESOLVED_BASE_URL) {
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    RESOLVED_BASE_URL = 'http://localhost:8000/api/v1'
+  } else {
+    RESOLVED_BASE_URL = '/_/backend/api/v1'
+  }
+}
+
+const BASE_URL = RESOLVED_BASE_URL
 
 // ── Token refresh state ────────────────────────────────────────────────────
 let isRefreshing = false
