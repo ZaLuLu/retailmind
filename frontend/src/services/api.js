@@ -61,7 +61,13 @@ async function parseError(res) {
 
   try {
     const body = await res.json()
-    err.message = body.detail || body.message || `Request failed (${res.status})`
+    // Support unpacking standard ErrorResponse format
+    if (body && body.success === false) {
+      err.message = body.error || `Request failed (${res.status})`
+      err.details = body.details
+    } else {
+      err.message = body.detail || body.message || `Request failed (${res.status})`
+    }
   } catch {
     err.message = `Request failed (${res.status})`
   }
@@ -81,7 +87,9 @@ async function refreshAccessToken() {
       body: JSON.stringify({ refresh_token: refreshToken }),
     })
     if (!res.ok) return null
-    const data = await res.json()
+    const responseBody = await res.json()
+    // Unpack wrapped token structure
+    const data = (responseBody && responseBody.success && responseBody.data) ? responseBody.data : responseBody
     storeTokens(data.access_token, data.refresh_token)
     return data.access_token
   } catch {
@@ -171,7 +179,12 @@ async function request(method, endpoint, data = null, options = {}) {
     return null
   }
 
-  return res.json()
+  const responseBody = await res.json()
+  // Unpack SuccessResponse envelope seamlessly for all downstream components
+  if (responseBody && responseBody.success === true && responseBody.data !== undefined) {
+    return responseBody.data
+  }
+  return responseBody
 }
 
 // ── File upload (multipart) ────────────────────────────────────────────────
@@ -203,7 +216,11 @@ async function uploadFile(endpoint, file) {
   }
 
   if (!res.ok) throw await parseError(res)
-  return res.json()
+  const responseBody = await res.json()
+  if (responseBody && responseBody.success === true && responseBody.data !== undefined) {
+    return responseBody.data
+  }
+  return responseBody
 }
 
 // ── Public API ─────────────────────────────────────────────────────────────
@@ -218,16 +235,15 @@ export const api = {
     })
     if (!res.ok) {
       const body = await res.json().catch(() => ({}))
-      const err = new Error(body.detail || 'Invalid credentials')
+      const err = new Error(body.error || body.detail || 'Invalid credentials')
       err.status = res.status
       throw err
     }
-    const data = await res.json()
+    const responseBody = await res.json()
+    const data = (responseBody && responseBody.success && responseBody.data) ? responseBody.data : responseBody
     storeTokens(data.access_token, data.refresh_token)
     return data
   },
-
-
 
   register: async (email, password) => {
     const res = await fetch(`${BASE_URL}/auth/register`, {
@@ -237,12 +253,15 @@ export const api = {
     })
     if (!res.ok) {
       const body = await res.json().catch(() => ({}))
-      const err = new Error(body.detail || 'Registration failed')
+      const err = new Error(body.error || body.detail || 'Registration failed')
       err.status = res.status
       throw err
     }
-    return res.json()
+    const responseBody = await res.json()
+    const data = (responseBody && responseBody.success && responseBody.data) ? responseBody.data : responseBody
+    return data
   },
+
 
   logout: () => {
     clearTokens()

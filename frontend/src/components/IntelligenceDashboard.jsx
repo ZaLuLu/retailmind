@@ -9,6 +9,7 @@ import SalesTrendGraph from './SalesTrendGraph'
 import DateRangeToggle from './DateRangeToggle'
 import PortfolioMatrix from './PortfolioMatrix'
 import CustomerSegmentsPanel from './CustomerSegmentsPanel'
+import UserManual from './UserManual'
 import { api } from '../services/api'
 import { useToast } from './Toast'
 
@@ -31,6 +32,7 @@ const IntelligenceDashboard = ({
   const [activeView, setActiveView] = useState('briefing')
   const [showArchitecture, setShowArchitecture] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const [period, setPeriod] = useState('mtd')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
@@ -51,14 +53,19 @@ const IntelligenceDashboard = ({
 
   const handleUploadClick = () => fileInputRef.current.click()
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0]
+  const processFile = async (file) => {
     if (!file) return
 
     // Client-side size check (10 MB)
     if (file.size > 10 * 1024 * 1024) {
       showToast('error', 'File exceeds 10 MB limit. Please split your data into smaller files.')
-      e.target.value = ''
+      return
+    }
+
+    // Client-side type check
+    const extension = file.name.split('.').pop()?.toLowerCase()
+    if (!['csv', 'txt', 'xlsx'].includes(extension)) {
+      showToast('error', 'Supported formats: .csv, .txt, .xlsx')
       return
     }
 
@@ -69,13 +76,38 @@ const IntelligenceDashboard = ({
       if (result.errors > 0) {
         showToast('warning', `${result.errors} rows had errors and were skipped.`)
       }
-      onRefresh()
+      onRefresh(period, dateFrom, dateTo)
     } catch (err) {
       showToast('error', err.message || 'Upload failed. Check your file format.')
     } finally {
       setUploading(false)
-      e.target.value = ''
     }
+  }
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      await processFile(file)
+    }
+    e.target.value = ''
+  }
+
+  const handleDrop = async (e) => {
+    e.preventDefault()
+    setIsDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file) {
+      await processFile(file)
+    }
+  }
+
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = () => {
+    setIsDragging(false)
   }
 
   const handlePeriodChange = ({ period: p, dateFrom: df, dateTo: dt }) => {
@@ -180,7 +212,8 @@ const IntelligenceDashboard = ({
             <div className="briefing-grid">
               {/* LEFT — main analytics column */}
               <div className="briefing-col-main">
-              {loading ? (
+                <UserManual />
+                {loading ? (
                 <div className="broadsheet-skeleton">
                   {/* Revenue hero skeleton */}
                   <div className="section-pad">
@@ -324,16 +357,23 @@ const IntelligenceDashboard = ({
                       accept=".csv,.txt,.xlsx"
                     />
                     <div
-                      className={`upload-box ${uploading ? 'uploading' : ''}`}
+                      className={`upload-box ${uploading ? 'uploading' : ''} ${isDragging ? 'dragging' : ''}`}
                       onClick={handleUploadClick}
-                      style={{ cursor: uploading ? 'wait' : 'pointer' }}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      style={{ 
+                        cursor: uploading ? 'wait' : 'pointer',
+                        border: isDragging ? '2px dashed var(--ink-blue)' : undefined,
+                        background: isDragging ? 'var(--bg-tint)' : undefined
+                      }}
                       role="button"
                       tabIndex={0}
                       aria-label="Upload sales CSV or Excel file"
                       onKeyDown={e => e.key === 'Enter' && handleUploadClick()}
                     >
-                      <span className="upload-icon">{uploading ? '⏳' : '↑'}</span>
-                      <span className="mono">{uploading ? 'Importing…' : 'Upload Sales File'}</span>
+                      <span className="upload-icon">{uploading ? '⏳' : (isDragging ? '📥' : '↑')}</span>
+                      <span className="mono">{uploading ? 'Importing…' : (isDragging ? 'Drop File Here' : 'Upload Sales File')}</span>
                       <span className="upload-subtitle">
                         CSV · Excel (.xlsx) · Auto-detects column headers
                       </span>

@@ -18,6 +18,9 @@ if "sslmode=require" in db_url:
 engine = create_async_engine(
     db_url,
     echo=True if settings.ENVIRONMENT == "development" else False,
+    pool_size=10,
+    max_overflow=20,
+    pool_recycle=3600,
     pool_pre_ping=True,
     connect_args=connect_args
 )

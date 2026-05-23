@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import sentry_sdk
 import os
 from .core.config import settings
@@ -9,13 +12,17 @@ from .api.advisor import router as advisor_router
 from .api.onboarding import router as onboarding_router
 from .api.users import router as users_router
 from .api.retail import router as retail_router
+from .middleware.security import SecurityHeadersMiddleware
 
-# Initialize Sentry
+# Initialize Sentry for monitoring
 if settings.SENTRY_DSN:
     sentry_sdk.init(
         dsn=settings.SENTRY_DSN,
         environment=settings.ENVIRONMENT,
     )
+
+# Initialize Rate Limiter (using client IP addresses)
+limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(
     title="RetailMind API",
@@ -23,16 +30,24 @@ app = FastAPI(
     version="3.0.0",
 )
 
-# CORS Middleware
+# Bind Rate Limiter state and error handler
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# CORS Middleware (restrict origins in production)
+allowed_origins = settings.ALLOWED_ORIGINS.split(",") if settings.ALLOWED_ORIGINS else ["http://localhost:5173"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS.split(","),
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-CSRF-Token"],
 )
 
-# Static Files
+# Mount Secure Headers Middleware
+app.add_middleware(SecurityHeadersMiddleware)
+
+# Static Files Ingestion
 if not os.path.exists(settings.UPLOAD_DIR):
     os.makedirs(settings.UPLOAD_DIR)
 

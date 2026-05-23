@@ -1,11 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from ..core.db import get_db
 from ..models.db import User, RefreshToken
 from ..schemas.auth import UserCreate, UserResponse, Token, TokenRefreshRequest
-from ..security.auth import (
-    get_password_hash, 
+from ..schemas.response import SuccessResponse
+from ..core.security import (
+    hash_password as get_password_hash, 
     verify_password, 
     create_access_token, 
     create_refresh_token,
@@ -16,9 +19,11 @@ from ..core.config import settings
 from datetime import datetime, timedelta, timezone
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+limiter = Limiter(key_func=get_remote_address)
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
+@router.post("/register", response_model=SuccessResponse[UserResponse], status_code=status.HTTP_201_CREATED)
+@limiter.limit("5/minute")
+async def register(request: Request, user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     # Check if user exists
     result = await db.execute(select(User).where(User.email == user_in.email))
     if result.scalars().first():
@@ -35,19 +40,29 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
-    return new_user
+    return SuccessResponse(data=new_user)
 
-@router.post("/login", response_model=Token)
-async def login(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
+@router.post("/login", response_model=SuccessResponse[Token])
+@limiter.limit("5/minute")
+async def login(request: Request, user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     # Verify user
     result = await db.execute(select(User).where(User.email == user_in.email))
     user = result.scalars().first()
     
-    if not user or not verify_password(user_in.password, user.password):
+    is_valid = False
+    new_hash = None
+    if user:
+        is_valid, new_hash = verify_password(user_in.password, user.password)
+        
+    if not is_valid:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
         )
+        
+    if new_hash:
+        user.password = new_hash
+        await db.commit()
     
     # Create tokens
     access_token = create_access_token(data={"sub": str(user.id)})
@@ -63,14 +78,15 @@ async def login(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     db.add(new_refresh)
     await db.commit()
     
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer"
-    }
+    return SuccessResponse(data=Token(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer"
+    ))
 
-@router.post("/refresh", response_model=Token)
-async def refresh(refresh_data: TokenRefreshRequest, db: AsyncSession = Depends(get_db)):
+@router.post("/refresh", response_model=SuccessResponse[Token])
+@limiter.limit("20/minute")
+async def refresh(request: Request, refresh_data: TokenRefreshRequest, db: AsyncSession = Depends(get_db)):
     # Decode token
     payload = decode_token(refresh_data.refresh_token)
     if not payload or payload.get("type") != "refresh":
@@ -107,11 +123,11 @@ async def refresh(refresh_data: TokenRefreshRequest, db: AsyncSession = Depends(
     
     await db.commit()
     
-    return {
-        "access_token": new_access,
-        "refresh_token": new_refresh,
-        "token_type": "bearer"
-    }
+    return SuccessResponse(data=Token(
+        access_token=new_access,
+        refresh_token=new_refresh,
+        token_type="bearer"
+    ))
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(refresh_data: TokenRefreshRequest, db: AsyncSession = Depends(get_db)):
