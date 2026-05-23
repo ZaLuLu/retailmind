@@ -527,6 +527,15 @@ async def upload_sales_csv(
         except ValueError:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid store_id format")
 
+        # Verify the store belongs to the current authenticated user
+        store_stmt = select(Store).where(Store.id == parsed_store_id, Store.user_id == current_user.id)
+        store_res = await db.execute(store_stmt)
+        if not store_res.scalars().first():
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Store not found or access denied"
+            )
+
     for line_num, row in enumerate(raw_rows, start=2):
         norm_row = {_normalise_header(k): v for k, v in row.items()}
         try:
