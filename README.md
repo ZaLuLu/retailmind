@@ -106,7 +106,7 @@ The app will be available at `http://localhost:5173`.
 | `DATABASE_URL` | PostgreSQL connection string (`postgresql+asyncpg://...`) | ✅ |
 | `JWT_SECRET` | Secret key for JWT signing (min 32 chars) | ✅ |
 | `GEMINI_API_KEY` | Google AI Studio API key | ⚠️ Optional (disables AI features) |
-| `GEMINI_MODEL` | Model name (default: `gemini-1.5-flash`) | No |
+| `GEMINI_MODEL` | Model name (default: `gemini-2.5-flash`) | No |
 | `ENVIRONMENT` | `development` or `production` | No |
 | `ALLOWED_ORIGINS` | CORS origins (comma-separated) | No |
 | `SENTRY_DSN` | Sentry DSN for error tracking | No |
