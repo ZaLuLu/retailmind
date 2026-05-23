@@ -255,6 +255,23 @@ export const api = {
     return data
   },
 
+  demoLogin: async () => {
+    const res = await fetch(`${BASE_URL}/auth/demo-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      const err = new Error(body.error || body.detail || 'Demo login failed')
+      err.status = res.status
+      throw err
+    }
+    const responseBody = await res.json()
+    const data = (responseBody && responseBody.success && responseBody.data) ? responseBody.data : responseBody
+    storeTokens(data.access_token, data.refresh_token)
+    return data
+  },
+
   register: async (email, password) => {
     const res = await fetch(`${BASE_URL}/auth/register`, {
       method: 'POST',

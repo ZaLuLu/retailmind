@@ -2,13 +2,27 @@ import React, { useState, useEffect } from 'react'
 
 const STORAGE_KEY = 'retailmind_saved_email'
 
-function Login({ onLogin, onSwitch }) {
+function Login({ onLogin, onDemoLogin, onSwitch }) {
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [error, setError]       = useState('')
   const [loading, setLoading]   = useState(false)
+  const [demoLoading, setDemoLoading] = useState(false)
   const [showPass, setShowPass] = useState(false)
   const [remember, setRemember] = useState(false)
+
+  const handleDemoClick = async (e) => {
+    e.preventDefault()
+    setError('')
+    setDemoLoading(true)
+    try {
+      await onDemoLogin()
+    } catch (err) {
+      setError(err?.message || 'Demo login failed')
+    } finally {
+      setDemoLoading(false)
+    }
+  }
 
   // Restore saved email on mount
   useEffect(() => {
@@ -149,8 +163,24 @@ function Login({ onLogin, onSwitch }) {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <button type="submit" disabled={loading} id="login-submit">
+                <button type="submit" disabled={loading || demoLoading} id="login-submit">
                   {loading ? 'AUTHENTICATING CORRESPONDENT...' : 'ENTER OFFICE DESK →'}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={loading || demoLoading}
+                  onClick={handleDemoClick}
+                  style={{
+                    background: 'none',
+                    color: 'var(--ink-blue)',
+                    border: '2px solid var(--ink-blue)',
+                    fontWeight: '700',
+                    letterSpacing: '0.04em',
+                    padding: '0.85rem'
+                  }}
+                >
+                  {demoLoading ? 'BOOTSTRAPPING DEMO OFFICE...' : 'TRY LIVE DEMO (GUEST ACCESS) →'}
                 </button>
 
                 <button

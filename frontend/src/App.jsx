@@ -146,6 +146,11 @@ function App() {
     setIsAuthenticated(true)
   }
 
+  const handleDemoLogin = async () => {
+    await api.demoLogin()
+    setIsAuthenticated(true)
+  }
+
   const handleRegister = async (email, password) => {
     await api.register(email, password)
     setAuthView('login')
@@ -194,7 +199,7 @@ function App() {
   // ── Routing ────────────────────────────────────────────────────────────────
   if (!isAuthenticated) {
     return authView === 'login'
-      ? <Login onLogin={handleLogin} onSwitch={() => setAuthView('register')} />
+      ? <Login onLogin={handleLogin} onDemoLogin={handleDemoLogin} onSwitch={() => setAuthView('register')} />
       : <Register onRegister={handleRegister} onSwitch={() => setAuthView('login')} />
   }
 
