@@ -84,6 +84,14 @@ body {
   );
   pointer-events: none;
   z-index: 9999;
+  transition: opacity 0.3s ease;
+}
+
+/* Hide the central newspaper crease when full-screen overlays (auth page/onboarding) are active */
+#root:has(.auth-page)::after,
+#root:has(.onboarding-overlay)::after {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* Tactile Print Patterns */
