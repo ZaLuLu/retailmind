@@ -7,11 +7,11 @@ services:
     rootDir: backend
     envVars:
       - key: DATABASE_URL
-        value: postgresql+asyncpg://neondb_owner:npg_6wR5NIHQpDUs@ep-dark-unit-ao08r0r8-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+        sync: false
       - key: JWT_SECRET
-        value: 42894b6d5f7564614d696e6450726f6a6563745365637265744b657932303236
+        generateValue: true
       - key: GEMINI_API_KEY
-        value: AIzaSyAKEiF-ULu2la-gcF1UDDFWjbOI9wZnEXE
+        sync: false
       - key: GEMINI_MODEL
         value: gemini-2.5-flash
       - key: ENVIRONMENT
