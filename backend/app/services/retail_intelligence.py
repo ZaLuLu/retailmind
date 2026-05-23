@@ -10,6 +10,134 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
+def custom_holt_winters_additive(series: List[float], seasonal_periods: int = 7, forecast_periods: int = 14) -> List[float]:
+    """
+    Pure Python/NumPy additive Holt-Winters triple exponential smoothing.
+    Optimizes smoothing constants alpha, beta, gamma via a fast grid search to minimize SSE.
+    """
+    import numpy as np
+    y = np.array(series, dtype=float)
+    n = len(y)
+    L = seasonal_periods
+    
+    if n < 2 * L:
+        # Fallback to simple rolling average if not enough seasons
+        avg = float(np.mean(y)) if n > 0 else 0.0
+        return [avg] * forecast_periods
+        
+    # Initial level: mean of first L values
+    l_init = float(np.mean(y[:L]))
+    
+    # Initial trend: average difference between corresponding seasons
+    b_init = float(np.mean([y[L + i] - y[i] for i in range(L)])) / L
+    
+    # Initial seasonality: deviation from the level for first season
+    s_init = list(y[:L] - l_init)
+    
+    # Fast grid search to minimize Sum of Squared Errors (SSE)
+    best_sse = float("inf")
+    best_params = (0.2, 0.1, 0.3)
+    
+    # Coarse search space
+    grid_vals = [0.1, 0.3, 0.5, 0.7, 0.9]
+    
+    for alpha in grid_vals:
+        for beta in grid_vals:
+            for gamma in grid_vals:
+                l = l_init
+                b = b_init
+                s = s_init.copy()
+                
+                sse = 0.0
+                for t in range(n):
+                    y_t = y[t]
+                    s_prev = s[t % L]
+                    
+                    y_hat = l + b + s_prev
+                    sse += (y_t - y_hat) ** 2
+                    
+                    l_next = alpha * (y_t - s_prev) + (1 - alpha) * (l + b)
+                    b_next = beta * (l_next - l) + (1 - beta) * b
+                    s[t % L] = gamma * (y_t - l_next) + (1 - gamma) * s_prev
+                    
+                    l = l_next
+                    b = b_next
+                
+                if sse < best_sse:
+                    best_sse = sse
+                    best_params = (alpha, beta, gamma)
+                    
+    # Fit model with optimized parameters
+    alpha, beta, gamma = best_params
+    l = l_init
+    b = b_init
+    s = s_init.copy()
+    
+    for t in range(n):
+        y_t = y[t]
+        s_prev = s[t % L]
+        
+        l_next = alpha * (y_t - s_prev) + (1 - alpha) * (l + b)
+        b_next = beta * (l_next - l) + (1 - beta) * b
+        s[t % L] = gamma * (y_t - l_next) + (1 - gamma) * s_prev
+        
+        l = l_next
+        b = b_next
+        
+    # Generate forecast
+    forecast_vals = []
+    for m in range(1, forecast_periods + 1):
+        s_idx = (n + m - 1) % L
+        forecast_vals.append(l + m * b + s[s_idx])
+        
+    return [max(float(val), 0.0) for val in forecast_vals]
+
+
+def custom_kmeans(X: np.ndarray, n_clusters: int = 4, max_iter: int = 300, random_state: int = 42) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Pure Python/NumPy implementation of K-Means clustering.
+    Returns:
+        labels (np.ndarray): cluster assignment index per sample.
+        centroids (np.ndarray): computed cluster centroids.
+    """
+    import numpy as np
+    n_samples = X.shape[0]
+    if n_samples < n_clusters:
+        raise ValueError("Number of samples must be >= n_clusters")
+        
+    # Seed pseudo-random generator deterministically
+    rng = np.random.default_rng(random_state)
+    
+    # Initialize centroids: select n_clusters distinct random samples
+    initial_indices = rng.choice(n_samples, size=n_clusters, replace=False)
+    centroids = X[initial_indices].copy()
+    
+    labels = np.zeros(n_samples, dtype=int)
+    
+    for _ in range(max_iter):
+        # Euclidean distance from each sample to each centroid
+        distances = np.linalg.norm(X[:, np.newaxis, :] - centroids[np.newaxis, :, :], axis=2)
+        new_labels = np.argmin(distances, axis=1)
+        
+        if np.array_equal(new_labels, labels):
+            break
+        labels = new_labels
+        
+        # Update centroids
+        new_centroids = np.zeros_like(centroids)
+        for k in range(n_clusters):
+            members = X[labels == k]
+            if len(members) > 0:
+                new_centroids[k] = np.mean(members, axis=0)
+            else:
+                # Fallback in case of empty cluster: reinitialize with random data point
+                new_centroids[k] = X[rng.choice(n_samples)]
+        centroids = new_centroids
+        
+    return labels, centroids
+
+
+
 def _resolve_date_range(
     period: str,
     date_from: Optional[date],
@@ -367,16 +495,11 @@ class RetailIntelligenceService:
 
         if active_rev_days >= 15:
             try:
-                from statsmodels.tsa.holtwinters import ExponentialSmoothing
-                model_rev = ExponentialSmoothing(
+                forecast_vals = custom_holt_winters_additive(
                     rev_history,
                     seasonal_periods=7,
-                    trend="add",
-                    seasonal="add"
+                    forecast_periods=14
                 )
-                fit_model_rev = model_rev.fit(optimized=True)
-                forecast_rev = fit_model_rev.forecast(14)
-                forecast_vals = [max(float(val), 0.0) for val in forecast_rev]
                 fitted_rev_hw = True
             except Exception as e:
                 logger.warning(f"Store revenue Holt-Winters forecasting failed, using fallback: {e}")
@@ -610,16 +733,11 @@ class RetailIntelligenceService:
 
             if active_days >= 15:
                 try:
-                    from statsmodels.tsa.holtwinters import ExponentialSmoothing
-                    model = ExponentialSmoothing(
+                    forecast_vals = custom_holt_winters_additive(
                         history_series,
                         seasonal_periods=7,
-                        trend="add",
-                        seasonal="add"
+                        forecast_periods=14
                     )
-                    fit_model = model.fit(optimized=True)
-                    forecast = fit_model.forecast(14)
-                    forecast_vals = [max(float(val), 0.0) for val in forecast]
                     fitted_hw = True
                 except Exception as e:
                     logger.warning(f"Holt-Winters failed for product {product_name}: {e}")
@@ -833,17 +951,16 @@ class RetailIntelligenceService:
             return {"clusters": clusters_out, "centroids": centroids}
 
         # Otherwise, fit K-Means
-        from sklearn.preprocessing import StandardScaler
-        from sklearn.cluster import KMeans
         import itertools
 
-        scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X)
+        # Custom StandardScaler
+        mean = np.mean(X, axis=0)
+        std = np.std(X, axis=0)
+        std = np.where(std == 0, 1.0, std)
+        X_scaled = (X - mean) / std
 
         # Fit K-Means
-        kmeans = KMeans(n_clusters=4, random_state=42, n_init='auto')
-        labels = kmeans.fit_predict(X_scaled)
-        centroids_scaled = kmeans.cluster_centers_  # 4 x 4 matrix
+        labels, centroids_scaled = custom_kmeans(X_scaled, n_clusters=4, random_state=42)
 
         # Determine best assignment permutation between cluster labels and archetypes
         archetypes = {
