@@ -6,12 +6,12 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     
     # Security
-    JWT_SECRET: str
+    JWT_SECRET: str = "42894b6d5f7564614d696e6450726f6a6563745365637265744b657932303236"
     JWT_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     
     # Database
-    DATABASE_URL: str
+    DATABASE_URL: str = "postgresql+asyncpg://neondb_owner:npg_6wR5NIHQpDUs@ep-dark-unit-ao08r0r8-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
     
     # Redis
     REDIS_URL: Optional[str] = None
