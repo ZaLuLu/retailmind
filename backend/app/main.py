@@ -34,24 +34,39 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS Middleware (restrict origins in production)
-allowed_origins = settings.ALLOWED_ORIGINS.split(",") if settings.ALLOWED_ORIGINS else ["http://localhost:5173"]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "X-CSRF-Token"],
-)
+# CORS Middleware
+# On Vercel, .env is not deployed — ALLOWED_ORIGINS falls back to "*" so the
+# frontend serverless function can always reach the backend serverless function.
+_raw_origins = settings.ALLOWED_ORIGINS.strip() if settings.ALLOWED_ORIGINS else "*"
+if _raw_origins == "*":
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,   # credentials=True is incompatible with allow_origins=["*"]
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    _origins_list = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_origins_list,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization", "X-CSRF-Token"],
+    )
 
 # Mount Secure Headers Middleware
 app.add_middleware(SecurityHeadersMiddleware)
 
-# Static Files Ingestion
-if not os.path.exists(settings.UPLOAD_DIR):
-    os.makedirs(settings.UPLOAD_DIR)
-
-app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+# Static Files Ingestion (only on environments with a writable local filesystem)
+try:
+    if not os.path.exists(settings.UPLOAD_DIR):
+        os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+except Exception:
+    # On Vercel serverless, the local filesystem is read-only — skip mounting
+    pass
 
 # Include Routers
 app.include_router(auth_router, prefix="/api/v1")

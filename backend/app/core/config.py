@@ -28,7 +28,9 @@ class Settings(BaseSettings):
     
     # CORS
     FRONTEND_URL: str = "http://localhost:5173"
-    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
+    # Default to "*" so Vercel deployments work without needing env vars.
+    # main.py sets allow_credentials=False when this is "*" (required by CORS spec).
+    ALLOWED_ORIGINS: str = "*"
     
     # Monitoring
     SENTRY_DSN: Optional[str] = None
