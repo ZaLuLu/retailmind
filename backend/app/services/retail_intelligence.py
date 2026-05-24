@@ -520,12 +520,23 @@ class RetailIntelligenceService:
                 w_factor = weekday_factors[f_date.weekday()]
                 forecast_vals.append(max(avg_rev * w_factor, 0.0))
 
+        # Calculate historical standard deviation and mean for daily revenue
+        active_rev_history = [val for val in rev_history if val > 0]
+        hist_std = float(np.std(active_rev_history)) if active_rev_history else 0.0
+
         revenue_forecast_14d = []
         for i in range(14):
             f_date = today + timedelta(days=i + 1)
+            f_val = forecast_vals[i]
+            # 95% confidence bands
+            forecast_lower = max(f_val - 1.96 * hist_std, 0.0)
+            forecast_upper = f_val + 1.96 * hist_std
+
             revenue_forecast_14d.append({
                 "date": str(f_date),
-                "revenue": round(forecast_vals[i], 2)
+                "revenue": round(f_val, 2),
+                "forecast_lower": round(forecast_lower, 2),
+                "forecast_upper": round(forecast_upper, 2),
             })
 
         # ── 9. Customer Segment Analytics SQL ────────────────────────────────
@@ -769,12 +780,20 @@ class RetailIntelligenceService:
 
             confidence = "high" if active_days >= 30 else "medium" if active_days >= 15 else "low"
 
+            # Calculate standard deviation of product historical daily quantities
+            active_history = [val for val in history_series if val > 0]
+            prod_std = float(np.std(active_history)) if active_history else 0.0
+
             if forecast_7d > 0 or forecast_14d > 0:
                 forecasts.append({
                     "product_name": product_name,
                     "category": data["category"],
                     "forecast_qty_7d": forecast_7d,
                     "forecast_qty_14d": forecast_14d,
+                    "forecast_lower_7d": max(round(forecast_7d - 1.96 * prod_std * np.sqrt(7), 1), 0.0),
+                    "forecast_upper_7d": round(forecast_7d + 1.96 * prod_std * np.sqrt(7), 1),
+                    "forecast_lower_14d": max(round(forecast_14d - 1.96 * prod_std * np.sqrt(14), 1), 0.0),
+                    "forecast_upper_14d": round(forecast_14d + 1.96 * prod_std * np.sqrt(14), 1),
                     "recent_7d_qty": round(recent_7_sum, 1),
                     "prior_7d_qty": round(prior_7_sum, 1),
                     "trend": trend,
@@ -857,6 +876,7 @@ class RetailIntelligenceService:
         date_from: Optional[date] = None,
         date_to: Optional[date] = None,
         store_id: Optional[Any] = None,
+        k: int = 4,
     ) -> Dict[str, Any]:
         """
         Auto-segment the store's product portfolio using unsupervised K-Means clustering.
@@ -959,39 +979,49 @@ class RetailIntelligenceService:
         std = np.where(std == 0, 1.0, std)
         X_scaled = (X - mean) / std
 
-        # Fit K-Means
-        labels, centroids_scaled = custom_kmeans(X_scaled, n_clusters=4, random_state=42)
+        # Fit K-Means with dynamic clusters count
+        actual_k = min(k, len(products))
+        labels, centroids_scaled = custom_kmeans(X_scaled, n_clusters=actual_k, random_state=42)
 
-        # Determine best assignment permutation between cluster labels and archetypes
-        archetypes = {
-            "Stars": np.array([1.0, 1.0, 1.0, -1.0]),
-            "Hidden Gems": np.array([-0.5, 1.0, -0.5, 0.0]),
-            "Cash Cows": np.array([1.0, -0.5, 1.0, -0.5]),
-            "Dead Weight": np.array([-1.0, -1.0, -1.0, 1.0]),
-        }
-        quadrant_names = ["Stars", "Hidden Gems", "Cash Cows", "Dead Weight"]
-
-        best_perm = None
-        min_total_dist = float("inf")
-
-        for perm in itertools.permutations(range(4)):
-            # perm maps index of quadrant_names (0..3) to cluster label (0..3)
-            # e.g., quadrant_names[0] ("Stars") mapped to cluster perm[0]
-            total_dist = 0.0
-            for quad_idx, cluster_lbl in enumerate(perm):
-                quad_name = quadrant_names[quad_idx]
-                arch_vec = archetypes[quad_name]
-                cent_vec = centroids_scaled[cluster_lbl]
-                total_dist += np.linalg.norm(cent_vec - arch_vec)
-            
-            if total_dist < min_total_dist:
-                min_total_dist = total_dist
-                best_perm = perm
-
-        # Mapping: cluster label -> quadrant name
+        # Map cluster labels to quadrants or custom named clusters
         label_to_quadrant = {}
-        for quad_idx, cluster_lbl in enumerate(best_perm):
-            label_to_quadrant[cluster_lbl] = quadrant_names[quad_idx]
+        if actual_k == 4:
+            # Determine best assignment permutation between cluster labels and archetypes
+            archetypes = {
+                "Stars": np.array([1.0, 1.0, 1.0, -1.0]),
+                "Hidden Gems": np.array([-0.5, 1.0, -0.5, 0.0]),
+                "Cash Cows": np.array([1.0, -0.5, 1.0, -0.5]),
+                "Dead Weight": np.array([-1.0, -1.0, -1.0, 1.0]),
+            }
+            quadrant_names = ["Stars", "Hidden Gems", "Cash Cows", "Dead Weight"]
+
+            best_perm = None
+            min_total_dist = float("inf")
+
+            for perm in itertools.permutations(range(4)):
+                total_dist = 0.0
+                for quad_idx, cluster_lbl in enumerate(perm):
+                    quad_name = quadrant_names[quad_idx]
+                    arch_vec = archetypes[quad_name]
+                    cent_vec = centroids_scaled[cluster_lbl]
+                    total_dist += np.linalg.norm(cent_vec - arch_vec)
+                
+                if total_dist < min_total_dist:
+                    min_total_dist = total_dist
+                    best_perm = perm
+
+            for quad_idx, cluster_lbl in enumerate(best_perm):
+                label_to_quadrant[cluster_lbl] = quadrant_names[quad_idx]
+        else:
+            # Map based on centroid quadrant characteristics
+            for cluster_lbl in range(actual_k):
+                cx = float(centroids_scaled[cluster_lbl, 0])
+                cy = float(centroids_scaled[cluster_lbl, 1])
+                if cx >= 0:
+                    quad = "Stars" if cy >= 0 else "Cash Cows"
+                else:
+                    quad = "Hidden Gems" if cy >= 0 else "Dead Weight"
+                label_to_quadrant[cluster_lbl] = f"{quad} (Cluster {cluster_lbl + 1})"
 
         # Construct response
         clusters_out = []

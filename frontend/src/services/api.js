@@ -1,24 +1,7 @@
-/**
- * RetailMind API Client
- *
- * Central request() interceptor handles:
- *  - Auth header injection
- *  - Automatic token refresh on 401 (retries original request once)
- *  - Request queuing during refresh (prevents race conditions)
- *  - Structured error normalization (network vs server vs client)
- */
+import { API_BASE_URL, IS_DEMO } from '../config'
 
-let RESOLVED_BASE_URL = import.meta.env.VITE_API_BASE_URL
+const BASE_URL = API_BASE_URL
 
-if (!RESOLVED_BASE_URL) {
-  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-    RESOLVED_BASE_URL = 'http://localhost:8000/api/v1'
-  } else {
-    RESOLVED_BASE_URL = '/_/backend/api/v1'
-  }
-}
-
-const BASE_URL = RESOLVED_BASE_URL
 
 // ── Token refresh state ────────────────────────────────────────────────────
 let isRefreshing = false
@@ -333,6 +316,11 @@ export const api = {
     return uploadFile(url, file)
   },
 
+  /** Upload a document (PDF/Image) for transaction extraction via AI Vision */
+  scanDocument: (file) => {
+    return uploadFile('/scan', file)
+  },
+
   /** URL for template CSV download (no auth needed) */
   getTemplateCsvUrl: () => `${BASE_URL}/retail/template-csv`,
 
@@ -343,12 +331,13 @@ export const api = {
   },
 
   /** K-Means clustering portfolio analysis (Phase 3) */
-  getPortfolioClusters: (period, dateFrom, dateTo, storeId) => {
+  getPortfolioClusters: (period, dateFrom, dateTo, storeId, k) => {
     let params = []
     if (period) params.push(`period=${period}`)
     if (dateFrom) params.push(`date_from=${dateFrom}`)
     if (dateTo) params.push(`date_to=${dateTo}`)
     if (storeId) params.push(`store_id=${storeId}`)
+    if (k) params.push(`k=${k}`)
     const query = params.length ? `?${params.join('&')}` : ''
     return request('GET', `/retail/portfolio-clusters${query}`)
   },
@@ -365,6 +354,103 @@ export const api = {
   // ── User settings ──────────────────────────────────────────────────────────
   updateUserSettings: (data) => request('PATCH', '/users/me', data),
 
+  /** Unified pre-cached chart bundle (Phase 2) */
+  getChartBundle: () => request('GET', '/analytics/chart-bundle'),
+
   // ── AI Advisor ─────────────────────────────────────────────────────────────
   askAdvisor: (question) => request('POST', '/advisor/ask', { question }),
+
+  /** Centralised fetch call for streaming the advisor response (POST stream) */
+  askAdvisorStream: async (question, context, onChunk, onError, onDone) => {
+    const token = localStorage.getItem('token')
+    const url = `${BASE_URL}/advisor/stream`
+    
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ question, context })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Advisor wire error (${response.status})`)
+      }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder('utf-8')
+      let buffer = ''
+
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop()
+
+        for (const line of lines) {
+          const cleaned = line.trim()
+          if (!cleaned.startsWith('data:')) continue
+
+          const jsonStr = cleaned.slice(5).trim()
+          if (!jsonStr) continue
+
+          try {
+            const data = JSON.parse(jsonStr)
+            if (data.error) {
+              onError(data.error)
+              return
+            }
+            if (data.chunk) {
+              onChunk(data.chunk)
+            }
+          } catch (e) {
+            console.error('Error parsing SSE data', e)
+          }
+        }
+      }
+      onDone()
+    } catch (err) {
+      onError(err.message || 'Stream connection failed')
+    }
+  },
+
+  // ── Demo Mode ──────────────────────────────────────────────────────────────
+
+  /**
+   * Upload a CSV/XLSX to replace demo data.
+   * Returns { job_id, record_count, skipped_rows, status }
+   * @param {File} file
+   */
+  demoResetAndUpload: async (file) => {
+    const url = `${BASE_URL}/demo/reset-and-upload`
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await fetch(url, {
+      method: 'POST',
+      // No Content-Type header — browser sets multipart/form-data with boundary
+      body: formData,
+    })
+    if (!res.ok) throw await parseError(res)
+    return res.json()
+  },
+
+  /**
+   * Returns an EventSource connected to the SSE progress stream.
+   * Caller must call .close() when done.
+   * @param {string} jobId
+   * @returns {EventSource}
+   */
+  demoProgress: (jobId) => {
+    return new EventSource(`${BASE_URL}/demo/progress/${jobId}`)
+  },
+
+  /**
+   * Restore the original seeded demo data.
+   * Returns { job_id, status }
+   */
+  demoRestore: () => request('POST', '/demo/restore'),
 }

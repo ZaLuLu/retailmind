@@ -1,0 +1,119 @@
+/* DemoModeBanner.css
+   ──────────────────
+   Fixed 36px banner that sits above the entire application.
+   Uses a dark slate color that doesn't clash with any chart palette.
+*/
+
+.demo-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  height: 36px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+  font-size: 12px;
+}
+
+.demo-banner__content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 1280px;
+  color: #cbd5e1;
+}
+
+.demo-banner__icon {
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.demo-banner__text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  color: #94a3b8;
+  letter-spacing: 0.01em;
+}
+
+.demo-banner__text strong {
+  color: #e2e8f0;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-size: 11px;
+}
+
+.demo-banner__sep {
+  color: #475569;
+}
+
+.demo-banner__actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.demo-banner__cta {
+  background: #0d9488;
+  color: #f0fdfa;
+  border: none;
+  border-radius: 100px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.15s ease, transform 0.1s ease;
+  white-space: nowrap;
+}
+
+.demo-banner__cta:hover {
+  background: #0f766e;
+  transform: translateY(-1px);
+}
+
+.demo-banner__cta:active {
+  transform: translateY(0);
+}
+
+.demo-banner__restore {
+  background: transparent;
+  color: #64748b;
+  border: none;
+  padding: 4px 6px;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.15s ease;
+  white-space: nowrap;
+}
+
+.demo-banner__restore:hover {
+  color: #94a3b8;
+}
+
+/* Push page content down when banner is visible */
+body:has(.demo-banner) {
+  padding-top: 36px;
+}
+
+/* Responsive: collapse text on mobile */
+@media (max-width: 480px) {
+  .demo-banner__text span:not(strong) {
+    display: none;
+  }
+  .demo-banner__sep {
+    display: none;
+  }
+}

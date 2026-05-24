@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { api } from '../services/api'
 
-function AdvisorChat({ summary, onClose }) {
+function AdvisorChat({ summary, prefill, clearPrefill, onClose }) {
   const [messages, setMessages] = useState([
     {
       role: 'advisor',
@@ -13,6 +13,13 @@ function AdvisorChat({ summary, onClose }) {
   const scrollRef = useRef(null)
 
   useEffect(() => {
+    if (prefill) {
+      setInput(prefill)
+      clearPrefill()
+    }
+  }, [prefill, clearPrefill])
+
+  useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
@@ -21,26 +28,40 @@ function AdvisorChat({ summary, onClose }) {
   const handleSend = async () => {
     if (!input.trim() || loading) return
 
-    const userMsg = { role: 'user', content: input }
-    setMessages(prev => [...prev, userMsg])
+    const currentInput = input;
+    const userMsg = { role: 'user', content: currentInput }
+    
+    // Create unique ID for the streaming response card
+    const streamId = Date.now();
+    
+    setMessages(prev => [...prev, userMsg, { id: streamId, role: 'advisor', content: '' }])
     setInput('')
     setLoading(true)
 
-    try {
-      const contextStr = summary ? JSON.stringify(summary) : ''
-      const response = await api.post('/advisor/ask', {
-        question: input,
-        context: contextStr
-      })
-      setMessages(prev => [...prev, { role: 'advisor', content: response.answer }])
-    } catch (err) {
-      setMessages(prev => [
-        ...prev,
-        { role: 'advisor', content: 'The intelligence desk is temporarily unavailable. Please try again shortly.' }
-      ])
-    } finally {
-      setLoading(false)
-    }
+    const contextStr = summary ? JSON.stringify(summary) : ''
+
+    await api.askAdvisorStream(
+      currentInput,
+      contextStr,
+      (chunk) => {
+        setMessages(prev => prev.map(msg => 
+          msg.id === streamId 
+            ? { ...msg, content: msg.content + chunk } 
+            : msg
+        ))
+      },
+      (error) => {
+        setMessages(prev => prev.map(msg => 
+          msg.id === streamId 
+            ? { ...msg, content: 'The intelligence desk encountered a telex line drop. Please resubmit your request.' } 
+            : msg
+        ))
+        setLoading(false)
+      },
+      () => {
+        setLoading(false)
+      }
+    )
   }
 
   return (
@@ -80,6 +101,33 @@ function AdvisorChat({ summary, onClose }) {
           {loading && (
             <div className="chat-thinking">TELEX TRANSCRIPTION IN PROGRESS...</div>
           )}
+        </div>
+
+        {/* Pre-built Prompt Chips */}
+        <div className="chat-prompt-chips" style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', padding: '0.5rem 1rem', borderTop: '1px dashed rgba(0,0,0,0.12)' }}>
+          {[
+            "What's dragging down my margin?",
+            "Which products should I reorder?",
+            "Why did sales drop last week?"
+          ].map((chip) => (
+            <button
+              key={chip}
+              className="prompt-chip mono"
+              style={{
+                fontSize: '0.62rem',
+                background: 'var(--bg-tint)',
+                border: '1px solid var(--ink-black)',
+                padding: '3px 8px',
+                cursor: 'pointer',
+                borderRadius: '3px',
+                fontWeight: 700
+              }}
+              disabled={loading}
+              onClick={() => setInput(chip)}
+            >
+              {chip}
+            </button>
+          ))}
         </div>
 
         <div className="chat-input-area">

@@ -1,7 +1,7 @@
 import React from 'react'
 import { formatMoneyCompact } from '../services/currency'
 
-export default function CustomerSegmentsPanel({ customerSegments = [], currency = 'INR' }) {
+export default function CustomerSegmentsPanel({ customerSegments = [], currency = 'INR', onAskAdvisor }) {
   // Sort segments by revenue contribution share descending
   const sortedSegments = [...customerSegments].sort((a, b) => b.revenue - a.revenue)
 
@@ -12,20 +12,26 @@ export default function CustomerSegmentsPanel({ customerSegments = [], currency 
         return {
           text: 'WHOLESALE',
           className: 'telex-stamp-badge red-stamp',
-          color: 'var(--ink-red)'
+          color: 'var(--ink-red)',
+          lightColor: 'rgba(139, 0, 0, 0.05)',
+          mediumColor: 'rgba(139, 0, 0, 0.12)'
         }
       case 'online':
         return {
           text: 'E-COMMERCE',
           className: 'telex-stamp-badge',
-          color: 'var(--ink-blue)'
+          color: 'var(--ink-blue)',
+          lightColor: 'rgba(0, 51, 102, 0.05)',
+          mediumColor: 'rgba(0, 51, 102, 0.12)'
         }
       case 'walk-in':
       default:
         return {
           text: 'STOREFRONT',
           className: 'telex-stamp-badge green-stamp',
-          color: 'var(--ink-green)'
+          color: 'var(--ink-green)',
+          lightColor: 'rgba(26, 77, 46, 0.05)',
+          mediumColor: 'rgba(26, 77, 46, 0.12)'
         }
     }
   }
@@ -47,13 +53,20 @@ export default function CustomerSegmentsPanel({ customerSegments = [], currency 
           const shareVal = seg.share || 0
           const growthVal = seg.mom_growth_pct || 0
           
+          // Heatmap background color intensity scaled by shareVal
+          const heatmapBg = shareVal > 40 ? tagInfo.mediumColor : tagInfo.lightColor;
+
           return (
             <div 
               key={seg.segment} 
               className="segment-row" 
               style={{ 
                 borderBottom: '1px dashed rgba(0,0,0,0.12)', 
-                paddingBottom: '1rem'
+                paddingBottom: '1rem',
+                backgroundColor: heatmapBg,
+                padding: '0.5rem',
+                borderRadius: '4px',
+                marginBottom: '0.25rem'
               }}
             >
               {/* Segment Header (Name & Channel Tag) */}
@@ -89,7 +102,7 @@ export default function CustomerSegmentsPanel({ customerSegments = [], currency 
               </div>
 
               {/* Detailed Metrics Panel */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', background: 'var(--bg-tint)', padding: '0.5rem', border: '1px solid rgba(0,0,0,0.08)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', background: 'var(--bg-paper)', padding: '0.5rem', border: '1px solid rgba(0,0,0,0.08)' }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <span className="mono" style={{ fontSize: '0.5rem', color: 'var(--text-muted)' }}>Gross Margin</span>
                   <span className="mono" style={{ fontSize: '0.7rem', fontWeight: 700, color: seg.margin_pct >= 25 ? 'var(--ink-green)' : 'var(--ink-red)' }}>
@@ -109,6 +122,28 @@ export default function CustomerSegmentsPanel({ customerSegments = [], currency 
                   </span>
                 </div>
               </div>
+
+              {/* Ask Advisor prompt trigger */}
+              {onAskAdvisor && (
+                <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'flex-start' }}>
+                  <button
+                    className="ask-advisor-btn mono"
+                    style={{
+                      fontSize: '0.62rem',
+                      background: 'var(--bg-paper)',
+                      border: '1px solid var(--ink-black)',
+                      padding: '3px 8px',
+                      cursor: 'pointer',
+                      boxShadow: '2px 2px 0 var(--ink-black)',
+                      transition: 'all 0.1s ease',
+                      fontWeight: 700
+                    }}
+                    onClick={() => onAskAdvisor(`Reviewing our segment analytics: the "${seg.segment}" channel brings in ${formatMoneyCompact(seg.revenue, currency)} (${shareVal.toFixed(1)}% share) with a gross margin of ${seg.margin_pct.toFixed(1)}% and MoM growth of ${growthVal.toFixed(1)}%. What specific strategic optimizations do you recommend for this segment?`)}
+                  >
+                    Ask Advisor about Segment →
+                  </button>
+                </div>
+              )}
             </div>
           )
         })}

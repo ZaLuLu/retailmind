@@ -10,6 +10,7 @@ import DateRangeToggle from './DateRangeToggle'
 import PortfolioMatrix from './PortfolioMatrix'
 import CustomerSegmentsPanel from './CustomerSegmentsPanel'
 import UserManual from './UserManual'
+import DocumentScanner from './DocumentScanner'
 import { api } from '../services/api'
 import { useToast } from './Toast'
 
@@ -27,10 +28,12 @@ const IntelligenceDashboard = ({
   selectedStore = null,
   onSelectStore,
   onCreateStore,
+  onAskAdvisor,
 }) => {
   const { showToast } = useToast()
   const [activeView, setActiveView] = useState('briefing')
   const [showArchitecture, setShowArchitecture] = useState(false)
+  const [showScanner, setShowScanner] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [period, setPeriod] = useState('mtd')
@@ -245,7 +248,7 @@ const IntelligenceDashboard = ({
                   <div className="section-pad">
                     <RevenueHero summary={summary} currency={currency} />
                   </div>
-                  <div className="section-pad">
+                  <div className="section-pad" id="tour-sales-graph">
                     <SalesTrendGraph sales={sales} categoryBreakdown={summary?.category_breakdown} forecast={summary?.revenue_forecast_14d ?? []} currency={currency} />
                   </div>
                   <div className="section-pad">
@@ -326,12 +329,13 @@ const IntelligenceDashboard = ({
                 </div>
               ) : (
                 <>
-                  <div className="section-pad">
+                  <div className="section-pad" id="tour-alerts">
                     <DemandSignals
                       demandSignals={summary?.demand_signals ?? []}
                       deadStockAlerts={summary?.dead_stock_alerts ?? []}
                       marginAlerts={summary?.margin_erosion_alerts ?? []}
                       currency={currency}
+                      onAskAdvisor={onAskAdvisor}
                     />
                   </div>
 
@@ -340,11 +344,12 @@ const IntelligenceDashboard = ({
                     <CustomerSegmentsPanel
                       customerSegments={summary?.customer_segments ?? []}
                       currency={currency}
+                      onAskAdvisor={onAskAdvisor}
                     />
                   </div>
 
                   {/* CSV Upload */}
-                  <div className="section-pad upload-section">
+                  <div className="section-pad upload-section" id="tour-upload">
                     <div className="section-kicker">
                       <span className="kicker-label">Data Import</span>
                       <div className="kicker-line" />
@@ -378,9 +383,18 @@ const IntelligenceDashboard = ({
                         CSV · Excel (.xlsx) · Auto-detects column headers
                       </span>
                     </div>
-                    <button className="template-btn" onClick={downloadTemplate}>
-                      ↓ Download CSV Template
-                    </button>
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                      <button className="template-btn" style={{ flex: 1, margin: 0 }} onClick={downloadTemplate}>
+                        ↓ CSV Template
+                      </button>
+                      <button 
+                        className="template-btn" 
+                        style={{ flex: 1, margin: 0, borderColor: 'var(--ink-red)', color: 'var(--ink-red)' }} 
+                        onClick={() => setShowScanner(true)}
+                      >
+                        📷 AI Scan Receipt
+                      </button>
+                    </div>
                   </div>
 
                   {/* AI Insight */}
@@ -424,6 +438,18 @@ const IntelligenceDashboard = ({
       {/* ── Overlays ── */}
       {showArchitecture && (
         <MLArchitectureMap onClose={() => setShowArchitecture(false)} />
+      )}
+      
+      {showScanner && (
+        <DocumentScanner
+          onClose={() => setShowScanner(false)}
+          onComplete={() => {
+            onRefresh(period, dateFrom, dateTo)
+            setShowScanner(false)
+          }}
+          selectedStore={selectedStore}
+          currency={currency}
+        />
       )}
 
       {/* Store Selector Modal */}

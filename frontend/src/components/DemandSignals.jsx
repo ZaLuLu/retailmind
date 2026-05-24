@@ -11,6 +11,7 @@ const DemandSignals = ({
   deadStockAlerts = [],
   marginAlerts = [],
   currency = 'INR',
+  onAskAdvisor,
 }) => {
   const [tab, setTab] = useState('demand') // 'demand' | 'dead' | 'margin' | 'forecast'
   const [forecast, setForecast] = useState([])
@@ -101,6 +102,25 @@ const DemandSignals = ({
                         <span className="signal-message">{s.message}</span>
                       </>
                     )}
+                    {onAskAdvisor && (
+                      <button
+                        className="ask-advisor-btn mono"
+                        style={{
+                          fontSize: '0.62rem',
+                          marginTop: '0.35rem',
+                          background: 'var(--bg-paper)',
+                          border: '1px solid var(--ink-black)',
+                          padding: '3px 8px',
+                          cursor: 'pointer',
+                          boxShadow: '2px 2px 0 var(--ink-black)',
+                          alignSelf: 'flex-start',
+                          fontWeight: 700
+                        }}
+                        onClick={() => onAskAdvisor(`Our product "${s.product_name}" is experiencing a sudden demand surge of +${s.deviation_pct}% compared to rolling average (Z-score: ${s.z_score?.toFixed(2) || 'N/A'}). What inventory replenishment and pricing tactics should we execute immediately to satisfy this demand?`)}
+                      >
+                        Ask Advisor →
+                      </button>
+                    )}
                   </div>
                   <span className="signal-qty">+{s.recent_qty} units</span>
                 </div>
@@ -114,9 +134,28 @@ const DemandSignals = ({
             : deadStockAlerts.map((s, i) => (
                 <div className="signal-card dead" key={i}>
                   <div className="signal-icon">⏸</div>
-                  <div className="signal-content">
+                  <div className="signal-content" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <span className="signal-product">{s.product_name}</span>
                     <span className="signal-message">{s.message}</span>
+                    {onAskAdvisor && (
+                      <button
+                        className="ask-advisor-btn mono"
+                        style={{
+                          fontSize: '0.62rem',
+                          marginTop: '0.35rem',
+                          background: 'var(--bg-paper)',
+                          border: '1px solid var(--ink-black)',
+                          padding: '3px 8px',
+                          cursor: 'pointer',
+                          boxShadow: '2px 2px 0 var(--ink-black)',
+                          alignSelf: 'flex-start',
+                          fontWeight: 700
+                        }}
+                        onClick={() => onAskAdvisor(`Our product "${s.product_name}" has had no sales in ${s.last_sale_days_ago} days. What concrete liquidation promotions, clearout discounts, or marketing campaigns do you advise to free up our working capital?`)}
+                      >
+                        Ask Advisor →
+                      </button>
+                    )}
                   </div>
                   <span className="signal-days">{s.last_sale_days_ago}d</span>
                 </div>
@@ -130,9 +169,28 @@ const DemandSignals = ({
             : marginAlerts.map((s, i) => (
                 <div className="signal-card margin-warn" key={i}>
                   <div className="signal-icon">📉</div>
-                  <div className="signal-content">
+                  <div className="signal-content" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <span className="signal-product">{s.product_name}</span>
                     <span className="signal-message">{s.message}</span>
+                    {onAskAdvisor && (
+                      <button
+                        className="ask-advisor-btn mono"
+                        style={{
+                          fontSize: '0.62rem',
+                          marginTop: '0.35rem',
+                          background: 'var(--bg-paper)',
+                          border: '1px solid var(--ink-black)',
+                          padding: '3px 8px',
+                          cursor: 'pointer',
+                          boxShadow: '2px 2px 0 var(--ink-black)',
+                          alignSelf: 'flex-start',
+                          fontWeight: 700
+                        }}
+                        onClick={() => onAskAdvisor(`The product "${s.product_name}" is suffering from severe margin erosion, dropping down to ${s.margin_pct}%, which is below our 20% critical threshold. What options (e.g. renegotiating COGS, optimizing bundles, raising retail price) do we have to fix this?`)}
+                      >
+                        Ask Advisor →
+                      </button>
+                    )}
                   </div>
                   <span className="signal-margin" style={{ color: '#E57373' }}>{s.margin_pct}%</span>
                 </div>
@@ -170,7 +228,7 @@ const DemandSignals = ({
                     {forecast.map((f, i) => (
                       <div className="signal-card forecast-card" key={i}>
                         <div className="forecast-rank mono">#{i + 1}</div>
-                        <div className="signal-content">
+                        <div className="signal-content" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                           <span className="signal-product">{f.product_name}</span>
                           <span className="signal-message">
                             <span className="cat-chip">{f.category}</span>
@@ -182,6 +240,25 @@ const DemandSignals = ({
                               {f.confidence} confidence
                             </span>
                           </span>
+                          {onAskAdvisor && (
+                            <button
+                              className="ask-advisor-btn mono"
+                              style={{
+                                fontSize: '0.62rem',
+                                marginTop: '0.35rem',
+                                background: 'var(--bg-paper)',
+                                border: '1px solid var(--ink-black)',
+                                padding: '3px 8px',
+                                cursor: 'pointer',
+                                boxShadow: '2px 2px 0 var(--ink-black)',
+                                alignSelf: 'flex-start',
+                                fontWeight: 700
+                              }}
+                              onClick={() => onAskAdvisor(`Our Holt-Winters model forecasts ~${f.forecast_qty_7d} units in sales for "${f.product_name}" over the next 7 days, showing an ${f.trend} trend (Historical: ${f.recent_qty} units). How should we adjust stock buffer or safety stock levels?`)}
+                            >
+                              Ask Advisor →
+                            </button>
+                          )}
                         </div>
                         <div className="forecast-right">
                           <span className="forecast-qty mono">

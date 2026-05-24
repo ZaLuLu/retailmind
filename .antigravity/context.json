@@ -1,0 +1,80 @@
+{
+  "project": "RetailMind",
+  "description": "AI-Powered Retail Business Intelligence for SMB Owners",
+  "type": "fullstack-monorepo",
+  "version": "2.0.0",
+  "repository": "https://github.com/ZaLuLu/retailmind",
+
+  "frontend": {
+    "root": "frontend/src",
+    "entry": "main.jsx",
+    "framework": "react19",
+    "bundler": "vite",
+    "language": "javascript"
+  },
+
+  "backend": {
+    "root": "backend/app",
+    "entry": "main.py",
+    "framework": "fastapi",
+    "language": "python",
+    "python_version": "3.11"
+  },
+
+  "db": {
+    "engine": "postgresql",
+    "version": "16",
+    "orm": "sqlalchemy-async",
+    "migrations": "alembic",
+    "schema_file": "schema.sql"
+  },
+
+  "ai": {
+    "provider": "google-gemini",
+    "model": "gemini-2.5-flash"
+  },
+
+  "services": {
+    "backend_port": 8000,
+    "frontend_port": 5173,
+    "redis_port": 6379,
+    "postgres_port": 5432
+  },
+
+  "aliases": {
+    "@components": "frontend/src/components",
+    "@hooks": "frontend/src/hooks",
+    "@api": "frontend/src/api",
+    "@store": "frontend/src/store",
+    "@utils": "frontend/src/utils",
+    "@types": "frontend/src/types",
+    "@pages": "frontend/src/pages"
+  },
+
+  "key_files": {
+    "config": "backend/app/core/config.py",
+    "db": "backend/app/core/db.py",
+    "models": "backend/app/models/db.py",
+    "deps": "backend/app/api/deps.py",
+    "main": "backend/app/main.py",
+    "seed": "backend/scripts/seed_demo_account.py"
+  },
+
+  "api_prefix": "/api/v1",
+  "routers": [
+    "auth",
+    "advisor",
+    "demo",
+    "onboarding",
+    "users",
+    "retail"
+  ],
+
+  "demo_mode": {
+    "env_var": "DEMO_MODE",
+    "demo_user_id": "00000000-0000-0000-0000-000000000001",
+    "demo_store_id": "00000000-0000-0000-0000-000000000002",
+    "bypass_file": "backend/app/api/deps.py",
+    "seed_script": "backend/scripts/seed_demo_account.py"
+  }
+}

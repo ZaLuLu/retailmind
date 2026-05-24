@@ -257,10 +257,10 @@ async def get_portfolio_clusters(
     date_from: Optional[date] = Query(default=None, description="Start date for custom range (YYYY-MM-DD)"),
     date_to: Optional[date] = Query(default=None, description="End date for custom range (YYYY-MM-DD)"),
     store_id: Optional[str] = Query(default=None, description="Optional store ID to filter by"),
+    k: int = Query(default=4, ge=3, le=6, description="Number of clusters"),
 ):
     """
-    K-Means clustering portfolio analysis, grouping products into 4 performance quadrants:
-    Stars, Cash Cows, Hidden Gems, Dead Weight.
+    K-Means clustering portfolio analysis, grouping products into performance quadrants.
     """
     if period == "custom" and (not date_from or not date_to):
         raise HTTPException(
@@ -286,7 +286,7 @@ async def get_portfolio_clusters(
 
     try:
         return await retail_intelligence_service.get_portfolio_clusters(
-            db, current_user.id, period=period, date_from=date_from, date_to=date_to, store_id=parsed_store_id
+            db, current_user.id, period=period, date_from=date_from, date_to=date_to, store_id=parsed_store_id, k=k
         )
     except Exception as e:
         logger.exception("Failed to generate portfolio clusters")
@@ -564,6 +564,65 @@ async def upload_sales_csv(
         "message": f"Successfully imported {len(records)} sale records.",
         "format": "xlsx" if is_xlsx else "csv",
     }
+
+
+class SaleRecordCreate(BaseModel):
+    product_name: str
+    product_sku: Optional[str] = None
+    product_category: str = "Other"
+    quantity_sold: float = 1.0
+    unit_price: float
+    sale_date: date
+    customer_segment: Optional[str] = "Walk-in"
+    currency: str = "INR"
+
+
+class BulkSalesCreate(BaseModel):
+    sales: list[SaleRecordCreate]
+
+
+@router.post("/bulk", status_code=status.HTTP_201_CREATED)
+async def bulk_create_sales(
+    payload: BulkSalesCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Bulk insert sale records manually entered or extracted via document scanner.
+    """
+    user_currency = current_user.currency or "INR"
+    records = []
+    for s in payload.sales:
+        qty = s.quantity_sold
+        unit_p = s.unit_price
+        total_rev = qty * unit_p
+        
+        # Estimate mock COGS if not provided, for margin recomputation
+        cogs = round(unit_p * 0.6, 2) * qty
+        margin = round(((total_rev - cogs) / total_rev * 100), 2) if total_rev > 0 else 0.0
+
+        record = SaleRecord(
+            user_id=current_user.id,
+            product_name=s.product_name.strip(),
+            product_sku=s.product_sku.strip() if s.product_sku else None,
+            product_category=s.product_category.strip() or "Other",
+            quantity_sold=qty,
+            unit_price=unit_p,
+            total_revenue=total_rev,
+            cogs=cogs,
+            gross_margin=margin,
+            sale_date=s.sale_date,
+            customer_segment=s.customer_segment.strip() if s.customer_segment else "Walk-in",
+            currency=s.currency or user_currency,
+            source="scan",
+        )
+        records.append(record)
+
+    if records:
+        db.add_all(records)
+        await db.commit()
+
+    return {"success": True, "inserted": len(records)}
 
 
 # ── CSV Template Download ─────────────────────────────────────────────────────

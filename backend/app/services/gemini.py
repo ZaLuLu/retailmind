@@ -130,6 +130,45 @@ class GeminiService:
             logger.error(f"Gemini advisor failed: {e}")
             raise
 
+    async def stream_advisor(self, question: str, context: Optional[str] = None):
+        """
+        Asynchronously stream answers from the RetailMind advisor.
+        """
+        if self.chat_model is None:
+            yield "AI advisor is not configured. Please set GEMINI_API_KEY."
+            return
+
+        full_prompt = f"""
+        You are 'RetailMind Advisor', a helpful retail business intelligence assistant for the RetailMind application.
+        Your goal is to make complex sales, margin, inventory, and demand data easy for store owners to understand.
+
+        CRITICAL GUARDRAIL - SCOPE LIMITATION:
+        You MUST ONLY answer questions related to retail business operations, store sales, margin analysis, product pricing, dead stock, demand signals, or the RetailMind application.
+        If the user asks about ANYTHING else (e.g., personal topics like overthinking, coding, general history, general knowledge, recipes, general personal finances, generating stories), you MUST politely decline and state exactly:
+        "I am RetailMind's Business Intelligence Advisor. I can only assist you with questions related to your retail store sales, margins, dead stock, demand spikes, and inventory trends."
+        Do NOT fulfill requests outside this retail business scope under any circumstances.
+
+        TONE RULES:
+        - Use simple, direct English.
+        - Avoid complex statistical jargon (if you use a complex term, explain it simply).
+        - Be insightful, analytical, and professional.
+        - Sound like a high-quality financial editor (like a 'Retail Insights' column).
+
+        User Context (Current Store Dashboard Data): {context if context else "No specific context provided."}
+        Question: {question}
+
+        Provide a short, punchy answer (max 100 words) with one actionable retail tip.
+        """
+
+        try:
+            response = await self.chat_model.generate_content_async(full_prompt, stream=True)
+            async for chunk in response:
+                if chunk.text:
+                    yield chunk.text
+        except Exception as e:
+            logger.error(f"Gemini advisor streaming failed: {e}")
+            raise
+
 
 # Singleton instance
 gemini_service = GeminiService()

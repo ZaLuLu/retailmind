@@ -4,8 +4,13 @@ import AdvisorChat from './components/AdvisorChat'
 import Login from './components/Login'
 import Register from './components/Register'
 import IntelligenceDashboard from './components/IntelligenceDashboard'
+import DemoModeBanner from './components/DemoModeBanner'
+import DemoResetUploadModal from './components/DemoResetUploadModal'
+import SplashScreen from './components/SplashScreen'
+import GuidedTour from './components/GuidedTour'
 import { api } from './services/api'
 import { useToast } from './components/Toast'
+import { IS_DEMO, DEMO_USER } from './config'
 import './App.css'
 
 const EMPTY_SUMMARY = {
@@ -25,18 +30,36 @@ const EMPTY_SUMMARY = {
 
 function App() {
   const { showToast } = useToast()
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'))
+
+  // ── Demo mode: bypass auth entirely ──────────────────────────────────────
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    IS_DEMO || !!localStorage.getItem('token')
+  )
   const [authView, setAuthView] = useState('login') // 'login' | 'register'
-  const [isOnboarded, setIsOnboarded] = useState(false)
+  const [splashDone, setSplashDone] = useState(false)
+  const [isOnboarded, setIsOnboarded] = useState(IS_DEMO) // demo is always onboarded
 
   const [showSettings, setShowSettings] = useState(false)
   const [showChat, setShowChat] = useState(false)
-  const [user, setUser] = useState({ fullName: '', storeName: '', currency: 'INR' })
+  const [chatPrefill, setChatPrefill] = useState('')
+
+  const handleAskAdvisor = (promptText) => {
+    setChatPrefill(promptText)
+    setShowChat(true)
+  }
+  const [user, setUser] = useState(
+    IS_DEMO
+      ? { fullName: DEMO_USER.fullName, storeName: DEMO_USER.storeName, currency: DEMO_USER.currency }
+      : { fullName: '', storeName: '', currency: 'INR' }
+  )
   const [sales, setSales] = useState([])
   const [summary, setSummary] = useState(EMPTY_SUMMARY)
   const [loading, setLoading] = useState(false)
   const [stores, setStores] = useState([])
   const [selectedStore, setSelectedStore] = useState(null)
+  // Track whether user has replaced demo data with their own upload
+  const [hasCustomData, setHasCustomData] = useState(false)
+  const [showImport, setShowImport] = useState(false)
 
   // Listen for forced logout from token refresh failure
   useEffect(() => {
@@ -196,11 +219,34 @@ function App() {
     }
   }
 
+  // ── Demo: handle upload + restore ─────────────────────────────────────────
+  const handleDemoUploadComplete = () => {
+    setHasCustomData(true)
+    setShowImport(false)
+    fetchUserData()
+    showToast('success', 'Your data is live! Showing your insights.')
+  }
+
+  const handleDemoRestore = async () => {
+    try {
+      await api.demoRestore()
+      setHasCustomData(false)
+      await fetchUserData()
+      showToast('success', 'Demo data restored.')
+    } catch (err) {
+      showToast('error', err.message || 'Restore failed.')
+    }
+  }
+
   // ── Routing ────────────────────────────────────────────────────────────────
   if (!isAuthenticated) {
     return authView === 'login'
       ? <Login onLogin={handleLogin} onDemoLogin={handleDemoLogin} onSwitch={() => setAuthView('register')} />
       : <Register onRegister={handleRegister} onSwitch={() => setAuthView('login')} />
+  }
+
+  if (!splashDone) {
+    return <SplashScreen onComplete={() => setSplashDone(true)} />
   }
 
   if (!isOnboarded) {
@@ -209,6 +255,22 @@ function App() {
 
   return (
     <div className="app-root">
+      <GuidedTour />
+      {/* Demo Mode Banner — always visible in demo, never dismissible */}
+      <DemoModeBanner
+        onUpload={() => setShowImport(true)}
+        hasCustomData={hasCustomData}
+        onRestore={handleDemoRestore}
+      />
+
+      {/* Demo upload modal */}
+      {showImport && (
+        <DemoResetUploadModal
+          onClose={() => setShowImport(false)}
+          onComplete={handleDemoUploadComplete}
+        />
+      )}
+
       {/* Settings modal — inline, lightweight */}
       {showSettings && (
         <div className="settings-overlay">
@@ -225,6 +287,8 @@ function App() {
       {showChat && (
         <AdvisorChat
           summary={summary}
+          prefill={chatPrefill}
+          clearPrefill={() => setChatPrefill('')}
           onClose={() => setShowChat(false)}
         />
       )}
@@ -240,9 +304,12 @@ function App() {
         onSelectStore={handleSelectStore}
         onCreateStore={handleCreateStore}
         onShowSettings={() => setShowSettings(true)}
-        onLogout={handleLogout}
+        onLogout={IS_DEMO ? null : handleLogout}
         onShowChat={() => setShowChat(true)}
         onRefresh={fetchUserData}
+        isDemoMode={IS_DEMO}
+        onShowImport={() => setShowImport(true)}
+        onAskAdvisor={handleAskAdvisor}
       />
     </div>
   )

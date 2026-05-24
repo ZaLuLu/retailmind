@@ -8,7 +8,9 @@ const PortfolioMatrix = ({ period, dateFrom, dateTo, storeId, currency, onQuadra
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [hoveredProduct, setHoveredProduct] = useState(null)
+  const [selectedProduct, setSelectedProduct] = useState(null)
   const [activeQuadrant, setActiveQuadrant] = useState(null)
+  const [k, setK] = useState(4)
 
   useEffect(() => {
     let active = true
@@ -16,7 +18,7 @@ const PortfolioMatrix = ({ period, dateFrom, dateTo, storeId, currency, onQuadra
       setLoading(true)
       setError(null)
       try {
-        const res = await api.getPortfolioClusters(period, dateFrom, dateTo, storeId)
+        const res = await api.getPortfolioClusters(period, dateFrom, dateTo, storeId, k)
         if (active) {
           setData(res || { clusters: [], centroids: {} })
         }
@@ -34,7 +36,7 @@ const PortfolioMatrix = ({ period, dateFrom, dateTo, storeId, currency, onQuadra
     return () => {
       active = false
     }
-  }, [period, dateFrom, dateTo, storeId])
+  }, [period, dateFrom, dateTo, storeId, k])
 
   if (error) {
     return (
@@ -62,7 +64,7 @@ const PortfolioMatrix = ({ period, dateFrom, dateTo, storeId, currency, onQuadra
     return { cx, cy }
   }
 
-  // Count quadrant distribution
+  // Count quadrant distribution dynamically based on label contents
   const quadCounts = {
     'Stars': 0,
     'Hidden Gems': 0,
@@ -72,9 +74,11 @@ const PortfolioMatrix = ({ period, dateFrom, dateTo, storeId, currency, onQuadra
   
   if (data?.clusters) {
     data.clusters.forEach(p => {
-      if (quadCounts[p.quadrant] !== undefined) {
-        quadCounts[p.quadrant]++
-      }
+      const q = p.quadrant.toLowerCase()
+      if (q.includes('star')) quadCounts['Stars']++
+      else if (q.includes('gem')) quadCounts['Hidden Gems']++
+      else if (q.includes('cow')) quadCounts['Cash Cows']++
+      else if (q.includes('dead')) quadCounts['Dead Weight']++
     })
   }
 
@@ -82,12 +86,45 @@ const PortfolioMatrix = ({ period, dateFrom, dateTo, storeId, currency, onQuadra
     setActiveQuadrant(quadName)
     if (!data?.clusters) return
     const matchingProducts = data.clusters
-      .filter(p => p.quadrant === quadName)
+      .filter(p => {
+        const q = p.quadrant.toLowerCase()
+        if (quadName === 'Stars') return q.includes('star')
+        if (quadName === 'Hidden Gems') return q.includes('gem')
+        if (quadName === 'Cash Cows') return q.includes('cow')
+        if (quadName === 'Dead Weight') return q.includes('dead')
+        return false
+      })
       .map(p => p.product_name)
     
     if (onQuadrantSelect) {
       onQuadrantSelect(matchingProducts, quadName)
     }
+  }
+
+  const getBadgeClass = (quad) => {
+    const q = quad.toLowerCase()
+    if (q.includes('star')) return 'stars'
+    if (q.includes('gem')) return 'hidden-gems'
+    if (q.includes('cow')) return 'cash-cows'
+    if (q.includes('dead')) return 'dead-weight'
+    return ''
+  }
+
+  const getAdvice = (quad) => {
+    const q = quad.toLowerCase()
+    if (q.includes('star')) {
+      return 'Maintain premium pricing, lock in supplier contracts, and feature prominently in marketing.'
+    }
+    if (q.includes('gem')) {
+      return 'Increase visibility, run bundle promotions, and test slight price drops to drive volume.'
+    }
+    if (q.includes('cow')) {
+      return 'Optimize operational costs, run volume loyalty discounts, and defend market share.'
+    }
+    if (q.includes('dead')) {
+      return 'Liquidate excess inventory, run clearance sales, or discontinue to free up working capital.'
+    }
+    return 'Analyze metrics trend to optimize pricing and inventory levels.'
   }
 
   return (
@@ -97,10 +134,24 @@ const PortfolioMatrix = ({ period, dateFrom, dateTo, storeId, currency, onQuadra
         <div className="kicker-line" />
       </div>
 
+      <div className="k-slider-container">
+        <label htmlFor="k-slider">Segment Granularity (K Clusters):</label>
+        <input
+          id="k-slider"
+          type="range"
+          min="3"
+          max="6"
+          value={k}
+          onChange={(e) => setK(parseInt(e.target.value))}
+          className="k-slider-input"
+        />
+        <span className="k-slider-value">{k}</span>
+      </div>
+
       <div className="portfolio-matrix-layout">
         <div className="portfolio-matrix-description">
           <p className="serif italic" style={{ fontSize: '0.95rem', margin: '0 0 1.2rem', lineHeight: '1.5' }}>
-            Machine learning groups your entire catalog into four performance quadrants based on standard-scaled Revenue, Gross Margin, Velocity, and Recency of sales.
+            Machine learning groups your entire catalog into performance quadrants based on standard-scaled Revenue, Gross Margin, Velocity, and Recency of sales.
           </p>
           <div className="quadrant-roster mono">
             <div className={`roster-item stars ${activeQuadrant === 'Stars' ? 'active' : ''}`} onClick={() => handleQuadrantClick('Stars')}>
@@ -167,20 +218,18 @@ const PortfolioMatrix = ({ period, dateFrom, dateTo, storeId, currency, onQuadra
                 {data?.clusters && data.clusters.map((p, idx) => {
                   const { cx, cy } = toSVGCoords(p.coordinates.x, p.coordinates.y)
                   const isHovered = hoveredProduct?.product_name === p.product_name
+                  const isSelected = selectedProduct?.product_name === p.product_name
+                  const circleClass = getBadgeClass(p.quadrant)
                   return (
                     <g key={idx} className="product-node-group">
                       <circle
                         cx={cx}
                         cy={cy}
-                        r={isHovered ? 8 : 6}
-                        className={`product-node-circle ${p.quadrant.toLowerCase().replace(' ', '-')}`}
+                        r={isHovered || isSelected ? 8 : 6}
+                        className={`product-node-circle ${circleClass}`}
                         onMouseEnter={() => setHoveredProduct(p)}
                         onMouseLeave={() => setHoveredProduct(null)}
-                        onClick={() => {
-                          if (onQuadrantSelect) {
-                            onQuadrantSelect([p.product_name], p.quadrant)
-                          }
-                        }}
+                        onClick={() => setSelectedProduct(p)}
                       />
                       {/* Crosshair indicator on hover */}
                       {isHovered && (
@@ -226,6 +275,63 @@ const PortfolioMatrix = ({ period, dateFrom, dateTo, storeId, currency, onQuadra
           )}
         </div>
       </div>
+
+      {/* Broadsheet Slide-Over Details Panel */}
+      {selectedProduct && (
+        <div className="matrix-slideover-backdrop" onClick={() => setSelectedProduct(null)}>
+          <div className="matrix-slideover-panel" onClick={(e) => e.stopPropagation()}>
+            <button className="slideover-close-btn" onClick={() => setSelectedProduct(null)}>✕</button>
+            <div className="slideover-header">
+              <span className={`slideover-badge ${getBadgeClass(selectedProduct.quadrant)}`}>
+                {selectedProduct.quadrant}
+              </span>
+              <h2 className="slideover-title">{selectedProduct.product_name}</h2>
+              <div className="slideover-category">Product Performance Bulletin</div>
+            </div>
+            
+            <div className="slideover-metrics">
+              <div className="slideover-metric-card">
+                <span>Revenue:</span>
+                <strong>{formatMoneyDetailed(selectedProduct.metrics.revenue, currency)}</strong>
+              </div>
+              <div className="slideover-metric-card">
+                <span>Gross Margin:</span>
+                <strong style={{ color: selectedProduct.metrics.margin_pct >= 25 ? 'var(--ink-green)' : 'var(--ink-red)' }}>
+                  {selectedProduct.metrics.margin_pct.toFixed(1)}%
+                </strong>
+              </div>
+              <div className="slideover-metric-card">
+                <span>Sales Velocity:</span>
+                <strong>{selectedProduct.metrics.qty} units</strong>
+              </div>
+              <div className="slideover-metric-card">
+                <span>Recency of Sales:</span>
+                <strong>{selectedProduct.metrics.recency} days ago</strong>
+              </div>
+            </div>
+            
+            <div className="slideover-action-card">
+              <div className="action-card-header">Recommended Action</div>
+              <div className="action-card-text">
+                {getAdvice(selectedProduct.quadrant)}
+              </div>
+            </div>
+
+            <button 
+              className="mono-btn" 
+              style={{ width: '100%', marginTop: 'auto' }}
+              onClick={() => {
+                if (onQuadrantSelect) {
+                  onQuadrantSelect([selectedProduct.product_name], selectedProduct.quadrant)
+                }
+                setSelectedProduct(null)
+              }}
+            >
+              View in Sales Ledger →
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

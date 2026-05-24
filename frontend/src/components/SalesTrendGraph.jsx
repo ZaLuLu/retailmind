@@ -50,6 +50,13 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
     const sortedDates = Object.keys(dailyMap).sort();
     const last15 = sortedDates.slice(-15);
 
+    // Calculate historical mean and standard deviation for aggregate daily revenue
+    const histRevenues = Object.values(dailyMap);
+    const histCount = histRevenues.length;
+    const histMean = histCount > 0 ? histRevenues.reduce((a, b) => a + b, 0) / histCount : 0;
+    const histVariance = histCount > 0 ? histRevenues.reduce((a, b) => a + Math.pow(b - histMean, 2), 0) / histCount : 0;
+    const histStd = Math.sqrt(histVariance);
+
     const hist = last15.map(d => {
       let displayDate = d;
       try {
@@ -60,9 +67,13 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
         }
       } catch (e) {}
 
+      const rev = dailyMap[d];
+      const isAnomaly = histStd > 0 && Math.abs(rev - histMean) > 3 * histStd;
+
       return {
         date: displayDate,
-        revenue: dailyMap[d],
+        revenue: rev,
+        isAnomaly: isAnomaly,
         type: 'Historical'
       };
     });
@@ -81,6 +92,8 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
       return {
         date: displayDate,
         forecastRevenue: f.revenue,
+        forecastLower: f.forecast_lower || f.revenue,
+        forecastUpper: f.forecast_upper || f.revenue,
         type: 'Forecast'
       };
     });
@@ -157,11 +170,20 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
           <div style={{ fontWeight: 'bold', borderBottom: '1px dashed #1A1A1A', paddingBottom: '0.2rem', marginBottom: '0.3rem', color: '#8B0000' }}>
             {label || data.category || data.name}
           </div>
-          {payload.map((p, idx) => (
-            <div key={idx} style={{ margin: '0.1rem 0' }}>
-              {p.name}: <span style={{ color: p.color || '#003366', fontWeight: 700 }}>{formatMoneyDetailed(p.value, currency)}</span>
-            </div>
-          ))}
+          {payload.map((p, idx) => {
+            if (Array.isArray(p.value)) {
+              return (
+                <div key={idx} style={{ margin: '0.1rem 0', fontStyle: 'italic', color: '#B8860B' }}>
+                  {p.name}: <span>{formatMoneyDetailed(p.value[0], currency)} - {formatMoneyDetailed(p.value[1], currency)}</span>
+                </div>
+              );
+            }
+            return (
+              <div key={idx} style={{ margin: '0.1rem 0' }}>
+                {p.name}: <span style={{ color: p.color || '#003366', fontWeight: 700 }}>{formatMoneyDetailed(p.value, currency)}</span>
+              </div>
+            );
+          })}
           {data.margin !== undefined && (
             <div style={{ marginTop: '0.2rem', color: '#1A4D2E', fontWeight: 'bold', borderTop: '1px dotted #1A1A1A', paddingTop: '0.15rem' }}>
               Margin: {data.margin.toFixed(1)}%
@@ -170,6 +192,11 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
           {data.percent !== undefined && (
             <div style={{ marginTop: '0.2rem', color: '#8B0000', fontWeight: 'bold', borderTop: '1px dotted #1A1A1A', paddingTop: '0.15rem' }}>
               Share: {data.percent.toFixed(1)}%
+            </div>
+          )}
+          {data.isAnomaly && (
+            <div style={{ marginTop: '0.25rem', color: '#8B0000', fontWeight: 'bold', borderTop: '1px dashed #8B0000', paddingTop: '0.2rem', fontSize: '0.62rem' }}>
+              ⚠️ EXTREME VOLUME SPIKE DETECTED (&gt;3σ)
             </div>
           )}
         </div>
@@ -255,6 +282,15 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
               />
               <Tooltip content={<CustomTooltip />} />
               <Area
+                name="95% Confidence Band"
+                type="monotone"
+                dataKey={(d) => d.type === 'Forecast' ? [d.forecastLower, d.forecastUpper] : [null, null]}
+                stroke="none"
+                fill="#B8860B"
+                fillOpacity={0.12}
+                legendType="rect"
+              />
+              <Area
                 name="Historical Revenue"
                 type="monotone"
                 dataKey="revenue"
@@ -262,6 +298,19 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
                 strokeWidth={2.5}
                 fillOpacity={1}
                 fill="url(#histColor)"
+                dot={(props) => {
+                  const { cx, cy, payload } = props;
+                  if (payload && payload.isAnomaly) {
+                    return (
+                      <g key={payload.date}>
+                        <circle cx={cx} cy={cy} r={6} fill="#8B0000" stroke="#FDFCF0" strokeWidth={1.5} />
+                        <path d={`M ${cx} ${cy - 12} L ${cx - 5} ${cy - 4} L ${cx + 5} ${cy - 4} Z`} fill="#8B0000" />
+                        <text x={cx} y={cy - 15} textAnchor="middle" fill="#8B0000" style={{ fontSize: '0.6rem', fontFamily: 'var(--font-mono)', fontWeight: 800 }}>⚠️ SPIKE</text>
+                      </g>
+                    );
+                  }
+                  return null;
+                }}
               />
               <Area
                 name="Projected Forecast"
