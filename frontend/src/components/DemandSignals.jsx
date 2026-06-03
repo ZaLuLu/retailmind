@@ -12,22 +12,28 @@ const DemandSignals = ({
   marginAlerts = [],
   currency = 'INR',
   onAskAdvisor,
+  storeId = null,
 }) => {
   const [tab, setTab] = useState('demand') // 'demand' | 'dead' | 'margin' | 'forecast'
   const [forecast, setForecast] = useState([])
   const [forecastLoading, setForecastLoading] = useState(false)
   const [forecastError, setForecastError] = useState(null)
 
-  // Lazy-load forecast only when tab is selected
+  // Reset forecast when storeId changes
+  useEffect(() => {
+    setForecast([])
+  }, [storeId])
+
+  // Lazy-load forecast only when tab is selected or storeId changes
   useEffect(() => {
     if (tab !== 'forecast' || forecast.length > 0) return
     setForecastLoading(true)
     setForecastError(null)
-    api.getRetailForecast()
+    api.getRetailForecast(storeId)
       .then(data => setForecast(data))
       .catch(err => setForecastError(err.message || 'Failed to load forecast'))
       .finally(() => setForecastLoading(false))
-  }, [tab])
+  }, [tab, storeId, forecast.length])
 
   const totalAlerts = demandSignals.length + deadStockAlerts.length + marginAlerts.length
 

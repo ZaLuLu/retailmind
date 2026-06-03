@@ -44,120 +44,42 @@ class GeminiService:
         )
 
     @gemini_retry
-    async def extract_transaction(self, file_content: bytes, mime_type: str):
-        """
-        Extract transaction data from a document using Gemini Flash.
-        Returns an ExtractionResult dict, or None on failure.
-        """
-        if self.model is None:
-            logger.warning("Gemini model not initialised — skipping extraction.")
-            return None
-
-        # Lazy import to avoid crash if schemas change
-        try:
-            from ..schemas.transaction import ExtractionResult
-        except ImportError:
-            logger.error("ExtractionResult schema not found; returning raw dict.")
-            ExtractionResult = None
-
-        prompt = """
-        You are an Indian financial intelligence expert. Analyze the attached document (receipt/invoice from India) and extract the following in JSON format:
-        - vendor_name: The name of the merchant/store.
-        - amount: The total amount paid in INR (numeric).
-        - category: One of [Food, Transport, Utilities, Entertainment, Health, Shopping, Other].
-        - transaction_date: The date in YYYY-MM-DD format.
-        - confidence: Your confidence score from 0.0 to 1.0.
-        - notes: A brief summary. Mention if GST was detected.
-
-        IMPORTANT: If the document uses INR or ₹, extract the numerical value only. If it's not a receipt, explain in 'notes'.
-        """
-
-        try:
-            if "image" in mime_type and _PIL_AVAILABLE:
-                import io
-                img = PIL.Image.open(io.BytesIO(file_content))
-                response = await self.model.generate_content_async([prompt, img])
-            else:
-                response = await self.model.generate_content_async([
-                    prompt,
-                    {"mime_type": mime_type, "data": file_content},
-                ])
-
-            data = json.loads(response.text)
-            if ExtractionResult is not None:
-                return ExtractionResult(**data)
-            return data
-
-        except Exception as e:
-            logger.error(f"Gemini extraction failed: {e}")
-            raise  # let tenacity handle retries
-
-    @gemini_retry
     async def ask_advisor(self, question: str, context: Optional[str] = None) -> str:
         """
-        Ask a general business intelligence question to the RetailMind advisor.
+        Ask a retail business intelligence question to the RetailMind advisor.
         Returns the advisor's answer as a string.
+        
+        Security: question is pre-validated and sanitized by the API layer before
+        reaching this method. Context is system-generated (not user-controlled).
         """
         if self.chat_model is None:
-            q_lower = question.lower()
-            if "margin" in q_lower or "cogs" in q_lower or "drag" in q_lower:
-                return (
-                    "Based on our retail analysis of the General Ledger, your overall gross profit margin stands at 32.4%. "
-                    "The primary drag is the Apparel category (specifically Tweed Jackets), where average cost of goods sold (COGS) "
-                    "has increased by 14.8% due to supplier freight premiums, while retail pricing remained flat.\n\n"
-                    "💡 **Actionable Tip:** Renominate target retail pricing for Apparel items, or initiate vendor bulk agreements "
-                    "to compress COGS by at least 8.5%."
-                )
-            elif "reorder" in q_lower or "stock" in q_lower or "product" in q_lower:
-                return (
-                    "Inventory signals show a clear demand surge in the Stationery category, specifically for Premium Vintage Fountain Pens "
-                    "and Leather Ledger Journals, which are moving 2.4x faster than expected. Conversely, Apparel tweed jackets have "
-                    "entered a 'Dead Stock' phase with 0 sales in the last 28 days.\n\n"
-                    "💡 **Actionable Tip:** Immediately allocate budget to double your stock level on high-velocity Stationery items "
-                    "before the holiday spike, while launching a 25% clearance promotion on Apparel to release tied capital."
-                )
-            elif "drop" in q_lower or "trend" in q_lower or "week" in q_lower:
-                return (
-                    "Anomalies in the sales trend graph indicate a 24.2% drop in transaction volume between May 19 and May 20. "
-                    "This was driven by a temporary outage in online customer checkout signals, causing B2B and online segment margins to slip.\n\n"
-                    "💡 **Actionable Tip:** Ensure B2B invoice generation channels are fully synchronized weekly. "
-                    "Set up automated alert checks to catch channel dropouts within 4 hours."
-                )
-            else:
-                return (
-                    "Greetings from the Bureau of Retail Intelligence. I have reviewed your storefront coordinates and ledger records. "
-                    "I can confirm that your current store margins are stable, but could be improved by optimising inventory flow.\n\n"
-                    "💡 **Actionable Tip:** Leverage K-Means matrix insights. Re-cluster your items weekly to detect 'Hidden Gems' "
-                    "(high margin, low volume) and run targeted clearance promos to liquidate 'Dead Stock'."
-                )
+            return self._fallback_answer(question)
 
-        full_prompt = f"""
-        You are 'RetailMind Advisor', a helpful retail business intelligence assistant for the RetailMind application.
-        Your goal is to make complex sales, margin, inventory, and demand data easy for store owners to understand.
+        # Truncate context to prevent token exhaustion attacks
+        safe_context = (context or "No specific context provided.")[:2000]
+        # Escape any curly braces in context to prevent f-string injection
+        safe_context = safe_context.replace("{", "{{").replace("}", "}}")
 
-        CRITICAL GUARDRAIL - SCOPE LIMITATION:
-        You MUST ONLY answer questions related to retail business operations, store sales, margin analysis, product pricing, dead stock, demand signals, or the RetailMind application.
-        If the user asks about ANYTHING else (e.g., personal topics like overthinking, coding, general history, general knowledge, recipes, general personal finances, generating stories), you MUST politely decline and state exactly:
-        "I am RetailMind's Business Intelligence Advisor. I can only assist you with questions related to your retail store sales, margins, dead stock, demand spikes, and inventory trends."
-        Do NOT fulfill requests outside this retail business scope under any circumstances.
+        system_instruction = (
+            "You are 'RetailMind Advisor', a retail business intelligence assistant. "
+            "You ONLY answer questions about retail operations: sales, margins, inventory, "
+            "dead stock, demand signals, pricing, and the RetailMind application. "
+            "For ANY other topic, respond exactly: "
+            "'I am RetailMind's Business Intelligence Advisor. I can only assist with "
+            "retail store sales, margins, dead stock, demand spikes, and inventory trends.' "
+            "Be concise (max 100 words), professional, and provide one actionable tip."
+        )
 
-        TONE RULES:
-        - Use simple, direct English.
-        - Avoid complex statistical jargon (if you use a complex term, explain it simply).
-        - Be insightful, analytical, and professional.
-        - Sound like a high-quality financial editor (like a 'Retail Insights' column).
-
-        User Context (Current Store Dashboard Data): {context if context else "No specific context provided."}
-        Question: {question}
-
-        Provide a short, punchy answer (max 100 words) with one actionable retail tip.
-        """
+        user_message = f"Store Dashboard Data: {safe_context}\n\nQuestion: {question}"
 
         try:
-            response = await self.chat_model.generate_content_async(full_prompt)
+            response = await asyncio.wait_for(
+                self.chat_model.generate_content_async([system_instruction, user_message]),
+                timeout=settings.GEMINI_TIMEOUT_SECONDS
+            )
             return response.text
         except Exception as e:
-            logger.error(f"Gemini advisor failed: {e}")
+            logger.error("Gemini advisor failed: %s", type(e).__name__)
             raise
 
     async def stream_advisor(self, question: str, context: Optional[str] = None):
@@ -165,75 +87,73 @@ class GeminiService:
         Asynchronously stream answers from the RetailMind advisor.
         """
         if self.chat_model is None:
-            q_lower = question.lower()
-            if "margin" in q_lower or "cogs" in q_lower or "drag" in q_lower:
-                reply = (
-                    "Based on our retail analysis of the General Ledger, your overall gross profit margin stands at 32.4%. "
-                    "The primary drag is the Apparel category (specifically Tweed Jackets), where average cost of goods sold (COGS) "
-                    "has increased by 14.8% due to supplier freight premiums, while retail pricing remained flat.\n\n"
-                    "💡 **Actionable Tip:** Renominate target retail pricing for Apparel items, or initiate vendor bulk agreements "
-                    "to compress COGS by at least 8.5%."
-                )
-            elif "reorder" in q_lower or "stock" in q_lower or "product" in q_lower:
-                reply = (
-                    "Inventory signals show a clear demand surge in the Stationery category, specifically for Premium Vintage Fountain Pens "
-                    "and Leather Ledger Journals, which are moving 2.4x faster than expected. Conversely, Apparel tweed jackets have "
-                    "entered a 'Dead Stock' phase with 0 sales in the last 28 days.\n\n"
-                    "💡 **Actionable Tip:** Immediately allocate budget to double your stock level on high-velocity Stationery items "
-                    "before the holiday spike, while launching a 25% clearance promotion on Apparel to release tied capital."
-                )
-            elif "drop" in q_lower or "trend" in q_lower or "week" in q_lower:
-                reply = (
-                    "Anomalies in the sales trend graph indicate a 24.2% drop in transaction volume between May 19 and May 20. "
-                    "This was driven by a temporary outage in online customer checkout signals, causing B2B and online segment margins to slip.\n\n"
-                    "💡 **Actionable Tip:** Ensure B2B invoice generation channels are fully synchronized weekly. "
-                    "Set up automated alert checks to catch channel dropouts within 4 hours."
-                )
-            else:
-                reply = (
-                    "Greetings from the Bureau of Retail Intelligence. I have reviewed your storefront coordinates and ledger records. "
-                    "I can confirm that your current store margins are stable, but could be improved by optimising inventory flow.\n\n"
-                    "💡 **Actionable Tip:** Leverage K-Means matrix insights. Re-cluster your items weekly to detect 'Hidden Gems' "
-                    "(high margin, low volume) and run targeted clearance promos to liquidate 'Dead Stock'."
-                )
-
+            reply = self._fallback_answer(question)
             words = reply.split(" ")
             for i in range(0, len(words), 3):
                 chunk = " ".join(words[i:i+3]) + " "
                 yield chunk
-                await asyncio.sleep(0.08)  # simulate typing speed
+                await asyncio.sleep(0.08)
             return
 
-        full_prompt = f"""
-        You are 'RetailMind Advisor', a helpful retail business intelligence assistant for the RetailMind application.
-        Your goal is to make complex sales, margin, inventory, and demand data easy for store owners to understand.
+        safe_context = (context or "No specific context provided.")[:2000]
+        safe_context = safe_context.replace("{", "{{").replace("}", "}}")
 
-        CRITICAL GUARDRAIL - SCOPE LIMITATION:
-        You MUST ONLY answer questions related to retail business operations, store sales, margin analysis, product pricing, dead stock, demand signals, or the RetailMind application.
-        If the user asks about ANYTHING else (e.g., personal topics like overthinking, coding, general history, general knowledge, recipes, general personal finances, generating stories), you MUST politely decline and state exactly:
-        "I am RetailMind's Business Intelligence Advisor. I can only assist you with questions related to your retail store sales, margins, dead stock, demand spikes, and inventory trends."
-        Do NOT fulfill requests outside this retail business scope under any circumstances.
+        system_instruction = (
+            "You are 'RetailMind Advisor', a retail business intelligence assistant. "
+            "You ONLY answer questions about retail operations: sales, margins, inventory, "
+            "dead stock, demand signals, pricing, and the RetailMind application. "
+            "For ANY other topic, respond exactly: "
+            "'I am RetailMind's Business Intelligence Advisor. I can only assist with "
+            "retail store sales, margins, dead stock, demand spikes, and inventory trends.' "
+            "Be concise (max 100 words), professional, and provide one actionable tip."
+        )
 
-        TONE RULES:
-        - Use simple, direct English.
-        - Avoid complex statistical jargon (if you use a complex term, explain it simply).
-        - Be insightful, analytical, and professional.
-        - Sound like a high-quality financial editor (like a 'Retail Insights' column).
-
-        User Context (Current Store Dashboard Data): {context if context else "No specific context provided."}
-        Question: {question}
-
-        Provide a short, punchy answer (max 100 words) with one actionable retail tip.
-        """
+        user_message = f"Store Dashboard Data: {safe_context}\n\nQuestion: {question}"
 
         try:
-            response = await self.chat_model.generate_content_async(full_prompt, stream=True)
+            response = await asyncio.wait_for(
+                self.chat_model.generate_content_async(
+                    [system_instruction, user_message], stream=True
+                ),
+                timeout=settings.GEMINI_TIMEOUT_SECONDS
+            )
             async for chunk in response:
                 if chunk.text:
                     yield chunk.text
         except Exception as e:
-            logger.error(f"Gemini advisor streaming failed: {e}")
+            logger.error("Gemini advisor streaming failed: %s", type(e).__name__)
             raise
+
+    def _fallback_answer(self, question: str) -> str:
+        """
+        Rule-based fallback when Gemini API key is not configured.
+        Returns generic but useful retail intelligence responses.
+        """
+        q_lower = question.lower()
+        if any(k in q_lower for k in ("margin", "cogs", "drag", "profit")):
+            return (
+                "Your overall gross profit margin performance depends on your COGS relative to revenue. "
+                "Review your Apparel and high-cost categories first — these typically drive margin drag. "
+                "💡 Tip: Negotiate vendor bulk agreements or adjust retail pricing to improve margin by 5-10%."
+            )
+        elif any(k in q_lower for k in ("reorder", "stock", "inventory", "product")):
+            return (
+                "Inventory signals show demand variance across product categories. "
+                "Focus reorder budgets on high-velocity items and run clearance on dead stock. "
+                "💡 Tip: Use the Forecast tab to identify products needing reorder before the next cycle."
+            )
+        elif any(k in q_lower for k in ("drop", "trend", "week", "spike")):
+            return (
+                "Sales trend anomalies can indicate channel outages, seasonal patterns, or data gaps. "
+                "Check your upload schedule and B2B channel synchronisation. "
+                "💡 Tip: Set up weekly review checkpoints to catch trend drops within 4 hours."
+            )
+        else:
+            return (
+                "I can help you analyse your store's sales, margins, inventory, and demand signals. "
+                "Connect a Gemini API key in your environment settings to unlock AI-powered insights. "
+                "💡 Tip: Upload your sales data via CSV to get started with demand forecasting."
+            )
 
 
 # Singleton instance

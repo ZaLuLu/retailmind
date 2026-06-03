@@ -362,21 +362,35 @@ export const api = {
 
   /** Centralised fetch call for streaming the advisor response (POST stream) */
   askAdvisorStream: async (question, context, onChunk, onError, onDone) => {
-    const token = localStorage.getItem('token')
-    const url = `${BASE_URL}/advisor/stream`
-    
-    try {
+    // Attempt to refresh token proactively if needed before opening the stream
+    let token = localStorage.getItem('token')
+
+    const doStream = async (authToken) => {
+      const url = `${BASE_URL}/advisor/stream`
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
         },
         body: JSON.stringify({ question, context })
       })
 
+      if (response.status === 401) {
+        // Token expired — attempt refresh then retry once
+        const newToken = await refreshAccessToken()
+        if (!newToken) {
+          clearTokens()
+          window.dispatchEvent(new CustomEvent('auth:logout'))
+          onError('Session expired. Please log in again.')
+          return
+        }
+        // Retry with new token
+        return doStream(newToken)
+      }
+
       if (!response.ok) {
-        throw new Error(`Advisor wire error (${response.status})`)
+        throw new Error(`Advisor stream error (${response.status})`)
       }
 
       const reader = response.body.getReader()
@@ -394,25 +408,22 @@ export const api = {
         for (const line of lines) {
           const cleaned = line.trim()
           if (!cleaned.startsWith('data:')) continue
-
           const jsonStr = cleaned.slice(5).trim()
           if (!jsonStr) continue
-
           try {
             const data = JSON.parse(jsonStr)
-            if (data.error) {
-              onError(data.error)
-              return
-            }
-            if (data.chunk) {
-              onChunk(data.chunk)
-            }
+            if (data.error) { onError(data.error); return }
+            if (data.chunk) onChunk(data.chunk)
           } catch (e) {
-            console.error('Error parsing SSE data', e)
+            // Non-fatal parse error on a single SSE chunk — continue streaming
           }
         }
       }
       onDone()
+    }
+
+    try {
+      await doStream(token)
     } catch (err) {
       onError(err.message || 'Stream connection failed')
     }

@@ -30,14 +30,34 @@ async def get_current_user(
     Dependency that returns the currently authenticated user.
 
     In demo mode (DEMO_MODE=true):
-        Bypasses ALL token validation and returns the seeded demo user directly.
-        This is the single chokepoint — every route that uses this dependency
-        automatically becomes publicly accessible in demo mode.
+        If a valid JWT token is provided, validates it and returns the user.
+        Otherwise, falls back to returning the seeded demo user directly.
 
     In production mode:
         Validates the JWT, extracts user_id, and fetches from DB.
     """
-    # ── Demo Mode bypass ──────────────────────────────────────────────────────
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    # ── Attempt standard JWT validation if token is present ─────────────────
+    if token:
+        payload = decode_token(token)
+        if payload is not None:
+            user_id_str: str | None = payload.get("sub")
+            if user_id_str is not None:
+                try:
+                    user_id = uuid.UUID(user_id_str)
+                    result = await db.execute(select(User).where(User.id == user_id))
+                    user = result.scalars().first()
+                    if user is not None:
+                        return user
+                except ValueError:
+                    pass
+
+    # ── Demo Mode fallback ──────────────────────────────────────────────────
     if settings.DEMO_MODE:
         try:
             demo_uuid = uuid.UUID(settings.DEMO_USER_ID)
@@ -61,30 +81,4 @@ async def get_current_user(
             )
         return demo_user
 
-    # ── Normal JWT validation ─────────────────────────────────────────────────
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    payload = decode_token(token)
-    if payload is None:
-        raise credentials_exception
-
-    user_id_str: str | None = payload.get("sub")
-    if user_id_str is None:
-        raise credentials_exception
-
-    try:
-        user_id = uuid.UUID(user_id_str)
-    except ValueError:
-        raise credentials_exception
-
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalars().first()
-
-    if user is None:
-        raise credentials_exception
-
-    return user
+    raise credentials_exception

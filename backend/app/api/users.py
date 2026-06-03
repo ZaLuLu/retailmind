@@ -1,13 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..core.db import get_db
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional, Dict
 from datetime import date
 from ..models.db import User, Budget
 from ..api.deps import get_current_user
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/users", tags=["Users"])
+
+ALLOWED_CURRENCIES = {"INR", "USD", "EUR", "GBP", "AED", "SGD", "JPY"}
 
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
@@ -15,6 +20,53 @@ class UserUpdate(BaseModel):
     store_name: Optional[str] = None
     currency: Optional[str] = None
     budgets: Optional[Dict[str, float]] = None
+
+    @field_validator("full_name")
+    @classmethod
+    def validate_full_name(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            v = v.strip()
+            if len(v) > 255:
+                raise ValueError("Full name must be 255 characters or fewer")
+        return v
+
+    @field_validator("store_name")
+    @classmethod
+    def validate_store_name(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            v = v.strip()
+            if len(v) > 255:
+                raise ValueError("Store name must be 255 characters or fewer")
+        return v
+
+    @field_validator("currency")
+    @classmethod
+    def validate_currency(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            v = v.upper().strip()
+            if v not in ALLOWED_CURRENCIES:
+                raise ValueError(f"Currency must be one of: {', '.join(sorted(ALLOWED_CURRENCIES))}")
+        return v
+
+    @field_validator("initial_balance")
+    @classmethod
+    def validate_balance(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None and v < 0:
+            raise ValueError("Initial balance cannot be negative")
+        return v
+
+    @field_validator("budgets")
+    @classmethod
+    def validate_budgets(cls, v: Optional[Dict[str, float]]) -> Optional[Dict[str, float]]:
+        if v is not None:
+            if len(v) > 50:
+                raise ValueError("Cannot set more than 50 budget categories")
+            for cat, limit in v.items():
+                if len(cat) > 100:
+                    raise ValueError(f"Category name '{cat[:20]}...' is too long")
+                if limit < 0:
+                    raise ValueError(f"Budget limit for '{cat}' cannot be negative")
+        return v
 
 class UserResponse(BaseModel):
     email: str
@@ -83,9 +135,10 @@ async def update_me(
         await db.refresh(current_user)
     except Exception as e:
         await db.rollback()
+        logger.exception("Failed to update user %s", current_user.id)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update user: {str(e)}"
+            detail="Failed to update user settings. Please try again."
         )
         
     return current_user

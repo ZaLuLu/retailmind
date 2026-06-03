@@ -169,7 +169,12 @@ function OnboardingWizard({ onComplete }) {
           </div>
           <div>
             {step < 3 ? (
-              <button onClick={nextStep} disabled={isSubmitting}>Continue →</button>
+              <button 
+                onClick={nextStep} 
+                disabled={isSubmitting || (step === 1 && (!formData.fullName.trim() || !formData.storeName.trim()))}
+              >
+                Continue →
+              </button>
             ) : (
               <button onClick={handleSubmit} disabled={isSubmitting} className={isSubmitting ? 'btn-ghost-loading' : ''}>
                 Launch Intelligence →

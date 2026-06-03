@@ -221,7 +221,8 @@ export default function DocumentScanner({ onClose, onComplete, selectedStore, cu
         }))
       }
 
-      await api.post('/retail/bulk', payload)
+      const endpoint = selectedStore?.id ? `/retail/bulk?store_id=${selectedStore.id}` : '/retail/bulk'
+      await api.post(endpoint, payload)
       setPhase('success')
       if (onComplete) {
         onComplete()

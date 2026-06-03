@@ -278,20 +278,42 @@ async def demo_reset_and_upload(
     await db.execute(delete(MLResult).where(MLResult.user_id == user.id))
     await db.commit()
 
+    # Look up the first store of the user to bind it to all imported sales records
+    store_stmt = select(Store).where(Store.user_id == user.id).order_by(Store.created_at.asc())
+    store_res = await db.execute(store_stmt)
+    store = store_res.scalars().first()
+    store_id = store.id if store else None
+
     # 4. Insert new records
     records: list[SaleRecord] = []
     skipped = 0
+    import math
 
     for _, row in df.iterrows():
         try:
             qty = float(row["quantity_sold"])
             price = float(row["unit_price"])
+
+            if math.isnan(qty) or math.isnan(price) or math.isinf(qty) or math.isinf(price):
+                logger.debug("Skipping row due to invalid number (NaN or Infinity)")
+                skipped += 1
+                continue
+
             total = qty * price
             raw_cogs = row.get("cogs", None)
-            cogs = float(raw_cogs) * qty if pd.notna(raw_cogs) and raw_cogs else None
+            
+            cogs = None
+            if pd.notna(raw_cogs) and raw_cogs:
+                cogs_val = float(raw_cogs)
+                if math.isnan(cogs_val) or math.isinf(cogs_val):
+                    logger.debug("Skipping row due to invalid COGS (NaN or Infinity)")
+                    skipped += 1
+                    continue
+                cogs = cogs_val * qty
+
             margin = (
                 round(((total - cogs) / total) * 100, 2)
-                if total > 0 and cogs
+                if total > 0 and cogs is not None
                 else None
             )
 
@@ -301,6 +323,7 @@ async def demo_reset_and_upload(
             records.append(
                 SaleRecord(
                     user_id=user.id,
+                    store_id=store_id,
                     product_name=str(row["product_name"]).strip(),
                     product_sku=str(row.get("product_sku", "")).strip() or None,
                     product_category=str(row.get("product_category", "Other")).strip(),

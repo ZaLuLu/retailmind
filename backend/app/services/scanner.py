@@ -47,17 +47,24 @@ class GeminiScannerService:
         """
 
         try:
+            import asyncio
             # Check if PDF or image and use correct API signature
             if "image" in mime_type:
                 import PIL.Image
                 import io
                 img = PIL.Image.open(io.BytesIO(file_content))
-                response = await self.model.generate_content_async([prompt, img])
+                response = await asyncio.wait_for(
+                    self.model.generate_content_async([prompt, img]),
+                    timeout=settings.GEMINI_TIMEOUT_SECONDS
+                )
             else:
-                response = await self.model.generate_content_async([
-                    prompt,
-                    {"mime_type": mime_type, "data": file_content},
-                ])
+                response = await asyncio.wait_for(
+                    self.model.generate_content_async([
+                        prompt,
+                        {"mime_type": mime_type, "data": file_content},
+                    ]),
+                    timeout=settings.GEMINI_TIMEOUT_SECONDS
+                )
 
             text = response.text.strip()
             # Clean markdown codeblocks if Gemini added them despite config

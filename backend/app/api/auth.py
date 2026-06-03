@@ -87,7 +87,8 @@ async def login(request: Request, user_in: UserCreate, db: AsyncSession = Depend
     ))
 
 @router.post("/demo-login", response_model=SuccessResponse[Token])
-async def demo_login(db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def demo_login(request: Request, db: AsyncSession = Depends(get_db)):
     """Self-bootstrapping demo endpoint. Creates the demo account + seeds dummy
     data on first call, then just issues tokens on every subsequent call.
     No rate limiter here so it never fails on Vercel cold starts.

@@ -336,6 +336,7 @@ const IntelligenceDashboard = ({
                       marginAlerts={summary?.margin_erosion_alerts ?? []}
                       currency={currency}
                       onAskAdvisor={onAskAdvisor}
+                      storeId={selectedStore?.id}
                     />
                   </div>
 

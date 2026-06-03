@@ -440,11 +440,27 @@ def _parse_xlsx_rows(content: bytes):
 
 
 def _build_sale_record(norm_row: dict, user_id, user_currency: str, store_id: Optional[Any] = None) -> SaleRecord:
-    qty = float(norm_row["quantity"])
-    unit_price = float(norm_row["unit_price"])
+    qty_raw = norm_row.get("quantity")
+    price_raw = norm_row.get("unit_price")
+    if qty_raw is None or price_raw is None:
+        raise ValueError("Missing quantity or unit_price field")
+
+    qty = float(qty_raw)
+    unit_price = float(price_raw)
+    
+    import math
+    if math.isnan(qty) or math.isnan(unit_price) or math.isinf(qty) or math.isinf(unit_price):
+        raise ValueError("quantity or unit_price is not a valid number (NaN or Infinity)")
+
     total_revenue = qty * unit_price
     cogs_raw = norm_row.get("cogs", "").strip()
-    cogs = float(cogs_raw) if cogs_raw else None
+    
+    cogs = None
+    if cogs_raw:
+        cogs = float(cogs_raw)
+        if math.isnan(cogs) or math.isinf(cogs):
+            raise ValueError("cogs is not a valid number (NaN or Infinity)")
+
     margin = None
     if cogs is not None and total_revenue > 0:
         margin = round(((total_revenue - (cogs * qty)) / total_revenue) * 100, 2)
@@ -584,33 +600,66 @@ class BulkSalesCreate(BaseModel):
 @router.post("/bulk", status_code=status.HTTP_201_CREATED)
 async def bulk_create_sales(
     payload: BulkSalesCreate,
+    store_id: Optional[str] = Query(default=None),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
     Bulk insert sale records manually entered or extracted via document scanner.
+    Maximum 500 records per request.
     """
+    from ..core.config import settings as _settings
+    import math
+
+    max_records = getattr(_settings, "BULK_SALES_MAX_RECORDS", 500)
+    if len(payload.sales) > max_records:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Bulk insert limited to {max_records} records per request. Got {len(payload.sales)}.",
+        )
+
+    parsed_store_id = None
+    if store_id:
+        try:
+            import uuid
+            parsed_store_id = uuid.UUID(store_id)
+        except ValueError:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid store_id format")
+
+        # Verify the store belongs to the current authenticated user
+        store_stmt = select(Store).where(Store.id == parsed_store_id, Store.user_id == current_user.id)
+        store_res = await db.execute(store_stmt)
+        if not store_res.scalars().first():
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Store not found or access denied"
+            )
+
     user_currency = current_user.currency or "INR"
     records = []
     for s in payload.sales:
         qty = s.quantity_sold
         unit_p = s.unit_price
+
+        if math.isnan(qty) or math.isnan(unit_p) or math.isinf(qty) or math.isinf(unit_p):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Quantity or unit price is not a valid number (NaN or Infinity)"
+            )
+
         total_rev = qty * unit_p
-        
-        # Estimate mock COGS if not provided, for margin recomputation
-        cogs = round(unit_p * 0.6, 2) * qty
-        margin = round(((total_rev - cogs) / total_rev * 100), 2) if total_rev > 0 else 0.0
 
         record = SaleRecord(
             user_id=current_user.id,
+            store_id=parsed_store_id,
             product_name=s.product_name.strip(),
             product_sku=s.product_sku.strip() if s.product_sku else None,
             product_category=s.product_category.strip() or "Other",
             quantity_sold=qty,
             unit_price=unit_p,
             total_revenue=total_rev,
-            cogs=cogs,
-            gross_margin=margin,
+            cogs=None,         # COGS unknown — not estimated; user can update later
+            gross_margin=None, # Cannot compute without COGS
             sale_date=s.sale_date,
             customer_segment=s.customer_segment.strip() if s.customer_segment else "Walk-in",
             currency=s.currency or user_currency,
