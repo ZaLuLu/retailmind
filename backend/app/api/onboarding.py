@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..core.db import get_db
-from ..models.db import User, Budget
+from ..models.db import User, Budget, Store
 from ..api.deps import get_current_user
 from pydantic import BaseModel, field_validator
 from typing import Dict
@@ -84,6 +84,16 @@ async def complete_onboarding(
     current_user.currency = request.currency
     current_user.is_onboarded = True
     current_user.intelligence_meta = {"budgets": request.budgets}
+
+    # 1.5 Create the default Store record for this user
+    default_store = Store(
+        user_id=current_user.id,
+        name=request.store_name,
+        location="Headquarters",
+        currency=request.currency,
+        is_active=True,
+    )
+    db.add(default_store)
     
     # 2. Create budget records for the current month
     today = date.today()

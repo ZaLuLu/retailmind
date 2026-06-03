@@ -45,17 +45,21 @@ async def get_current_user(
     # ── Attempt standard JWT validation if token is present ─────────────────
     if token:
         payload = decode_token(token)
-        if payload is not None:
-            user_id_str: str | None = payload.get("sub")
-            if user_id_str is not None:
-                try:
-                    user_id = uuid.UUID(user_id_str)
-                    result = await db.execute(select(User).where(User.id == user_id))
-                    user = result.scalars().first()
-                    if user is not None:
-                        return user
-                except ValueError:
-                    pass
+        if payload is None:
+            raise credentials_exception
+        user_id_str: str | None = payload.get("sub")
+        if user_id_str is None:
+            raise credentials_exception
+        try:
+            user_id = uuid.UUID(user_id_str)
+        except ValueError:
+            raise credentials_exception
+
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalars().first()
+        if user is None:
+            raise credentials_exception
+        return user
 
     # ── Demo Mode fallback ──────────────────────────────────────────────────
     if settings.DEMO_MODE:

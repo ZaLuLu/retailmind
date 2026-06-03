@@ -437,16 +437,7 @@ export const api = {
    * @param {File} file
    */
   demoResetAndUpload: async (file) => {
-    const url = `${BASE_URL}/demo/reset-and-upload`
-    const formData = new FormData()
-    formData.append('file', file)
-    const res = await fetch(url, {
-      method: 'POST',
-      // No Content-Type header — browser sets multipart/form-data with boundary
-      body: formData,
-    })
-    if (!res.ok) throw await parseError(res)
-    return res.json()
+    return uploadFile('/demo/reset-and-upload', file)
   },
 
   /**

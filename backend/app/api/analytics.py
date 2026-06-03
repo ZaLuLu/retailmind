@@ -2,9 +2,9 @@
 import json
 import logging
 from datetime import datetime, date, timedelta
-from typing import Any
+from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
@@ -61,6 +61,7 @@ async def get_or_compute_ml_result(
 async def get_chart_bundle(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    store_id: Optional[str] = Query(default=None),
 ):
     """
     Returns a unified dashboard JSON bundle containing KPIs, 90-day daily revenue history,
@@ -71,8 +72,19 @@ async def get_chart_bundle(
     """
     user_id = current_user.id
     
+    parsed_store_id = None
+    if store_id:
+        try:
+            import uuid
+            parsed_store_id = uuid.UUID(store_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid store_id format",
+            )
+            
     # 1. Check Redis cache first
-    cache_key = f"chart_bundle:{user_id}"
+    cache_key = f"chart_bundle:{user_id}:{store_id or 'all'}"
     try:
         cached = await cache.get(cache_key)
         if cached:
@@ -83,26 +95,32 @@ async def get_chart_bundle(
     try:
         # 2. Get standard retail summary for 30d KPIs and lists
         summary = await retail_intelligence_service.get_retail_summary(
-            db, user_id, period="30d"
+            db, user_id, period="30d", store_id=parsed_store_id
         )
         
-        # 3. Get or compute forecasting (Holt-Winters triple exponential smoothing)
-        async def compute_forecast():
-            return await retail_intelligence_service.get_demand_forecast(db, user_id)
-        
-        forecast = await get_or_compute_ml_result(user_id, "forecast", db, compute_forecast)
+        # 3. Get or compute forecasting and portfolio quadrant
+        if parsed_store_id:
+            # Bypass persistent MLResult cache since it has no store_id column;
+            # rely on the store-specific Redis cache key instead.
+            forecast = await retail_intelligence_service.get_demand_forecast(db, user_id, store_id=parsed_store_id)
+            portfolio = await retail_intelligence_service.get_portfolio_clusters(db, user_id, period="30d", store_id=parsed_store_id)
+        else:
+            async def compute_forecast():
+                return await retail_intelligence_service.get_demand_forecast(db, user_id)
+            forecast = await get_or_compute_ml_result(user_id, "forecast", db, compute_forecast)
 
-        # 4. Get or compute portfolio quadrants (K-Means unsupervised clustering)
-        async def compute_portfolio():
-            return await retail_intelligence_service.get_portfolio_clusters(db, user_id, period="30d")
-        
-        portfolio = await get_or_compute_ml_result(user_id, "portfolio", db, compute_portfolio)
+            async def compute_portfolio():
+                return await retail_intelligence_service.get_portfolio_clusters(db, user_id, period="30d")
+            portfolio = await get_or_compute_ml_result(user_id, "portfolio", db, compute_portfolio)
 
         # 5. Customer segments from 30d summary
         segments = summary.get("customer_segments", [])
 
         # 6. Persisted alerts
-        alerts_stmt = select(Alert).where(Alert.user_id == user_id).order_by(Alert.created_at.desc())
+        alerts_query = select(Alert).where(Alert.user_id == user_id)
+        if parsed_store_id:
+            alerts_query = alerts_query.where(Alert.store_id == parsed_store_id)
+        alerts_stmt = alerts_query.order_by(Alert.created_at.desc())
         alerts_res = await db.execute(alerts_stmt)
         alerts = [
             {
@@ -121,18 +139,17 @@ async def get_chart_bundle(
         # 7. Dense 90-day daily revenue series
         today = date.today()
         lookback_start_90d = today - timedelta(days=89)
-        stmt_rev_daily = (
-            select(
-                SaleRecord.sale_date,
-                func.sum(SaleRecord.total_revenue).label("daily_rev")
-            )
-            .where(
-                SaleRecord.user_id == user_id,
-                SaleRecord.sale_date >= lookback_start_90d,
-                SaleRecord.sale_date <= today
-            )
-            .group_by(SaleRecord.sale_date)
+        rev_query = select(
+            SaleRecord.sale_date,
+            func.sum(SaleRecord.total_revenue).label("daily_rev")
+        ).where(
+            SaleRecord.user_id == user_id,
+            SaleRecord.sale_date >= lookback_start_90d,
+            SaleRecord.sale_date <= today
         )
+        if parsed_store_id:
+            rev_query = rev_query.where(SaleRecord.store_id == parsed_store_id)
+        stmt_rev_daily = rev_query.group_by(SaleRecord.sale_date)
         r_rev_daily = await db.execute(stmt_rev_daily)
         daily_rev_map = {row.sale_date: float(row.daily_rev or 0.0) for row in r_rev_daily.all()}
         

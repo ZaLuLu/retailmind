@@ -287,7 +287,7 @@ async def demo_reset_and_upload(
     return {
         "job_id": job_id,
         "record_count": len(records),
-        "skipped_rows": skipped,
+        "skipped_rows": len(errors),
         "status": "processing",
     }
 
