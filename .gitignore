@@ -33,3 +33,5 @@ env/
 # OS junk
 .DS_Store
 Thumbs.db
+
+.vercel
