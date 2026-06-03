@@ -21,7 +21,6 @@ import uuid
 from datetime import date, datetime, timedelta
 from typing import AsyncGenerator
 
-import pandas as pd
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile, File
 from fastapi.responses import StreamingResponse
 from sqlalchemy import delete, select
@@ -219,56 +218,27 @@ async def demo_reset_and_upload(
     raw = await file.read()
 
     # 1. Parse
-    try:
-        if filename.endswith(".csv"):
-            df = pd.read_csv(__import__("io").BytesIO(raw), encoding="utf-8-sig")
-        else:
-            df = pd.read_excel(__import__("io").BytesIO(raw))
-    except Exception as exc:
-        raise HTTPException(422, f"Could not parse file: {exc}") from exc
+    from .retail import _parse_csv_rows, _parse_xlsx_rows, _normalise_header, _build_sale_record
 
-    if len(df) == 0:
+    try:
+        if filename.endswith(".xlsx"):
+            raw_rows, normalised_headers = _parse_xlsx_rows(raw)
+        else:
+            try:
+                text = raw.decode("utf-8-sig")
+            except UnicodeDecodeError:
+                text = raw.decode("latin-1")
+            raw_rows, normalised_headers = _parse_csv_rows(text)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+    if len(raw_rows) == 0:
         raise HTTPException(422, "Uploaded file has no data rows.")
 
-    if len(df) > settings.MAX_UPLOAD_ROWS:
+    if len(raw_rows) > settings.MAX_UPLOAD_ROWS:
         raise HTTPException(
             413,
             f"File exceeds maximum of {settings.MAX_UPLOAD_ROWS:,} rows.",
-        )
-
-    # 2. Normalise column names (case-insensitive alias resolution)
-    ALIASES: dict[str, str] = {
-        # product
-        "product": "product_name", "item": "product_name", "item_name": "product_name",
-        "name": "product_name",
-        # quantity
-        "qty": "quantity_sold", "quantity": "quantity_sold", "units": "quantity_sold",
-        "units_sold": "quantity_sold", "qty_sold": "quantity_sold",
-        # price
-        "price": "unit_price", "selling_price": "unit_price", "sale_price": "unit_price",
-        "mrp": "unit_price",
-        # date
-        "date": "sale_date", "transaction_date": "sale_date", "order_date": "sale_date",
-        # sku
-        "sku": "product_sku", "item_code": "product_sku", "barcode": "product_sku",
-        "product_id": "product_sku",
-        # category
-        "category": "product_category", "type": "product_category",
-        # cogs
-        "cost": "cogs", "cost_price": "cogs", "purchase_price": "cogs", "unit_cost": "cogs",
-        # segment
-        "segment": "customer_segment",
-    }
-    df.columns = [ALIASES.get(c.strip().lower(), c.strip().lower()) for c in df.columns]
-
-    # Validate required columns
-    required = {"product_name", "quantity_sold", "unit_price", "sale_date"}
-    missing = required - set(df.columns)
-    if missing:
-        raise HTTPException(
-            422,
-            f"Missing required columns: {', '.join(missing)}. "
-            "Use the template from the Data Import page.",
         )
 
     # 3. Delete existing records
@@ -286,64 +256,23 @@ async def demo_reset_and_upload(
 
     # 4. Insert new records
     records: list[SaleRecord] = []
-    skipped = 0
-    import math
+    errors = []
+    user_currency = user.currency or "USD"
 
-    for _, row in df.iterrows():
+    for line_num, row in enumerate(raw_rows, start=2):
+        norm_row = {_normalise_header(k): v for k, v in row.items()}
         try:
-            qty = float(row["quantity_sold"])
-            price = float(row["unit_price"])
-
-            if math.isnan(qty) or math.isnan(price) or math.isinf(qty) or math.isinf(price):
-                logger.debug("Skipping row due to invalid number (NaN or Infinity)")
-                skipped += 1
-                continue
-
-            total = qty * price
-            raw_cogs = row.get("cogs", None)
-            
-            cogs = None
-            if pd.notna(raw_cogs) and raw_cogs:
-                cogs_val = float(raw_cogs)
-                if math.isnan(cogs_val) or math.isinf(cogs_val):
-                    logger.debug("Skipping row due to invalid COGS (NaN or Infinity)")
-                    skipped += 1
-                    continue
-                cogs = cogs_val * qty
-
-            margin = (
-                round(((total - cogs) / total) * 100, 2)
-                if total > 0 and cogs is not None
-                else None
-            )
-
-            sale_date_raw = str(row["sale_date"])[:10]
-            sale_date = datetime.strptime(sale_date_raw, "%Y-%m-%d").date()
-
-            records.append(
-                SaleRecord(
-                    user_id=user.id,
-                    store_id=store_id,
-                    product_name=str(row["product_name"]).strip(),
-                    product_sku=str(row.get("product_sku", "")).strip() or None,
-                    product_category=str(row.get("product_category", "Other")).strip(),
-                    quantity_sold=qty,
-                    unit_price=price,
-                    total_revenue=total,
-                    cogs=cogs,
-                    gross_margin=margin,
-                    sale_date=sale_date,
-                    customer_segment=str(row.get("customer_segment", "")).strip() or None,
-                    currency="USD",
-                    source="demo_upload",
-                )
-            )
-        except Exception as exc:
-            logger.debug("Skipping row due to parse error: %s", exc)
-            skipped += 1
+            record = _build_sale_record(norm_row, user.id, user_currency, store_id=store_id)
+            record.source = "demo_upload"
+            records.append(record)
+        except Exception as e:
+            errors.append(f"Row {line_num}: {e}")
 
     if not records:
-        raise HTTPException(422, "No valid rows could be parsed from the file.")
+        raise HTTPException(
+            status_code=422,
+            detail=f"No valid rows could be parsed from the file. First error: {errors[0] if errors else 'Unknown'}",
+        )
 
     batch_size = 500
     for i in range(0, len(records), batch_size):
