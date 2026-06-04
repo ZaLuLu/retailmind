@@ -226,6 +226,29 @@
   border-radius: 0; /* Pure square ribbon strips */
 }
 
+.message-content p {
+  margin: 0 0 0.5rem 0;
+}
+
+.message-content p:last-child {
+  margin-bottom: 0;
+}
+
+.message-content ul, .message-content ol {
+  margin: 0 0 0.5rem 0;
+  padding-left: 1.2rem;
+  text-align: left;
+}
+
+.message-content li {
+  margin-bottom: 0.25rem;
+}
+
+.message-content strong {
+  font-weight: 900;
+  color: #000;
+}
+
 /* User Message: Golden Yellow Telegram Tape Strip */
 .chat-message.user .message-content {
   background: #FFFDF0; /* Crisp ivory paper */
@@ -1091,3 +1114,36 @@
   color: var(--ink);
 }
 .error-boundary__btn--secondary:hover { background: rgba(13,27,42,0.06); }
+
+/* ── Mobile Responsiveness Overlays ── */
+@media (max-width: 768px) {
+  .chat-card {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  
+  .store-modal-overlay {
+    background: var(--bg-paper) !important;
+  }
+
+  .store-modal {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 16px !important;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .store-list {
+    flex: 1;
+    max-height: unset !important;
+  }
+}

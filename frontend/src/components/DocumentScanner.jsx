@@ -14,10 +14,10 @@ export default function DocumentScanner({ onClose, onComplete, selectedStore, cu
   const [committing, setCommitting] = useState(false)
 
   const logSteps = [
-    'CONNECTING TO THE BUREAU OF INTELLIGENCE EXTRACTION ENGINE...',
-    'ESTABLISHING DOCUMENT ENVELOPE HANDSHAKE...',
-    'INJECTING INVOICE MATRIX BYTES TO GEMINI VISION MODEL...',
-    'PERFORMING OPTICAL CHARACTER AUDIT AND METADATA EXTRACTION...',
+    'CONNECTING TO AI DOCUMENT EXTRACTION ENGINE...',
+    'ESTABLISHING SECURE DATA SHAKE...',
+    'UPLOADING INVOICE BYTES TO GEMINI VISION MODEL...',
+    'PERFORMING DOCUMENT SCANNING AND METADATA EXTRACTION...',
     'RECONCILING TRANSACTION DATE STAMPS AND BARCODE SKU SIGNALS...',
     'APPLYING NATURAL LANGUAGE CATEGORIZATION SCHEMES...',
     'CALCULATING UNIT PRICES, COGS SCALES, AND SYSTEM MARGINS...',
@@ -35,6 +35,17 @@ export default function DocumentScanner({ onClose, onComplete, selectedStore, cu
     }
     return () => clearInterval(interval)
   }, [phase, terminalIndex])
+
+  // Escape key handler to close the modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
 
   // Drag handlers
   const handleDrag = (e) => {
@@ -116,7 +127,7 @@ export default function DocumentScanner({ onClose, onComplete, selectedStore, cu
 
     } catch (err) {
       console.error("AI scanning failed:", err)
-      setErrorMessage(err.message || "The Bureau was unable to interpret this receipt's layout. Please check your Gemini connection or run our offline preview fallback.")
+      setErrorMessage(err.message || "The AI scanner was unable to interpret this receipt's layout. Please check your Gemini connection or run our offline preview fallback.")
       setPhase('error')
     }
   }
@@ -243,7 +254,7 @@ export default function DocumentScanner({ onClose, onComplete, selectedStore, cu
         
         <div className="scanner-modal-header">
           <div className="scanner-header-title-block">
-            <span className="scanner-kicker">Intelligence Bureau scanner</span>
+            <span className="scanner-kicker">AI DOCUMENT SCANNER</span>
             <h2>AI Document Scanning Terminal</h2>
           </div>
           <button className="scanner-modal-close" onClick={onClose}>✕</button>
@@ -254,7 +265,7 @@ export default function DocumentScanner({ onClose, onComplete, selectedStore, cu
           {phase === 'drop' && (
             <div>
               <div className="scanner-fallback-banner">
-                💡 <strong>Gemini Vision Mode:</strong> Drop print receipts or supplier invoice PDFs here. The bureau will scan line-by-line, forecast demand spikes, and compute standard margins instantly.
+                💡 <strong>Gemini Vision Mode:</strong> Drop print receipts or supplier invoice PDFs here. The scanner will process line-by-line, forecast demand spikes, and compute standard margins instantly.
               </div>
 
               <div 
@@ -307,7 +318,7 @@ export default function DocumentScanner({ onClose, onComplete, selectedStore, cu
             <div className="scanner-loading-container">
               <div className="scanner-typewriter-box">
                 <div className="scanner-terminal-header">
-                  <span>Bureau Telex Link v1.0</span>
+                  <span>AI Scanner Terminal v1.0</span>
                   <span>STATUS: SECURE_SCAN</span>
                 </div>
                 {terminalLogs.map((log, i) => (

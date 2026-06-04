@@ -10,35 +10,21 @@ import SplashScreen from './components/SplashScreen'
 import GuidedTour from './components/GuidedTour'
 import { api } from './services/api'
 import { useToast } from './components/Toast'
-import { IS_DEMO, DEMO_USER } from './config'
+import { IS_DEMO } from './config'
+import { useRetailData } from './hooks/useRetailData'
 import './App.css'
-
-const EMPTY_SUMMARY = {
-  total_revenue: 0,
-  total_cogs: 0,
-  gross_profit: 0,
-  overall_margin_pct: 0,
-  mom_revenue_change_pct: 0,
-  num_sales: 0,
-  top_products: [],
-  category_breakdown: [],
-  demand_signals: [],
-  dead_stock_alerts: [],
-  margin_erosion_alerts: [],
-  ai_insight: 'Connecting to intelligence bureau…',
-}
 
 function App() {
   const { showToast } = useToast()
 
-  // ── Demo mode: bypass auth entirely ──────────────────────────────────────
+  // ── Auth & Routing state ─────────────────────────────────────────────────
   const [isAuthenticated, setIsAuthenticated] = useState(
     IS_DEMO || !!localStorage.getItem('token')
   )
   const [authView, setAuthView] = useState('login') // 'login' | 'register'
   const [splashDone, setSplashDone] = useState(false)
-  const [isOnboarded, setIsOnboarded] = useState(IS_DEMO) // demo is always onboarded
 
+  // ── Modals & Chat state ──────────────────────────────────────────────────
   const [showSettings, setShowSettings] = useState(false)
   const [showChat, setShowChat] = useState(false)
   const [chatPrefill, setChatPrefill] = useState('')
@@ -46,121 +32,6 @@ function App() {
   const handleAskAdvisor = (promptText) => {
     setChatPrefill(promptText)
     setShowChat(true)
-  }
-  const [user, setUser] = useState(
-    IS_DEMO
-      ? { fullName: DEMO_USER.fullName, storeName: DEMO_USER.storeName, currency: DEMO_USER.currency }
-      : { fullName: '', storeName: '', currency: 'INR' }
-  )
-  const [sales, setSales] = useState([])
-  const [summary, setSummary] = useState(EMPTY_SUMMARY)
-  const [loading, setLoading] = useState(false)
-  const [stores, setStores] = useState([])
-  const [selectedStore, setSelectedStore] = useState(null)
-  // Track whether user has replaced demo data with their own upload
-  const [hasCustomData, setHasCustomData] = useState(false)
-  const [showImport, setShowImport] = useState(false)
-
-  // Listen for forced logout from token refresh failure
-  useEffect(() => {
-    const handleForcedLogout = () => {
-      handleLogout()
-      showToast('warning', 'Your session expired. Please log in again.')
-    }
-    window.addEventListener('auth:logout', handleForcedLogout)
-    return () => window.removeEventListener('auth:logout', handleForcedLogout)
-  }, [])
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchUserData()
-    }
-  }, [isAuthenticated])
-
-  const fetchUserData = async (period, dateFrom, dateTo, storeIdOverride) => {
-    setLoading(true)
-    try {
-      // 1. User profile
-      const data = await api.get('/users/me')
-      setUser({
-        fullName: data.full_name || '',
-        storeName: data.store_name || '',
-        currency: data.currency || 'INR',
-      })
-      setIsOnboarded(data.is_onboarded)
-
-      if (data.is_onboarded) {
-        // 1.5 Fetch stores
-        let fetchedStores = []
-        try {
-          fetchedStores = await api.getStores()
-        } catch (storeErr) {
-          console.error("Failed to fetch stores", storeErr)
-        }
-
-        let activeStore = null
-        if (storeIdOverride) {
-          activeStore = fetchedStores.find(s => s.id === storeIdOverride) || null
-        } else if (selectedStore) {
-          activeStore = fetchedStores.find(s => s.id === selectedStore.id) || null
-        }
-
-        // If no stores exist, create one from user's storeName
-        if (fetchedStores.length === 0) {
-          try {
-            const defaultStore = await api.createStore({
-              name: data.store_name || 'My First Store',
-              location: 'Primary'
-            })
-            fetchedStores = [defaultStore]
-            activeStore = defaultStore
-          } catch (createErr) {
-            console.error("Failed to create default store", createErr)
-          }
-        } else if (!activeStore) {
-          activeStore = fetchedStores[0]
-        }
-
-        setStores(fetchedStores)
-        setSelectedStore(activeStore)
-
-        const activeStoreId = activeStore?.id || null
-
-        // 2. Retail intelligence summary
-        const summaryData = await api.getRetailSummary(period, dateFrom, dateTo, activeStoreId)
-        setSummary(summaryData)
-
-        // 3. Sales ledger
-        const salesData = await api.getRetailSales(200, 0, '', '', dateFrom, dateTo, activeStoreId)
-        setSales(salesData)
-      }
-    } catch (err) {
-      console.error('Failed to fetch user data', err)
-      if (err.status === 401) {
-        handleLogout()
-      } else if (err.type === 'server') {
-        showToast('error', 'Server error — could not load your data. Please try again.')
-      } else if (!err.status) {
-        showToast('error', 'Connection failed — check your network.')
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleSelectStore = async (storeId) => {
-    // Preserve current filters when switching stores
-    await fetchUserData(summary?.period, summary?.date_from, summary?.date_to, storeId)
-  }
-
-  const handleCreateStore = async (name, location) => {
-    try {
-      const newStore = await api.createStore({ name, location })
-      await fetchUserData(summary?.period, summary?.date_from, summary?.date_to, newStore.id)
-      showToast('success', `Store "${name}" created successfully!`)
-    } catch (err) {
-      showToast('error', err.message || 'Failed to create store.')
-    }
   }
 
   // ── Auth handlers ──────────────────────────────────────────────────────────
@@ -182,61 +53,50 @@ function App() {
   const handleLogout = () => {
     api.logout()
     setIsAuthenticated(false)
-    setUser({ fullName: '', storeName: '', currency: 'INR' })
-    setSales([])
-    setSummary(EMPTY_SUMMARY)
   }
 
-  // ── Onboarding ─────────────────────────────────────────────────────────────
-  const handleOnboardingComplete = async (data) => {
-    try {
-      await api.post('/onboarding/complete', {
-        full_name: data.fullName,
-        store_name: data.storeName,
-        initial_balance: 0,
-        currency: data.currency || 'INR',
-        budgets: {},
-      })
-      await fetchUserData()
-    } catch (err) {
-      showToast('error', err.message || 'Onboarding failed. Please try again.')
+  // Use the custom state hook
+  const {
+    user,
+    sales,
+    summary,
+    loading,
+    stores,
+    selectedStore,
+    hasCustomData,
+    showImport,
+    setShowImport,
+    isOnboarded,
+    fetchUserData,
+    handleSelectStore,
+    handleCreateStore,
+    handleOnboardingComplete,
+    handleSettingsSave,
+    handleDemoUploadComplete,
+    handleDemoRestore,
+  } = useRetailData(isAuthenticated, showToast, handleLogout)
+
+  // Listen for forced logout from token refresh failure
+  useEffect(() => {
+    const handleForcedLogout = () => {
+      handleLogout()
+      showToast('warning', 'Your session expired. Please log in again.')
     }
-  }
+    window.addEventListener('auth:logout', handleForcedLogout)
+    return () => window.removeEventListener('auth:logout', handleForcedLogout)
+  }, [])
 
-  // ── Settings ───────────────────────────────────────────────────────────────
-  const handleSettingsSave = async (updatedData) => {
-    try {
-      await api.patch('/users/me', {
-        full_name: updatedData.fullName,
-        store_name: updatedData.storeName,
-        currency: updatedData.currency,
-      })
-      await fetchUserData()
-      setShowSettings(false)
-      showToast('success', 'Settings saved.')
-    } catch (err) {
-      showToast('error', err.message || 'Failed to update settings.')
+  // Listen for Escape key to close settings and advisor chat overlays
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        if (showSettings) setShowSettings(false)
+        if (showChat) setShowChat(false)
+      }
     }
-  }
-
-  // ── Demo: handle upload + restore ─────────────────────────────────────────
-  const handleDemoUploadComplete = () => {
-    setHasCustomData(true)
-    setShowImport(false)
-    fetchUserData()
-    showToast('success', 'Your data is live! Showing your insights.')
-  }
-
-  const handleDemoRestore = async () => {
-    try {
-      await api.demoRestore()
-      setHasCustomData(false)
-      await fetchUserData()
-      showToast('success', 'Demo data restored.')
-    } catch (err) {
-      showToast('error', err.message || 'Restore failed.')
-    }
-  }
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [showSettings, showChat])
 
   // ── Routing ────────────────────────────────────────────────────────────────
   if (!isAuthenticated) {
@@ -279,7 +139,7 @@ function App() {
               <h2>Store Settings</h2>
               <button className="close-btn" onClick={() => setShowSettings(false)}>✕</button>
             </div>
-            <SettingsForm user={user} onSave={handleSettingsSave} onCancel={() => setShowSettings(false)} />
+            <SettingsForm user={user} onSave={(updatedData) => handleSettingsSave(updatedData, () => setShowSettings(false))} onCancel={() => setShowSettings(false)} />
           </div>
         </div>
       )}
@@ -356,10 +216,8 @@ const SettingsForm = ({ user, onSave, onCancel }) => {
         </select>
       </label>
       <div className="settings-actions">
-        <button type="button" className="mono-btn" onClick={onCancel} disabled={isSubmitting}>Cancel</button>
-        <button type="submit" className={`mono-btn ${isSubmitting ? 'btn-ghost-loading' : ''}`} disabled={isSubmitting} style={{ background: 'var(--ink)', color: 'var(--paper)' }}>
-          Save Settings
-        </button>
+        <button type="button" className="btn-secondary" onClick={onCancel} disabled={isSubmitting}>Cancel</button>
+        <button type="submit" className="btn-primary" disabled={isSubmitting}>{isSubmitting ? 'Saving...' : 'Save Settings'}</button>
       </div>
     </form>
   )

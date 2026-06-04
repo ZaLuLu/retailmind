@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.responses import StreamingResponse
 from ..api.deps import get_current_user
 from ..models.db import User
 from ..services.gemini import gemini_service
+from ..core.limiter import limiter
 from pydantic import BaseModel, field_validator
 from typing import Optional
 import json
@@ -13,9 +14,14 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/advisor", tags=["Advisor"])
 
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
 class AdvisorRequest(BaseModel):
     question: str
     context: Optional[str] = None
+    history: Optional[list[ChatMessage]] = None
 
     @field_validator("context")
     @classmethod
@@ -105,12 +111,17 @@ async def ask_advisor(
     Ask the AI advisor a retail business question (synchronous).
     Question is validated and sanitized before forwarding to Gemini.
     """
-    answer = await gemini_service.ask_advisor(request.question, request.context)
+    history_dicts = None
+    if request.history:
+        history_dicts = [m.model_dump() for m in request.history]
+    answer = await gemini_service.ask_advisor(request.question, request.context, history=history_dicts)
     return AdvisorResponse(answer=answer)
 
 @router.post("/stream")
+@limiter.limit("30/minute")
 async def stream_advisor(
-    request: AdvisorRequest,
+    request: Request,
+    advisor_req: AdvisorRequest,
     current_user: User = Depends(get_current_user)
 ):
     """
@@ -119,7 +130,14 @@ async def stream_advisor(
     """
     async def event_generator():
         try:
-            async for chunk in gemini_service.stream_advisor(request.question, request.context):
+            history_dicts = None
+            if advisor_req.history:
+                history_dicts = [m.model_dump() for m in advisor_req.history]
+            async for chunk in gemini_service.stream_advisor(
+                advisor_req.question,
+                advisor_req.context,
+                history=history_dicts
+            ):
                 yield f"data: {json.dumps({'chunk': chunk})}\n\n"
         except Exception:
             logger.exception("Error in advisor stream")

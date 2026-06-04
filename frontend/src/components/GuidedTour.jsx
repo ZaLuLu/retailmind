@@ -20,7 +20,7 @@ export default function GuidedTour() {
     {
       selector: '#tour-alerts',
       title: '⚠️ Severity Alert Board',
-      content: 'Audits dead stock, margin erosion, and spikes. Click "Ask Advisor" to mount the teletype chat pre-filled with dynamic diagnostic instructions.'
+      content: 'Audits dead stock, margin erosion, and spikes. Click "Ask Advisor" to open the advisor chat panel pre-filled with dynamic diagnostic instructions.'
     },
     {
       selector: '#tour-upload',
@@ -40,6 +40,18 @@ export default function GuidedTour() {
       return () => clearTimeout(timer)
     }
   }, [])
+
+  // Escape key handler to close the tour
+  useEffect(() => {
+    if (!isVisible) return
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        handleDismiss()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isVisible])
 
   useEffect(() => {
     if (!isVisible) return
@@ -97,7 +109,7 @@ export default function GuidedTour() {
       <div className="tour-card-floating">
         
         <div className="tour-card-header">
-          <span className="tour-card-kicker">Bureau correspondent guide</span>
+          <span className="tour-card-kicker">Retail Intelligence Guide</span>
           <span className="mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
             STEP {activeStep + 1} OF {steps.length}
           </span>

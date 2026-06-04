@@ -44,7 +44,13 @@ class GeminiService:
         )
 
     @gemini_retry
-    async def ask_advisor(self, question: str, context: Optional[str] = None) -> str:
+    async def ask_advisor(
+        self,
+        question: str,
+        context: Optional[str] = None,
+        history: Optional[list[dict]] = None,
+        system_instruction: Optional[str] = None
+    ) -> str:
         """
         Ask a retail business intelligence question to the RetailMind advisor.
         Returns the advisor's answer as a string.
@@ -60,29 +66,66 @@ class GeminiService:
         # Escape any curly braces in context to prevent f-string injection
         safe_context = safe_context.replace("{", "{{").replace("}", "}}")
 
-        system_instruction = (
-            "You are 'RetailMind Advisor', a retail business intelligence assistant. "
-            "You ONLY answer questions about retail operations: sales, margins, inventory, "
-            "dead stock, demand signals, pricing, and the RetailMind application. "
-            "For ANY other topic, respond exactly: "
-            "'I am RetailMind's Business Intelligence Advisor. I can only assist with "
-            "retail store sales, margins, dead stock, demand spikes, and inventory trends.' "
-            "Be concise (max 100 words), professional, and provide one actionable tip."
-        )
+        if not system_instruction:
+            if "You are a retail business intelligence analyst" in question:
+                system_instruction = (
+                    "You are a retail business intelligence analyst. "
+                    "Write ONE sharp, actionable sentence (max 20 words) summarising the most important insight from this data. "
+                    "Sound like a Financial Times headline — factual, direct, no fluff."
+                )
+                question = "Summarise the data."
+            else:
+                system_instruction = (
+                    "You are RetailMind's AI Business Advisor — a world-class retail analytics expert. "
+                    "You have access to the user's real store data. Give specific, data-driven advice. "
+                    "You ONLY answer questions about retail operations: sales, margins, inventory, dead stock, demand signals, pricing, and the RetailMind application. "
+                    "\nRules:\n"
+                    "- Always cite real numbers from the data (product names, percentages, revenue figures)\n"
+                    "- End every response with ONE concrete action the owner can take today\n"
+                    "- Use markdown: **bold** numbers, bullet points for lists, avoid walls of text\n"
+                    "- For off-topic questions: professionally redirect to retail analytics. Respond exactly: 'I am RetailMind's Business Intelligence Advisor. I can only assist with retail store sales, margins, dead stock, demand spikes, and inventory trends.'\n"
+                    "- Never invent numbers not in the data; say 'I need more data' if insufficient\n"
+                    "- Keep responses under 200 words unless the user asks for detail"
+                )
+
+        contents = []
+        if history:
+            for msg in history:
+                role = "model" if msg.get("role") in ("advisor", "model") else "user"
+                content = msg.get("content", "")
+                if content:
+                    contents.append({
+                        "role": role,
+                        "parts": [content]
+                    })
 
         user_message = f"Store Dashboard Data: {safe_context}\n\nQuestion: {question}"
+        contents.append({
+            "role": "user",
+            "parts": [user_message]
+        })
 
         try:
+            model = genai.GenerativeModel(
+                model_name=settings.GEMINI_MODEL,
+                system_instruction=system_instruction
+            )
             response = await asyncio.wait_for(
-                self.chat_model.generate_content_async([system_instruction, user_message]),
+                model.generate_content_async(contents),
                 timeout=settings.GEMINI_TIMEOUT_SECONDS
             )
             return response.text
         except Exception as e:
-            logger.error("Gemini advisor failed: %s", type(e).__name__)
-            raise
+            logger.error("Gemini advisor failed: %s. Using fallback answer.", type(e).__name__)
+            return self._fallback_answer(question)
 
-    async def stream_advisor(self, question: str, context: Optional[str] = None):
+    async def stream_advisor(
+        self,
+        question: str,
+        context: Optional[str] = None,
+        history: Optional[list[dict]] = None,
+        system_instruction: Optional[str] = None
+    ):
         """
         Asynchronously stream answers from the RetailMind advisor.
         """
@@ -98,22 +141,46 @@ class GeminiService:
         safe_context = (context or "No specific context provided.")[:2000]
         safe_context = safe_context.replace("{", "{{").replace("}", "}}")
 
-        system_instruction = (
-            "You are 'RetailMind Advisor', a retail business intelligence assistant. "
-            "You ONLY answer questions about retail operations: sales, margins, inventory, "
-            "dead stock, demand signals, pricing, and the RetailMind application. "
-            "For ANY other topic, respond exactly: "
-            "'I am RetailMind's Business Intelligence Advisor. I can only assist with "
-            "retail store sales, margins, dead stock, demand spikes, and inventory trends.' "
-            "Be concise (max 100 words), professional, and provide one actionable tip."
-        )
+        if not system_instruction:
+            system_instruction = (
+                "You are RetailMind's AI Business Advisor — a world-class retail analytics expert. "
+                "You have access to the user's real store data. Give specific, data-driven advice. "
+                "You ONLY answer questions about retail operations: sales, margins, inventory, dead stock, demand signals, pricing, and the RetailMind application. "
+                "\nRules:\n"
+                "- Always cite real numbers from the data (product names, percentages, revenue figures)\n"
+                "- End every response with ONE concrete action the owner can take today\n"
+                "- Use markdown: **bold** numbers, bullet points for lists, avoid walls of text\n"
+                "- For off-topic questions: professionally redirect to retail analytics. Respond exactly: 'I am RetailMind's Business Intelligence Advisor. I can only assist with retail store sales, margins, dead stock, demand spikes, and inventory trends.'\n"
+                "- Never invent numbers not in the data; say 'I need more data' if insufficient\n"
+                "- Keep responses under 200 words unless the user asks for detail"
+            )
+
+        contents = []
+        if history:
+            for msg in history:
+                role = "model" if msg.get("role") in ("advisor", "model") else "user"
+                content = msg.get("content", "")
+                if content:
+                    contents.append({
+                        "role": role,
+                        "parts": [content]
+                    })
 
         user_message = f"Store Dashboard Data: {safe_context}\n\nQuestion: {question}"
+        contents.append({
+            "role": "user",
+            "parts": [user_message]
+        })
 
         try:
+            model = genai.GenerativeModel(
+                model_name=settings.GEMINI_MODEL,
+                system_instruction=system_instruction
+            )
             response = await asyncio.wait_for(
-                self.chat_model.generate_content_async(
-                    [system_instruction, user_message], stream=True
+                model.generate_content_async(
+                    contents,
+                    stream=True
                 ),
                 timeout=settings.GEMINI_TIMEOUT_SECONDS
             )
@@ -121,8 +188,13 @@ class GeminiService:
                 if chunk.text:
                     yield chunk.text
         except Exception as e:
-            logger.error("Gemini advisor streaming failed: %s", type(e).__name__)
-            raise
+            logger.error("Gemini advisor streaming failed: %s. Using fallback streaming.", type(e).__name__)
+            reply = self._fallback_answer(question)
+            words = reply.split(" ")
+            for i in range(0, len(words), 3):
+                chunk = " ".join(words[i:i+3]) + " "
+                yield chunk
+                await asyncio.sleep(0.08)
 
     def _fallback_answer(self, question: str) -> str:
         """

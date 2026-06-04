@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { api } from '../services/api'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
+
+// Configure marked options
+marked.setOptions({
+  breaks: true,
+  gfm: true
+})
 
 function AdvisorChat({ summary, prefill, clearPrefill, onClose }) {
   const [messages, setMessages] = useState([
@@ -25,6 +33,16 @@ function AdvisorChat({ summary, prefill, clearPrefill, onClose }) {
     }
   }, [messages])
 
+  const renderMarkdown = (content) => {
+    try {
+      const rawHtml = marked.parse(content || '')
+      const cleanHtml = DOMPurify.sanitize(rawHtml)
+      return { __html: cleanHtml }
+    } catch (e) {
+      return { __html: content || '' }
+    }
+  }
+
   const handleSend = async () => {
     if (!input.trim() || loading) return
 
@@ -39,10 +57,17 @@ function AdvisorChat({ summary, prefill, clearPrefill, onClose }) {
     setLoading(true)
 
     const contextStr = summary ? JSON.stringify(summary) : ''
+    
+    // Build history payload from messages in state (up to 10 previous turns)
+    const historyPayload = messages
+      .filter(m => m.content && m.content.trim() !== '')
+      .map(m => ({ role: m.role, content: m.content }))
+      .slice(-10)
 
     await api.askAdvisorStream(
       currentInput,
       contextStr,
+      historyPayload,
       (chunk) => {
         setMessages(prev => prev.map(msg => 
           msg.id === streamId 
@@ -53,7 +78,7 @@ function AdvisorChat({ summary, prefill, clearPrefill, onClose }) {
       (error) => {
         setMessages(prev => prev.map(msg => 
           msg.id === streamId 
-            ? { ...msg, content: 'The intelligence desk encountered a telex line drop. Please resubmit your request.' } 
+            ? { ...msg, content: 'The AI advisor encountered a connection issue. Please resubmit your request.' } 
             : msg
         ))
         setLoading(false)
@@ -70,13 +95,9 @@ function AdvisorChat({ summary, prefill, clearPrefill, onClose }) {
         <header>
           <div className="chat-header-row">
             <div>
-              <p className="mono" style={{ margin: '0 0 0.1rem', color: 'var(--ink-muted)', fontSize: '0.6rem', fontWeight: 800, letterSpacing: '0.12em' }}>
-                DIRECT WIRE TRANSMISSION // CLASSIFIED LEDGER ACCESS
-              </p>
-              <h2>Teletype Advisor Dispatch</h2>
+              <h2>AI Business Advisor</h2>
               <div style={{ display: 'flex', gap: '1rem', marginTop: '0.4rem', fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'var(--text-muted)' }}>
-                <span>STATION: RETAILMIND CORE V3.1.0</span>
-                <span>DESK ID: ENG-RAG-902</span>
+                <span>SYSTEM: RETAILMIND CORE V3.1.0</span>
                 <span>STATUS: ACTIVE ONLINE</span>
               </div>
             </div>
@@ -88,18 +109,16 @@ function AdvisorChat({ summary, prefill, clearPrefill, onClose }) {
           {messages.map((msg, i) => (
             <div key={i} className={`chat-message ${msg.role}`}>
               <div className="message-header">
-                {msg.role === 'advisor' ? '▲ ADVISOR SYSTEM DISPATCH' : '▼ OPERATOR INQUIRY'}
+                {msg.role === 'advisor' ? 'RetailMind AI' : 'You'}
               </div>
-              <div className="message-content">
-                {msg.role === 'advisor' && (
-                  <div className="telex-badge">REPLY STAMP: INTEL-OK</div>
-                )}
-                {msg.content}
-              </div>
+              <div 
+                className="message-content markdown-body"
+                dangerouslySetInnerHTML={renderMarkdown(msg.content)}
+              />
             </div>
           ))}
           {loading && (
-            <div className="chat-thinking">TELEX TRANSCRIPTION IN PROGRESS...</div>
+            <div className="chat-thinking">Thinking...</div>
           )}
         </div>
 
@@ -136,7 +155,7 @@ function AdvisorChat({ summary, prefill, clearPrefill, onClose }) {
             placeholder="Ask about top products, margins, dead stock, demand trends..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             aria-label="Advisor question"
             disabled={loading}
           />

@@ -54,9 +54,9 @@ function OnboardingWizard({ onComplete }) {
         <header className="step-indicator">
           <span className="mono">Step {step} of 3</span>
           <h2>
-            {step === 1 ? 'Establish Your Desk'
+            {step === 1 ? 'Store Profile Configuration'
               : step === 2 ? 'Target Revenue Configuration'
-              : 'Launch Intelligence Bureau'}
+              : 'Launch Retail Intelligence'}
           </h2>
         </header>
 
@@ -64,7 +64,7 @@ function OnboardingWizard({ onComplete }) {
           <div className="wizard-step">
             <p>Define your storefront coordinates and reporting standards.</p>
             <div className="form-group">
-              <label>Proprietor / Correspondent Name</label>
+              <label>Proprietor Name</label>
               <input
                 type="text"
                 placeholder="e.g. Rahul Sharma"
@@ -128,7 +128,7 @@ function OnboardingWizard({ onComplete }) {
         {step === 3 && (
           <div className="wizard-step">
             <p>
-              Review your agency briefing. Are these storefront parameters correct?
+              Review your storefront configuration. Are these parameters correct?
             </p>
             <div className="summary card" style={{ border: 'var(--border-heavy)', padding: '1rem', backgroundColor: 'rgba(0,0,0,0.02)' }}>
               <p className="mono"><strong>PROPRIETOR:</strong> {formData.fullName}</p>

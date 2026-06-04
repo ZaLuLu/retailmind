@@ -1,7 +1,7 @@
 # backend/app/api/analytics.py
 import json
 import logging
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
@@ -178,7 +178,7 @@ async def get_chart_bundle(
             "portfolio": portfolio,
             "segments": segments,
             "alerts": alerts,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
         }
 
         # Cache in Redis: infinite TTL in demo mode, 5 min TTL in production

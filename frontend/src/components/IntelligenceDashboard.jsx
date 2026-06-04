@@ -13,6 +13,7 @@ import UserManual from './UserManual'
 import DocumentScanner from './DocumentScanner'
 import { api } from '../services/api'
 import { useToast } from './Toast'
+import ErrorBoundary from './ErrorBoundary'
 
 const IntelligenceDashboard = ({
   summary,
@@ -135,15 +136,6 @@ const IntelligenceDashboard = ({
 
       {/* ── Masthead ── */}
       <header className="masthead">
-        <div className="masthead-ticker">
-          <div className="masthead-ticker-edition">
-            <span>VOL. I — RETAIL EDITION</span>
-            <span>POWERED BY AI</span>
-            <span>SMB INTELLIGENCE BUREAU</span>
-          </div>
-          <span>RETAILMIND INTEL CORP.</span>
-        </div>
-
         <div className="masthead-main">
           <div className="masthead-title-block">
             <h1 className="masthead-title">RetailMind</h1>
@@ -243,30 +235,71 @@ const IntelligenceDashboard = ({
                     <div className="skeleton-line text-short" />
                   </div>
                 </div>
+              ) : sales.length === 0 ? (
+                <div className="zero-state-container animate-scale">
+                  <div className="zero-state-card" style={{ border: 'var(--border-light)', padding: '2.5rem', background: 'var(--bg-tint)', marginBottom: '2rem' }}>
+                    <span className="mono" style={{ color: 'var(--ink-red)', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em' }}>
+                      ONBOARDING GATEWAY
+                    </span>
+                    <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', marginTop: '0.5rem', fontWeight: 800 }}>Welcome to RetailMind</h2>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', margin: '1rem 0 1.5rem' }}>
+                      RetailMind leverages time-series forecasting, K-Means clustering, and Z-Score anomaly detection to transform raw transaction records into clear, action-oriented business intelligence.
+                    </p>
+                    <p style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '1rem' }}>To begin analyzing your retail operations, follow these steps:</p>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                        <span className="mono" style={{ background: 'var(--ink-black)', color: 'var(--bg-paper)', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 700, fontSize: '0.75rem' }}>1</span>
+                        <div>
+                          <h4 style={{ margin: '0 0 0.2rem', fontSize: '0.95rem', fontWeight: 700 }}>Upload Sales Records</h4>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Use the "Data Import" box on the right sidebar to upload a CSV or Excel (.xlsx) file. We'll automatically map your headers.</p>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                        <span className="mono" style={{ background: 'var(--ink-black)', color: 'var(--bg-paper)', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 700, fontSize: '0.75rem' }}>2</span>
+                        <div>
+                          <h4 style={{ margin: '0 0 0.2rem', fontSize: '0.95rem', fontWeight: 700 }}>Or Scan Receipts</h4>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Click "AI Scan Receipt" to capture or upload an invoice/receipt. Our AI scanner extracts transaction data automatically.</p>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                        <span className="mono" style={{ background: 'var(--ink-black)', color: 'var(--bg-paper)', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 700, fontSize: '0.75rem' }}>3</span>
+                        <div>
+                          <h4 style={{ margin: '0 0 0.2rem', fontSize: '0.95rem', fontWeight: 700 }}>Explore ML Dashboards & Chat</h4>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Your dashboard charts, category breakdown, smart alerts, and AI business advisor will populate instantly once data is loaded.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <>
                   <div className="section-pad">
                     <RevenueHero summary={summary} currency={currency} />
                   </div>
                   <div className="section-pad" id="tour-sales-graph">
-                    <SalesTrendGraph sales={sales} categoryBreakdown={summary?.category_breakdown} forecast={summary?.revenue_forecast_14d ?? []} currency={currency} />
+                    <ErrorBoundary inline>
+                      <SalesTrendGraph sales={sales} categoryBreakdown={summary?.category_breakdown} forecast={summary?.revenue_forecast_14d ?? []} currency={currency} />
+                    </ErrorBoundary>
                   </div>
                   <div className="section-pad">
                     <TopProductsTable products={summary?.top_products ?? []} currency={currency} />
                   </div>
                   <div className="section-pad">
-                    <PortfolioMatrix
-                      period={period}
-                      dateFrom={dateFrom}
-                      dateTo={dateTo}
-                      storeId={selectedStore?.id}
-                      currency={currency}
-                      onQuadrantSelect={(productNames, quadName) => {
-                        setLedgerProductFilter(productNames)
-                        setActiveView('ledger')
-                        showToast('success', `Filtered ledger by ${quadName} quadrant`)
-                      }}
-                    />
+                    <ErrorBoundary inline>
+                      <PortfolioMatrix
+                        period={period}
+                        dateFrom={dateFrom}
+                        dateTo={dateTo}
+                        storeId={selectedStore?.id}
+                        currency={currency}
+                        onQuadrantSelect={(productNames, quadName) => {
+                          setLedgerProductFilter(productNames)
+                          setActiveView('ledger')
+                          showToast('success', `Filtered ledger by ${quadName} quadrant`)
+                        }}
+                      />
+                    </ErrorBoundary>
                   </div>
 
                   {/* Category Breakdown */}
@@ -342,11 +375,13 @@ const IntelligenceDashboard = ({
 
                   {/* Customer Segment Analytics Panel */}
                   <div className="section-pad">
-                    <CustomerSegmentsPanel
-                      customerSegments={summary?.customer_segments ?? []}
-                      currency={currency}
-                      onAskAdvisor={onAskAdvisor}
-                    />
+                    <ErrorBoundary inline>
+                      <CustomerSegmentsPanel
+                        customerSegments={summary?.customer_segments ?? []}
+                        currency={currency}
+                        onAskAdvisor={onAskAdvisor}
+                      />
+                    </ErrorBoundary>
                   </div>
 
                   {/* CSV Upload */}
@@ -401,7 +436,7 @@ const IntelligenceDashboard = ({
                   {/* AI Insight */}
                   <div className="section-pad insight-section">
                     <div className="insight-card">
-                      <p className="insight-label">Bureau of Retail Intelligence · AI Dispatch</p>
+                      <p className="insight-label">RetailMind AI Dispatch</p>
                       <p className="insight-quote">"{summary?.ai_insight ?? 'Analysing your retail data...'}"</p>
                       <button className="ask-btn" onClick={onShowChat}>Ask Retail Advisor →</button>
                     </div>

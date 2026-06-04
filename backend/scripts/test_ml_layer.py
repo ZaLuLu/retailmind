@@ -146,7 +146,7 @@ async def run_tests():
             user_id=user.id, store_id=store.id,
             product_name="Artisan Ink", product_category="Office",
             quantity_sold=1.0, unit_price=50.0, total_revenue=50.0,
-            cogs=5.0, gross_margin=90.0, sale_date=today - timedelta(days=5),
+            cogs=5.0, gross_margin=90.0, sale_date=today - timedelta(days=1),
             customer_segment="Online", currency="INR", source="test"
         ))
         

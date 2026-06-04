@@ -8,9 +8,8 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
 
 from .core.config import settings
 from .api.auth import router as auth_router
@@ -22,6 +21,7 @@ from .api.retail import router as retail_router
 from .api.analytics import router as analytics_router
 from .api.scan import router as scan_router
 from .middleware.security import SecurityHeadersMiddleware
+from .core.limiter import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +31,6 @@ if settings.SENTRY_DSN:
         dsn=settings.SENTRY_DSN,
         environment=settings.ENVIRONMENT,
     )
-
-# Initialize Rate Limiter (using client IP addresses)
-limiter = Limiter(key_func=get_remote_address)
 
 from contextlib import asynccontextmanager
 from .core.redis import cache

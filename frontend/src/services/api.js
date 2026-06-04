@@ -361,7 +361,7 @@ export const api = {
   askAdvisor: (question) => request('POST', '/advisor/ask', { question }),
 
   /** Centralised fetch call for streaming the advisor response (POST stream) */
-  askAdvisorStream: async (question, context, onChunk, onError, onDone) => {
+  askAdvisorStream: async (question, context, history, onChunk, onError, onDone) => {
     // Attempt to refresh token proactively if needed before opening the stream
     let token = localStorage.getItem('token')
 
@@ -373,7 +373,7 @@ export const api = {
           'Content-Type': 'application/json',
           ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
         },
-        body: JSON.stringify({ question, context })
+        body: JSON.stringify({ question, context, history })
       })
 
       if (response.status === 401) {

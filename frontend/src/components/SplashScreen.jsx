@@ -7,9 +7,9 @@ export default function SplashScreen({ onComplete }) {
   const [fade, setFade] = useState(false)
 
   const steps = [
-    '[SYS] BOOTSTRAPPING COURIER DIGITAL CORE...',
-    '[SYS] SYNCHRONISING DECENTRALIZED RETAIL LEDGERS...',
-    '[SYS] INTEL ARCHITECTURE DISPATCH READY.'
+    '[SYS] INITIALIZING RETAIL ANALYTICS ENGINE...',
+    '[SYS] CONFIGURING ENCRYPTED RETAIL DATASTORES...',
+    '[SYS] SYSTEM CORE READY.'
   ]
 
   useEffect(() => {
@@ -47,9 +47,9 @@ export default function SplashScreen({ onComplete }) {
       <div className="splash-broadsheet">
         
         <div className="splash-masthead">
-          <span className="splash-kicker">SMB Intelligence Bureau</span>
+          <span className="splash-kicker">SMB Retail Intelligence Dashboard</span>
           <h1 className="splash-title">RetailMind</h1>
-          <span className="splash-sub">VOL. I — INTELLIGENCE BRIEFING EDITION</span>
+          <span className="splash-sub">VOL. I — SALES INTELLIGENCE EDITION</span>
         </div>
 
         <div className="splash-terminal">
@@ -65,7 +65,7 @@ export default function SplashScreen({ onComplete }) {
 
         <div className="splash-stamp">
           <div className="splash-stamp-text">
-            SECURE<br />WIRE
+            SECURE<br />DATA
           </div>
         </div>
 

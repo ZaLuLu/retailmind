@@ -82,32 +82,16 @@ function Login({ onLogin, onDemoLogin, onSwitch }) {
                 "Without reliable data, a merchant merely walks through the dark. Light up your revenue, stock margins, and customer dynamics today."
               </p>
             </div>
-
-            {/* Vintage ink stamp */}
-            <div className="editorial-stamp">
-              <div className="editorial-stamp-inner">
-                SECURE
-                <br />
-                DESK ACCESS
-                <br />
-                DESK #1
-              </div>
-            </div>
-
-            <div className="editorial-footer">
-              <span>VOL. XXIV — NO. 142</span>
-              <span>ONE SHILLING</span>
-            </div>
           </div>
 
           {/* Right Column: Active Card */}
           <div className="auth-card">
             <div style={{ marginBottom: '1.75rem', borderBottom: 'var(--border-mid)', paddingBottom: '1rem' }}>
               <p className="mono" style={{ margin: '0 0 0.2rem', color: 'var(--ink-red)', fontSize: '0.65rem', fontWeight: 700 }}>
-                ESTABLISHED MMXXVI — DESK LOG
+                ESTABLISHED MMXXVI — SECURITY PORTAL
               </p>
               <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 800, color: 'var(--ink-black)' }}>
-                Correspondent Login
+                Sign In
               </h2>
             </div>
 
@@ -115,7 +99,7 @@ function Login({ onLogin, onDemoLogin, onSwitch }) {
               {error && <div className="auth-error">{error}</div>}
 
               <div className="form-group">
-                <label htmlFor="login-email">Correspondence Email</label>
+                <label htmlFor="login-email">Email Address</label>
                 <input
                   id="login-email"
                   type="email"
@@ -128,7 +112,7 @@ function Login({ onLogin, onDemoLogin, onSwitch }) {
               </div>
 
               <div className="form-group">
-                <label htmlFor="login-password">Secure Access Code</label>
+                <label htmlFor="login-password">Password</label>
                 <div className="password-wrapper">
                   <input
                     id="login-password"
@@ -158,13 +142,13 @@ function Login({ onLogin, onDemoLogin, onSwitch }) {
                     checked={remember}
                     onChange={e => setRemember(e.target.checked)}
                   />
-                  <span>Remember my terminal email</span>
+                  <span>Remember my email</span>
                 </label>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
                 <button type="submit" disabled={loading || demoLoading} id="login-submit">
-                  {loading ? 'AUTHENTICATING CORRESPONDENT...' : 'ENTER OFFICE DESK →'}
+                  {loading ? 'SIGNING IN...' : 'SIGN IN →'}
                 </button>
 
                 <button
@@ -180,7 +164,7 @@ function Login({ onLogin, onDemoLogin, onSwitch }) {
                     padding: '0.85rem'
                   }}
                 >
-                  {demoLoading ? 'BOOTSTRAPPING DEMO OFFICE...' : 'TRY LIVE DEMO (GUEST ACCESS) →'}
+                  {demoLoading ? 'BOOTSTRAPPING DEMO...' : 'TRY LIVE DEMO (GUEST ACCESS) →'}
                 </button>
 
                 <button
@@ -188,7 +172,7 @@ function Login({ onLogin, onDemoLogin, onSwitch }) {
                   onClick={onSwitch}
                   className="switch-btn"
                 >
-                  New correspondent? Register secure credentials here
+                  Create an account
                 </button>
               </div>
             </form>

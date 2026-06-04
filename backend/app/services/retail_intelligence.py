@@ -1,11 +1,12 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
-from ..models.db import SaleRecord
+from ..models.db import SaleRecord, MLResult, Alert
 from ..services.gemini import gemini_service
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from typing import Dict, Any, List, Optional, Tuple
 import logging
 import numpy as np
+import hashlib
 
 logger = logging.getLogger(__name__)
 
@@ -192,6 +193,36 @@ class RetailIntelligenceService:
         window_days = (end_date - start_date).days + 1
         prev_start = start_date - timedelta(days=window_days)
         prev_end = start_date - timedelta(days=1)
+
+        # ── Cache Check (Phase 4) ─────────────────────────────────────────────
+        # Get count and max created_at of sale records to detect data changes
+        stmt_hash = select(
+            func.count(SaleRecord.id).label("count"),
+            func.max(SaleRecord.created_at).label("max_created_at")
+        ).where(SaleRecord.user_id == user_id)
+        if store_id is not None:
+            stmt_hash = stmt_hash.where(SaleRecord.store_id == store_id)
+        
+        res_hash = await db.execute(stmt_hash)
+        hash_row = res_hash.one()
+        rec_count = hash_row.count
+        max_created_at = hash_row.max_created_at
+
+        # Calculate a unique data hash
+        max_created_str = max_created_at.isoformat() if max_created_at else "never"
+        data_hash_source = f"{rec_count}_{max_created_str}_{period}_{start_date}_{end_date}_{store_id or 'all'}"
+        data_hash = hashlib.sha256(data_hash_source.encode("utf-8")).hexdigest()
+
+        # Try to retrieve from DB cache
+        cache_key = f"summary_{period}_{store_id or 'all'}"
+        stmt_cache = select(MLResult).where(
+            MLResult.user_id == user_id,
+            MLResult.result_type == cache_key
+        )
+        res_cache = await db.execute(stmt_cache)
+        cached_result = res_cache.scalars().first()
+        if cached_result and cached_result.data_hash == data_hash:
+            return cached_result.payload
 
         # ── 1. Current period totals ─────────────────────────────────────────
         totals_cond = [
@@ -650,7 +681,7 @@ class RetailIntelligenceService:
         except Exception as e:
             logger.warning(f"Gemini AI insight failed: {e}")
 
-        return {
+        summary_payload = {
             "total_revenue": total_revenue,
             "total_cogs": total_cogs,
             "gross_profit": gross_profit,
@@ -670,6 +701,81 @@ class RetailIntelligenceService:
             "date_from": str(start_date),
             "date_to": str(end_date),
         }
+
+        # Sync alerts in database
+        async def sync_db_alerts(computed_alerts: List[Dict[str, Any]], alert_type: str):
+            stmt_exist = select(Alert).where(
+                Alert.user_id == user_id,
+                Alert.alert_type == alert_type
+            )
+            if store_id is not None:
+                stmt_exist = stmt_exist.where(Alert.store_id == store_id)
+            else:
+                stmt_exist = stmt_exist.where(Alert.store_id.is_(None))
+                
+            res_exist = await db.execute(stmt_exist)
+            existing_alerts = {a.product_name: a for a in res_exist.scalars().all()}
+            
+            computed_names = set()
+            for alert_data in computed_alerts:
+                p_name = alert_data["product_name"]
+                computed_names.add(p_name)
+                
+                # Deduce severity
+                severity = "warning"
+                if alert_type == "demand_spike":
+                    severity = "info"
+                elif alert_type == "margin_erosion" and alert_data.get("margin_pct", 0) < 10:
+                    severity = "critical"
+                
+                if p_name in existing_alerts:
+                    existing = existing_alerts[p_name]
+                    existing.payload = alert_data
+                    existing.severity = severity
+                else:
+                    new_alert = Alert(
+                        user_id=user_id,
+                        store_id=store_id,
+                        alert_type=alert_type,
+                        product_name=p_name,
+                        severity=severity,
+                        payload=alert_data,
+                        is_read=False
+                    )
+                    db.add(new_alert)
+            
+            for p_name, old_alert in existing_alerts.items():
+                if p_name not in computed_names:
+                    await db.delete(old_alert)
+
+        try:
+            await sync_db_alerts(demand_signals, "demand_spike")
+            await sync_db_alerts(dead_stock_alerts, "dead_stock")
+            await sync_db_alerts(margin_erosion_alerts, "margin_erosion")
+        except Exception as e:
+            logger.warning(f"Failed to sync alerts in database: {e}")
+
+        # Update cache in DB
+        if cached_result:
+            cached_result.payload = summary_payload
+            cached_result.data_hash = data_hash
+            cached_result.computed_at = func.now()
+        else:
+            new_cache = MLResult(
+                user_id=user_id,
+                result_type=cache_key,
+                payload=summary_payload,
+                data_hash=data_hash
+            )
+            db.add(new_cache)
+
+        try:
+            await db.commit()
+        except Exception as e:
+            logger.warning(f"Failed to commit MLResult cache / alerts sync: {e}")
+            await db.rollback()
+
+        return summary_payload
 
     # ── Holt-Winters & Triple Exponential Smoothing Demand Forecasting ────────
 
@@ -981,6 +1087,9 @@ class RetailIntelligenceService:
 
         # Fit K-Means with dynamic clusters count
         actual_k = min(k, len(products))
+        # Reduce k to number of unique feature rows to avoid duplicate centroid collision issues
+        unique_rows = np.unique(X_scaled, axis=0)
+        actual_k = min(actual_k, unique_rows.shape[0])
         labels, centroids_scaled = custom_kmeans(X_scaled, n_clusters=actual_k, random_state=42)
 
         # Map cluster labels to quadrants or custom named clusters

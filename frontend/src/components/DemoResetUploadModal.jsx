@@ -19,13 +19,21 @@ export default function DemoResetUploadModal({ onClose, onComplete }) {
   const eventSourceRef = useRef(null)
 
   useEffect(() => {
-    // Cleanup EventSource on unmount
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+
+    // Cleanup EventSource and keydown on unmount
     return () => {
+      window.removeEventListener('keydown', handleKeyDown)
       if (eventSourceRef.current) {
         eventSourceRef.current.close()
       }
     }
-  }, [])
+  }, [onClose])
 
   // Drag handlers
   const handleDrag = (e) => {

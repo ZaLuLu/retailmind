@@ -1,13 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query, Request
 from fastapi.responses import StreamingResponse, PlainTextResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from ..core.db import get_db
-from ..models.db import User, SaleRecord, Store
+from ..models.db import User, SaleRecord, Store, Alert
 from ..api.deps import get_current_user
 from ..services.retail_intelligence import retail_intelligence_service
 from datetime import date
 from typing import Optional, Any
+from ..core.limiter import limiter
 from pydantic import BaseModel
 import csv
 import io
@@ -440,6 +441,8 @@ def _parse_xlsx_rows(content: bytes):
 
 
 def _build_sale_record(norm_row: dict, user_id, user_currency: str, store_id: Optional[Any] = None) -> SaleRecord:
+    from ..core.validation import sanitize_string
+
     qty_raw = norm_row.get("quantity")
     price_raw = norm_row.get("unit_price")
     if qty_raw is None or price_raw is None:
@@ -468,23 +471,25 @@ def _build_sale_record(norm_row: dict, user_id, user_currency: str, store_id: Op
     return SaleRecord(
         user_id=user_id,
         store_id=store_id,
-        product_name=norm_row["product_name"].strip(),
-        product_sku=norm_row.get("sku", "").strip() or None,
-        product_category=norm_row.get("category", "Other").strip() or "Other",
+        product_name=sanitize_string(norm_row["product_name"]),
+        product_sku=sanitize_string(norm_row.get("sku", "")) or None,
+        product_category=sanitize_string(norm_row.get("category", "Other")) or "Other",
         quantity_sold=qty,
         unit_price=unit_price,
         total_revenue=total_revenue,
         cogs=(cogs * qty) if cogs is not None else None,
         gross_margin=margin,
         sale_date=_parse_date(norm_row["date"]),
-        customer_segment=norm_row.get("customer_segment", "").strip() or None,
-        currency=norm_row.get("currency", "").strip() or user_currency,
+        customer_segment=sanitize_string(norm_row.get("customer_segment", "")) or None,
+        currency=sanitize_string(norm_row.get("currency", "")) or user_currency,
         source="csv_upload",
     )
 
 
 @router.post("/upload-csv")
+@limiter.limit("20/hour")
 async def upload_sales_csv(
+    request: Request,
     file: UploadFile = File(...),
     store_id: Optional[str] = Query(default=None),
     current_user: User = Depends(get_current_user),
@@ -498,6 +503,8 @@ async def upload_sales_csv(
     Required columns: product_name, quantity, unit_price, date
     Optional: sku, category, cogs, customer_segment, currency
     """
+    from ..core.validation import validate_file_magic
+
     filename = file.filename or ""
     is_xlsx = filename.lower().endswith(".xlsx")
     is_csv = filename.lower().endswith((".csv", ".txt"))
@@ -509,6 +516,9 @@ async def upload_sales_csv(
         )
 
     content = await file.read()
+
+    # Validate file magic bytes
+    validate_file_magic(content, filename)
 
     # File size check (10 MB)
     if len(content) > 10 * 1024 * 1024:
@@ -690,3 +700,116 @@ async def get_template_csv():
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=retailmind_template.csv"},
     )
+
+
+# ── Alert Management (Phase 4) ───────────────────────────────────────────────
+
+@router.get("/alerts")
+async def list_alerts(
+    current_user: User = Depends(get_current_user),
+    store_id: Optional[str] = Query(default=None),
+    db: AsyncSession = Depends(get_db)
+):
+    """List all persisted alerts for the user, optionally filtered by store."""
+    stmt = select(Alert).where(Alert.user_id == current_user.id)
+    if store_id:
+        try:
+            import uuid
+            stmt = stmt.where(Alert.store_id == uuid.UUID(store_id))
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid store_id format"
+            )
+    stmt = stmt.order_by(Alert.created_at.desc())
+    res = await db.execute(stmt)
+    alerts = res.scalars().all()
+    return {
+        "success": True,
+        "data": [
+            {
+                "id": str(a.id),
+                "alert_type": a.alert_type,
+                "product_sku": a.product_sku,
+                "product_name": a.product_name,
+                "severity": a.severity,
+                "payload": a.payload,
+                "is_read": a.is_read,
+                "created_at": a.created_at.isoformat() if a.created_at else None
+            }
+            for a in alerts
+        ]
+    }
+
+@router.get("/alerts/unread-count")
+async def get_unread_alerts_count(
+    current_user: User = Depends(get_current_user),
+    store_id: Optional[str] = Query(default=None),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get count of unread alerts."""
+    stmt = select(func.count(Alert.id)).where(
+        Alert.user_id == current_user.id,
+        Alert.is_read == False
+    )
+    if store_id:
+        try:
+            import uuid
+            stmt = stmt.where(Alert.store_id == uuid.UUID(store_id))
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid store_id format"
+            )
+    res = await db.execute(stmt)
+    count = res.scalar() or 0
+    return {"success": True, "data": {"unread_count": count}}
+
+@router.post("/alerts/{alert_id}/read")
+async def mark_alert_read(
+    alert_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Mark an alert as read."""
+    try:
+        import uuid
+        parsed_id = uuid.UUID(alert_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid alert_id format"
+        )
+    stmt = select(Alert).where(Alert.id == parsed_id, Alert.user_id == current_user.id)
+    res = await db.execute(stmt)
+    alert = res.scalars().first()
+    if not alert:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Alert not found"
+        )
+    alert.is_read = True
+    await db.commit()
+    return {"success": True, "data": {"alert_id": str(alert.id), "is_read": True}}
+
+@router.post("/alerts/read-all")
+async def mark_all_alerts_read(
+    current_user: User = Depends(get_current_user),
+    store_id: Optional[str] = Query(default=None),
+    db: AsyncSession = Depends(get_db)
+):
+    """Mark all alerts for the user (and optionally store) as read."""
+    from sqlalchemy import update
+    stmt = update(Alert).where(Alert.user_id == current_user.id, Alert.is_read == False).values(is_read=True)
+    if store_id:
+        try:
+            import uuid
+            stmt = stmt.where(Alert.store_id == uuid.UUID(store_id))
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid store_id format"
+            )
+    await db.execute(stmt)
+    await db.commit()
+    return {"success": True, "message": "All alerts marked as read"}

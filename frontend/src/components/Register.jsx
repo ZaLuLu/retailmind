@@ -63,32 +63,16 @@ function Register({ onRegister, onSwitch }) {
                 "By establishing your identity in our records, you gain deep analytical command over gross margins, sales trends, and AI forecasting."
               </p>
             </div>
-
-            {/* Vintage ink stamp */}
-            <div className="editorial-stamp">
-              <div className="editorial-stamp-inner">
-                SECURE
-                <br />
-                REGISTRY
-                <br />
-                DESK #1
-              </div>
-            </div>
-
-            <div className="editorial-footer">
-              <span>VOL. XXIV — NO. 142</span>
-              <span>ONE SHILLING</span>
-            </div>
           </div>
 
           {/* Right Column: Active Card */}
           <div className="auth-card">
             <div style={{ marginBottom: '1.75rem', borderBottom: 'var(--border-mid)', paddingBottom: '1rem' }}>
               <p className="mono" style={{ margin: '0 0 0.2rem', color: 'var(--ink-red)', fontSize: '0.65rem', fontWeight: 700 }}>
-                ESTABLISHED MMXXVI — CORRESPONDENT REGISTRY
+                ESTABLISHED MMXXVI — REGISTRATION PORTAL
               </p>
               <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 800, color: 'var(--ink-black)' }}>
-                Establish Identity
+                Create Account
               </h2>
             </div>
 
@@ -96,7 +80,7 @@ function Register({ onRegister, onSwitch }) {
               {error && <div className="auth-error">{error}</div>}
 
               <div className="form-group">
-                <label htmlFor="register-email">Correspondence Email</label>
+                <label htmlFor="register-email">Email Address</label>
                 <input
                   id="register-email"
                   type="email"
@@ -109,7 +93,7 @@ function Register({ onRegister, onSwitch }) {
               </div>
 
               <div className="form-group">
-                <label htmlFor="register-password">Secure Access Code</label>
+                <label htmlFor="register-password">Password</label>
                 <div className="password-wrapper">
                   <input
                     id="register-password"
@@ -133,7 +117,7 @@ function Register({ onRegister, onSwitch }) {
               </div>
 
               <div className="form-group">
-                <label htmlFor="register-confirm">Confirm Access Code</label>
+                <label htmlFor="register-confirm">Confirm Password</label>
                 <div className="password-wrapper">
                   <input
                     id="register-confirm"
@@ -158,14 +142,14 @@ function Register({ onRegister, onSwitch }) {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1.5rem' }}>
                 <button type="submit" disabled={loading} id="register-submit">
-                  {loading ? 'INITIALIZING CORRESPONDENT...' : 'INITIALIZE ACCOUNT →'}
+                  {loading ? 'CREATING ACCOUNT...' : 'CREATE ACCOUNT →'}
                 </button>
                 <button
                   type="button"
                   onClick={onSwitch}
                   className="switch-btn"
                 >
-                  Already a correspondent? Login with secure credentials
+                  Already have an account? Sign in
                 </button>
               </div>
             </form>

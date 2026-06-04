@@ -18,10 +18,10 @@ import hashlib
 import json
 import logging
 import uuid
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import AsyncGenerator
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile, File, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -30,7 +30,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..api.deps import get_current_user
 from ..core.config import settings
 from ..core.db import get_db
-from ..models.db import Alert, MLResult, SaleRecord, User
+from ..models.db import Alert, MLResult, SaleRecord, User, Store
+from ..core.limiter import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +65,7 @@ async def _emit_progress(
         "step": step,
         "percent": percent,
         "message": message,
-        "ts": datetime.utcnow().isoformat(),
+        "ts": datetime.now(timezone.utc).isoformat(),
     }
     _job_progress[job_id].append(event)
     logger.info("Job %s — %s %d%%: %s", job_id, step, percent, message)
@@ -193,7 +194,9 @@ async def _run_full_ml_pipeline(user_id: str, job_id: str) -> None:
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @router.post("/reset-and-upload")
+@limiter.limit("3/hour")
 async def demo_reset_and_upload(
+    request: Request,
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
@@ -216,6 +219,10 @@ async def demo_reset_and_upload(
         raise HTTPException(400, "Only .csv, .xlsx, or .xls files are accepted.")
 
     raw = await file.read()
+
+    # Validate file magic bytes
+    from ..core.validation import validate_file_magic
+    validate_file_magic(raw, filename)
 
     # 1. Parse
     from .retail import _parse_csv_rows, _parse_xlsx_rows, _normalise_header, _build_sale_record
