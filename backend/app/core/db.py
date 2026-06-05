@@ -7,6 +7,11 @@ import re
 # asyncpg compatibility: strip sslmode param (not supported as a query kwarg)
 # and pass ssl=True via connect_args instead
 db_url = settings.DATABASE_URL
+if db_url.startswith("postgresql://"):
+    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+elif db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+
 connect_args = {}
 if "sslmode=require" in db_url:
     connect_args["ssl"] = True
