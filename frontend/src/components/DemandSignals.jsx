@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { api } from '../services/api'
 import { formatMoneyCompact } from '../services/currency'
 
@@ -19,21 +19,36 @@ const DemandSignals = ({
   const [forecastLoading, setForecastLoading] = useState(false)
   const [forecastError, setForecastError] = useState(null)
 
-  // Reset forecast when storeId changes
+  // Unified effect: reset forecast cache on storeId change; lazy-load when forecast tab is active
   useEffect(() => {
+    // Always reset cached forecast when the store changes
     setForecast([])
+    setForecastError(null)
+    // Only fetch if the forecast tab is already active
+    if (tab !== 'forecast') return
+    let cancelled = false
+    setForecastLoading(true)
+    api.getRetailForecast(storeId)
+      .then(data => { if (!cancelled) setForecast(data) })
+      .catch(err => { if (!cancelled) setForecastError(err.message || 'Failed to load forecast') })
+      .finally(() => { if (!cancelled) setForecastLoading(false) })
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId])
 
-  // Lazy-load forecast only when tab is selected or storeId changes
+  // Fetch forecast when the tab is switched to 'forecast'
   useEffect(() => {
-    if (tab !== 'forecast' || forecast.length > 0) return
+    if (tab !== 'forecast' || forecast.length > 0 || forecastLoading) return
+    let cancelled = false
     setForecastLoading(true)
     setForecastError(null)
     api.getRetailForecast(storeId)
-      .then(data => setForecast(data))
-      .catch(err => setForecastError(err.message || 'Failed to load forecast'))
-      .finally(() => setForecastLoading(false))
-  }, [tab, storeId, forecast.length])
+      .then(data => { if (!cancelled) setForecast(data) })
+      .catch(err => { if (!cancelled) setForecastError(err.message || 'Failed to load forecast') })
+      .finally(() => { if (!cancelled) setForecastLoading(false) })
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab])
 
   const totalAlerts = demandSignals.length + deadStockAlerts.length + marginAlerts.length
 

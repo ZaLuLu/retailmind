@@ -538,7 +538,7 @@ class RetailIntelligenceService:
         if not fitted_rev_hw:
             # Fallback projection: rolling average of the last 14 days with weekday seasonality
             last_14_days = rev_history[-14:]
-            avg_rev = sum(last_14_days) / len(last_14_days) if any(last_14_days) else 100.0
+            avg_rev = sum(last_14_days) / len(last_14_days) if any(last_14_days) else 0.0
             weekday_factors = [1.0] * 7
             for day_idx in range(7):
                 day_vals = [rev_history[idx] for idx in range(day_idx, 90, 7) if rev_history[idx] > 0]

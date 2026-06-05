@@ -34,9 +34,14 @@ if settings.SENTRY_DSN:
 
 from contextlib import asynccontextmanager
 from .core.redis import cache
+from .core.db import Base, engine
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Dynamically create tables on startup if they don't exist
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+        
     await cache.initialize()
     yield
     if cache.is_redis_available and cache.redis:

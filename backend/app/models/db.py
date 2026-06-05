@@ -264,45 +264,43 @@ class MLResult(Base):
 # Legacy (scheduled for removal — upgrade plan §3.2)
 # ─────────────────────────────────────────────────────────────────────────────
 
-# class Budget(Base):
-#     """LEGACY — personal finance model, scheduled for removal in a future migration."""
+class Budget(Base):
+    """LEGACY — personal finance model, scheduled for removal in a future migration."""
+
+    __tablename__ = "budgets"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    category = Column(String(50), nullable=False)
+    monthly_limit = Column(DECIMAL(10, 2), nullable=False)
+    month = Column(Date, nullable=False)
 # 
-#     __tablename__ = "budgets"
+    __table_args__ = (
+        Index("idx_user_category_month", "user_id", "category", "month", unique=True),
+    )
 # 
-#     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-#     user_id = Column(
-#         UUID(as_uuid=True),
-#         ForeignKey("users.id", ondelete="CASCADE"),
-#         nullable=False,
-#     )
-#     category = Column(String(50), nullable=False)
-#     monthly_limit = Column(DECIMAL(10, 2), nullable=False)
-#     month = Column(Date, nullable=False)
-# 
-#     __table_args__ = (
-#         Index("idx_user_category_month", "user_id", "category", "month", unique=True),
-#     )
-# 
-# 
-# class Transaction(Base):
-#     """LEGACY — personal finance model, scheduled for removal in a future migration."""
-# 
-#     __tablename__ = "transactions"
-# 
-#     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-#     user_id = Column(
-#         UUID(as_uuid=True),
-#         ForeignKey("users.id", ondelete="CASCADE"),
-#         nullable=False,
-#     )
-#     vendor_name = Column(String(255))
-#     amount = Column(DECIMAL(10, 2), nullable=False)
-#     category = Column(String(50), nullable=False, default="Other")
-#     transaction_date = Column(Date, nullable=False)
-#     confidence = Column(DECIMAL(5, 2))
-#     notes = Column(Text)
-#     document_path = Column(String(500))
-#     intelligence_meta = Column(JSONB, nullable=True)
-#     created_by_ai = Column(Boolean, default=False)
-#     deleted_at = Column(DateTime(timezone=True), nullable=True)
-#     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class Transaction(Base):
+    """LEGACY — personal finance model, scheduled for removal in a future migration."""
+    __tablename__ = "transactions"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    vendor_name = Column(String(255))
+    amount = Column(DECIMAL(10, 2), nullable=False)
+    category = Column(String(50), nullable=False, default="Other")
+    transaction_date = Column(Date, nullable=False)
+    confidence = Column(DECIMAL(5, 2))
+    notes = Column(Text)
+    document_path = Column(String(500))
+    intelligence_meta = Column(JSONB, nullable=True)
+    created_by_ai = Column(Boolean, default=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

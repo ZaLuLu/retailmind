@@ -19,7 +19,7 @@ function App() {
 
   // ── Auth & Routing state ─────────────────────────────────────────────────
   const [isAuthenticated, setIsAuthenticated] = useState(
-    IS_DEMO || !!localStorage.getItem('token')
+    !!localStorage.getItem('token')
   )
   const [authView, setAuthView] = useState('login') // 'login' | 'register'
   const [splashDone, setSplashDone] = useState(false)
@@ -121,6 +121,7 @@ function App() {
         onUpload={() => setShowImport(true)}
         hasCustomData={hasCustomData}
         onRestore={handleDemoRestore}
+        hasSalesData={sales.length > 0}
       />
 
       {/* Demo upload modal */}
@@ -164,7 +165,7 @@ function App() {
         onSelectStore={handleSelectStore}
         onCreateStore={handleCreateStore}
         onShowSettings={() => setShowSettings(true)}
-        onLogout={IS_DEMO ? null : handleLogout}
+        onLogout={handleLogout}
         onShowChat={() => setShowChat(true)}
         onRefresh={fetchUserData}
         isDemoMode={IS_DEMO}
@@ -189,6 +190,19 @@ const SettingsForm = ({ user, onSave, onCancel }) => {
   const [storeName, setStoreName] = useState(user.storeName || '')
   const [currency, setCurrency] = useState(user.currency || 'INR')
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    const previousFocus = document.activeElement
+    const firstInput = document.querySelector('.settings-input')
+    if (firstInput) {
+      firstInput.focus()
+    }
+    return () => {
+      if (previousFocus) {
+        previousFocus.focus()
+      }
+    }
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault();

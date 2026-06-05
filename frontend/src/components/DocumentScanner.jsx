@@ -1,5 +1,5 @@
 // DocumentScanner.jsx
-import React, { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { api } from '../services/api'
 import './DocumentScanner.css'
 
@@ -36,15 +36,28 @@ export default function DocumentScanner({ onClose, onComplete, selectedStore, cu
     return () => clearInterval(interval)
   }, [phase, terminalIndex])
 
-  // Escape key handler to close the modal
+  // Escape key handler to close the modal & restore focus
   useEffect(() => {
+    const previousFocus = document.activeElement
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         onClose()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    
+    // Focus close button or container on mount
+    const closeBtn = document.querySelector('.scanner-modal .close-btn')
+    if (closeBtn) {
+      closeBtn.focus()
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      if (previousFocus) {
+        previousFocus.focus()
+      }
+    }
   }, [onClose])
 
   // Drag handlers

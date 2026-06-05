@@ -19,6 +19,20 @@ function AdvisorChat({ summary, prefill, clearPrefill, onClose }) {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const scrollRef = useRef(null)
+  const sendingRef = useRef(false)
+
+  useEffect(() => {
+    const previousFocus = document.activeElement
+    const chatInput = document.querySelector('.chat-input-area input')
+    if (chatInput) {
+      chatInput.focus()
+    }
+    return () => {
+      if (previousFocus) {
+        previousFocus.focus()
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (prefill) {
@@ -29,7 +43,10 @@ function AdvisorChat({ summary, prefill, clearPrefill, onClose }) {
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: 'smooth'
+      })
     }
   }, [messages])
 
@@ -44,13 +61,14 @@ function AdvisorChat({ summary, prefill, clearPrefill, onClose }) {
   }
 
   const handleSend = async () => {
-    if (!input.trim() || loading) return
+    if (!input.trim() || loading || sendingRef.current) return
 
-    const currentInput = input;
+    sendingRef.current = true
+    const currentInput = input
     const userMsg = { role: 'user', content: currentInput }
     
     // Create unique ID for the streaming response card
-    const streamId = Date.now();
+    const streamId = Date.now()
     
     setMessages(prev => [...prev, userMsg, { id: streamId, role: 'advisor', content: '' }])
     setInput('')
@@ -64,29 +82,41 @@ function AdvisorChat({ summary, prefill, clearPrefill, onClose }) {
       .map(m => ({ role: m.role, content: m.content }))
       .slice(-10)
 
-    await api.askAdvisorStream(
-      currentInput,
-      contextStr,
-      historyPayload,
-      (chunk) => {
-        setMessages(prev => prev.map(msg => 
-          msg.id === streamId 
-            ? { ...msg, content: msg.content + chunk } 
-            : msg
-        ))
-      },
-      (error) => {
-        setMessages(prev => prev.map(msg => 
-          msg.id === streamId 
-            ? { ...msg, content: 'The AI advisor encountered a connection issue. Please resubmit your request.' } 
-            : msg
-        ))
-        setLoading(false)
-      },
-      () => {
-        setLoading(false)
-      }
-    )
+    try {
+      await api.askAdvisorStream(
+        currentInput,
+        contextStr,
+        historyPayload,
+        (chunk) => {
+          setMessages(prev => prev.map(msg => 
+            msg.id === streamId 
+              ? { ...msg, content: msg.content + chunk } 
+              : msg
+          ))
+        },
+        (error) => {
+          setMessages(prev => prev.map(msg => 
+            msg.id === streamId 
+              ? { ...msg, content: 'The AI advisor encountered a connection issue. Please resubmit your request.' } 
+              : msg
+          ))
+          setLoading(false)
+          sendingRef.current = false
+        },
+        () => {
+          setLoading(false)
+          sendingRef.current = false
+        }
+      )
+    } catch (e) {
+      setMessages(prev => prev.map(msg => 
+        msg.id === streamId 
+          ? { ...msg, content: 'The AI advisor encountered a connection issue. Please resubmit your request.' } 
+          : msg
+      ))
+      setLoading(false)
+      sendingRef.current = false
+    }
   }
 
   return (

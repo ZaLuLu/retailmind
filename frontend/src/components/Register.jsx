@@ -151,6 +151,17 @@ function Register({ onRegister, onSwitch }) {
                 >
                   Already have an account? Sign in
                 </button>
+                <a
+                  href="/"
+                  className="switch-btn"
+                  style={{ textDecoration: 'underline', marginTop: '0.5rem', fontSize: '0.8rem', textAlign: 'center', display: 'block', color: 'var(--text-muted)' }}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    window.location.href = window.location.origin
+                  }}
+                >
+                  ← Back to Demo Showcase
+                </a>
               </div>
             </form>
           </div>

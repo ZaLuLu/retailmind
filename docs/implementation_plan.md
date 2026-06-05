@@ -1,4 +1,51 @@
 # Implementation Plan — Phase 3: Machine Learning & Analytics Layer
+# Demo Mode Seed Integration
+
+## Goal Description
+Enable the RetailMind backend to automatically seed a rich demo dataset on startup when `DEMO_MODE=true`. This provides a ready‑to‑use demo environment with synthetic sales, alerts, and ML results.
+
+## User Review Required
+> [!IMPORTANT]
+> Verify that the demo user credentials (`demo@retailmind.com` / `demo123`) are acceptable for public exposure. Adjust the email/password if needed.
+
+## Open Questions
+- Should the demo dataset be refreshed on every server restart, or only when a `--force` flag is set? (Current implementation forces refresh on each start.)
+- Do we need to expose an admin UI button to trigger `seed_demo_data(force=True)` manually?
+
+## Proposed Changes
+
+### Backend
+
+- **[MODIFY]** `backend/app/main.py`
+  - Already imports and runs `seed_demo_data(force=True)` during lifespan when `DEMO_MODE` is true.
+  - No code change required, but ensure the path manipulation correctly adds `backend/scripts` to `PYTHONPATH`.
+
+- **[MODIFY]** `backend/app/core/config.py`
+  - Ensure `DEMO_MODE` defaults to `false` and can be toggled via `.env` (already present).
+  - Add optional `DEMO_USER_ID` and `DEMO_STORE_ID` defaults (already present).
+
+- **[NEW]** `backend/scripts/seed_demo_account.py` *(already exists)*
+  - Provides `seed_demo_data` and `seed_for_user` functions.
+  - No modifications needed.
+
+### Frontend (optional)
+
+- Add a “Demo Mode” banner on the landing page that displays demo credentials and a link to reset the demo data (calls `/api/v1/demo/restore`).
+
+## Verification Plan
+
+### Automated Tests
+- Run existing backend test suite (`pytest`) to ensure no failures.
+- Add a new test that starts the FastAPI app with `DEMO_MODE=true` and verifies that a demo user and store are present in the DB after startup.
+
+### Manual Verification
+- Start the application locally (`npm run dev` for frontend, `uvicorn app.main:app` for backend).
+- Visit the landing page, confirm the demo banner appears.
+- Use the demo login credentials to authenticate.
+- Check the `/health/live` endpoint returns `"demo_mode": true`.
+- Trigger the demo reset endpoint and confirm records are cleared and re‑seeded.
+
+---
 
 This document details the exact, step-by-step engineering roadmap for Phase 3 of **RetailMind** (the Machine Learning and Analytics Layer). It provides clear technical specifications, mathematical foundations, and concrete code blueprints so other developers and stakeholders can easily track, review, and follow our execution path.
 

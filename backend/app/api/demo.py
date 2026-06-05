@@ -11,8 +11,6 @@ Routes:
     GET  /api/v1/demo/progress/{job_id} — SSE stream of pipeline progress
     POST /api/v1/demo/restore           — restore original seeded data
 """
-from __future__ import annotations
-
 import asyncio
 import hashlib
 import json
@@ -182,6 +180,9 @@ async def _run_full_ml_pipeline(user_id: str, job_id: str) -> None:
             logger.exception("Alerts/Segments step failed")
             await _emit_progress(job_id, "alerts_failed", 80, f"Alerts/Segments warn: {exc}")
 
+        from ..core.redis import cache
+        await cache.invalidate_chart_bundle(uid)
+
         await _emit_progress(job_id, "alerts", 75, "Smart alerts generated")
         await _emit_progress(job_id, "segments", 90, "Customer segments ready")
         await _emit_progress(job_id, "done", 100, "Analysis complete ✓")
@@ -346,7 +347,6 @@ async def demo_progress(job_id: str) -> StreamingResponse:
 
 @router.post("/restore")
 async def demo_restore(
-    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ) -> dict:
@@ -359,10 +359,10 @@ async def demo_restore(
     # Import and re-run seed for this user only
     try:
         from scripts.seed_demo_account import seed_for_user
-        job_id = str(uuid.uuid4())
-        _job_progress[job_id] = []
-        background_tasks.add_task(seed_for_user, str(user.id), job_id, _job_progress)
-        return {"job_id": job_id, "status": "restoring"}
+        from ..core.redis import cache
+        await seed_for_user(str(user.id))
+        await cache.invalidate_chart_bundle(user.id)
+        return {"status": "success", "message": "Demo data restored successfully"}
     except ImportError as e:
         logger.warning(f"Seed import failed: {e}")
         # Seed function not yet available — run seed script externally

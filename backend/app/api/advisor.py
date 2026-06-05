@@ -113,7 +113,8 @@ async def ask_advisor(
     """
     history_dicts = None
     if request.history:
-        history_dicts = [m.model_dump() for m in request.history]
+        limit = 4 if getattr(current_user, "is_demo", False) else 10
+        history_dicts = [m.model_dump() for m in request.history[-limit:]]
     answer = await gemini_service.ask_advisor(request.question, request.context, history=history_dicts)
     return AdvisorResponse(answer=answer)
 
@@ -132,7 +133,8 @@ async def stream_advisor(
         try:
             history_dicts = None
             if advisor_req.history:
-                history_dicts = [m.model_dump() for m in advisor_req.history]
+                limit = 4 if getattr(current_user, "is_demo", False) else 10
+                history_dicts = [m.model_dump() for m in advisor_req.history[-limit:]]
             async for chunk in gemini_service.stream_advisor(
                 advisor_req.question,
                 advisor_req.context,

@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     GEMINI_TIMEOUT_SECONDS: int = 30
 
     # ─── File Uploads ────────────────────────────────────────────────────────
-    MAX_FILE_SIZE_MB: int = 10
+    MAX_FILE_SIZE_MB: int = 20
     MAX_UPLOAD_ROWS: int = 50_000
     ALLOWED_FILE_TYPES: str = "pdf,jpg,jpeg,png,webp,csv,xlsx,xls"
     UPLOAD_DIR: str = "./storage/uploads"

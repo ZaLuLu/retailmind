@@ -59,6 +59,8 @@ async def get_current_user(
         user = result.scalars().first()
         if user is None:
             raise credentials_exception
+        user.is_demo = payload.get("is_demo", False)
+        user.demo_session_id = payload.get("demo_session_id")
         return user
 
     # ── Demo Mode fallback ──────────────────────────────────────────────────
@@ -77,12 +79,14 @@ async def get_current_user(
 
         if demo_user is None:
             raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                status_code=status.HTTP_535_SERVICE_UNAVAILABLE,
                 detail=(
                     "Demo data not seeded. "
                     "Run: python backend/scripts/seed_demo_account.py"
                 ),
             )
+        demo_user.is_demo = True
+        demo_user.demo_session_id = "default_demo"
         return demo_user
 
     raise credentials_exception

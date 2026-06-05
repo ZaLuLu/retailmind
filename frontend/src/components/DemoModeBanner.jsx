@@ -1,4 +1,3 @@
-import React from 'react'
 import { IS_DEMO } from '../config'
 import './DemoModeBanner.css'
 
@@ -15,8 +14,15 @@ import './DemoModeBanner.css'
  * @param {boolean} props.hasCustomData — true if user uploaded their own file
  * @param {() => void} props.onRestore — restores original seeded demo data
  */
-export default function DemoModeBanner({ onUpload, hasCustomData, onRestore }) {
+export default function DemoModeBanner({ onUpload, hasCustomData, onRestore, hasSalesData }) {
   if (!IS_DEMO) return null
+
+  let statusText = "Your retail sandbox is empty. Upload your sales data to begin."
+  if (hasCustomData) {
+    statusText = "Showing your uploaded dataset"
+  } else if (hasSalesData) {
+    statusText = "Showing 90-day sample dataset"
+  }
 
   return (
     <div className="demo-banner" role="banner" aria-label="Demo mode notification">
@@ -25,7 +31,7 @@ export default function DemoModeBanner({ onUpload, hasCustomData, onRestore }) {
         <span className="demo-banner__text">
           <strong>DEMO MODE</strong>
           <span className="demo-banner__sep">·</span>
-          Showing 90-day sample dataset
+          {statusText}
         </span>
 
         <div className="demo-banner__actions">

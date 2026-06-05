@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy import delete
 from ..core.db import get_db
-from ..models.db import User, RefreshToken, Store, SaleRecord
+from ..models.db import User, RefreshToken, Store, SaleRecord, Alert, MLResult
 import os
+import logging
 from decimal import Decimal
 from ..schemas.auth import UserCreate, UserResponse, Token, TokenRefreshRequest
 from ..schemas.response import SuccessResponse
@@ -20,6 +22,7 @@ from datetime import datetime, timedelta, timezone, date
 from ..core.limiter import limiter
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+logger = logging.getLogger(__name__)
 
 @router.post("/register", response_model=SuccessResponse[UserResponse], status_code=status.HTTP_201_CREATED)
 @limiter.limit("5/minute")
@@ -87,36 +90,79 @@ async def login(request: Request, user_in: UserCreate, db: AsyncSession = Depend
 @router.post("/demo-login", response_model=SuccessResponse[Token])
 @limiter.limit("10/minute")
 async def demo_login(request: Request, db: AsyncSession = Depends(get_db)):
-    """Creates a new ephemeral demo session and issues a JWT access and refresh token.
-    Uses DemoSessionStore for complete visitor isolation.
+    """Logs in to the prebuilt demo user, clearing their sales data for a fresh start.
+    Bypasses ephemeral sessions for localhost simplicity.
     """
-    from ..services.demo_store import DemoSessionStore
+    import uuid
+    from ..core.redis import cache
     
-    # 1. Cleanup expired demo sessions to keep DB clean
-    try:
-        await DemoSessionStore.cleanup_expired_sessions(db)
-    except Exception as e:
-        logger.error(f"Failed to cleanup expired demo sessions: {e}")
+    demo_user_id = uuid.UUID(settings.DEMO_USER_ID)
+    demo_store_id = uuid.UUID(settings.DEMO_STORE_ID)
+    
+    # 1. Ensure the prebuilt demo user exists
+    result = await db.execute(select(User).where(User.id == demo_user_id))
+    user = result.scalars().first()
+    
+    if not user:
+        # Create user
+        user = User(
+            id=demo_user_id,
+            email="demo@retailmind.com",
+            password=get_password_hash("demo123"),
+            full_name="User",
+            store_name="RetailMind Demo Store",
+            currency="USD",
+            is_onboarded=True,
+            plan="pro",
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+    else:
+        # Ensure name and onboarding state are correct
+        user.full_name = "User"
+        user.is_onboarded = True
+        await db.commit()
         
-    # 2. Create the ephemeral demo session
-    demo_session_id, user = await DemoSessionStore.create_session(db)
-    
-    # 3. Create tokens with is_demo=True and demo_session_id in payload
+    # 2. Ensure the prebuilt demo store exists
+    result_store = await db.execute(select(Store).where(Store.id == demo_store_id))
+    store = result_store.scalars().first()
+    if not store:
+        store = Store(
+            id=demo_store_id,
+            user_id=demo_user_id,
+            name="RetailMind Demo Store",
+            currency="USD",
+            is_active=True,
+        )
+        db.add(store)
+        await db.commit()
+
+    # 3. Clear all transaction, alert, and MLResult records for this user to start empty
+    await db.execute(delete(SaleRecord).where(SaleRecord.user_id == demo_user_id))
+    await db.execute(delete(Alert).where(Alert.user_id == demo_user_id))
+    await db.execute(delete(MLResult).where(MLResult.user_id == demo_user_id))
+    await db.commit()
+
+    # 4. Invalidate user's cached chart bundles
+    await cache.invalidate_chart_bundle(demo_user_id)
+
+    # 5. Create tokens with is_demo=True and fixed demo session metadata
     access_token = create_access_token(data={
-        "sub": str(user.id),
-        "demo_session_id": demo_session_id,
+        "sub": str(demo_user_id),
+        "demo_session_id": "default_demo",
         "is_demo": True
     })
     refresh_token = create_refresh_token(data={
-        "sub": str(user.id),
-        "demo_session_id": demo_session_id,
+        "sub": str(demo_user_id),
+        "demo_session_id": "default_demo",
         "is_demo": True
     })
     
-    # 4. Store refresh token in DB
+    # 6. Store refresh token in DB
     expires_at = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     new_refresh = RefreshToken(
-        user_id=user.id,
+        user_id=demo_user_id,
         token_hash=hash_token(refresh_token),
         expires_at=expires_at
     )

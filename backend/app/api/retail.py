@@ -9,6 +9,7 @@ from ..services.retail_intelligence import retail_intelligence_service
 from datetime import date
 from typing import Optional, Any
 from ..core.limiter import limiter
+from ..core.redis import cache
 from pydantic import BaseModel
 import csv
 import io
@@ -58,6 +59,17 @@ async def create_store(
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new store for the current user."""
+    # For demo users, limit store count to 3 stores max per session
+    if getattr(current_user, "is_demo", False):
+        stmt = select(Store).where(Store.user_id == current_user.id)
+        res = await db.execute(stmt)
+        existing_stores = res.scalars().all()
+        if len(existing_stores) >= 3:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Demo sessions are limited to registering a maximum of 3 stores."
+            )
+
     try:
         store = Store(
             user_id=current_user.id,
@@ -443,6 +455,10 @@ def _parse_xlsx_rows(content: bytes):
 def _build_sale_record(norm_row: dict, user_id, user_currency: str, store_id: Optional[Any] = None) -> SaleRecord:
     from ..core.validation import sanitize_string
 
+    product_name_val = norm_row.get("product_name")
+    if not product_name_val or not str(product_name_val).strip():
+        raise ValueError("product_name cannot be empty")
+
     qty_raw = norm_row.get("quantity")
     price_raw = norm_row.get("unit_price")
     if qty_raw is None or price_raw is None:
@@ -541,6 +557,14 @@ async def upload_sales_csv(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
 
+    # For demo users, limit upload row size to prevent database bloating
+    max_upload_rows = 500 if getattr(current_user, "is_demo", False) else 50000
+    if len(raw_rows) > max_upload_rows:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Upload limited to a maximum of {max_upload_rows} rows in portfolio showcase mode. Got {len(raw_rows)} rows."
+        )
+
     user_currency = current_user.currency or "INR"
     records = []
     errors = []
@@ -583,6 +607,8 @@ async def upload_sales_csv(
         db.add_all(records[i: i + batch_size])
         await db.commit()
 
+    await cache.invalidate_chart_bundle(current_user.id)
+
     return {
         "inserted": len(records),
         "errors": len(errors),
@@ -621,11 +647,12 @@ async def bulk_create_sales(
     from ..core.config import settings as _settings
     import math
 
-    max_records = getattr(_settings, "BULK_SALES_MAX_RECORDS", 500)
+    # For demo users, limit bulk insert size to 50 records max
+    max_records = 50 if getattr(current_user, "is_demo", False) else getattr(_settings, "BULK_SALES_MAX_RECORDS", 500)
     if len(payload.sales) > max_records:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Bulk insert limited to {max_records} records per request. Got {len(payload.sales)}.",
+            detail=f"Bulk insert limited to {max_records} records per request for this session. Got {len(payload.sales)}.",
         )
 
     parsed_store_id = None
@@ -680,6 +707,8 @@ async def bulk_create_sales(
     if records:
         db.add_all(records)
         await db.commit()
+
+    await cache.invalidate_chart_bundle(current_user.id)
 
     return {"success": True, "inserted": len(records)}
 
@@ -813,3 +842,26 @@ async def mark_all_alerts_read(
     await db.execute(stmt)
     await db.commit()
     return {"success": True, "message": "All alerts marked as read"}
+__all__ = [
+    "StoreCreate",
+    "list_stores",
+    "create_store",
+    "get_retail_summary",
+    "get_sales",
+    "get_demand_forecast",
+    "get_portfolio_clusters",
+    "export_sales_csv",
+    "upload_sales_csv",
+    "SaleRecordCreate",
+    "BulkSalesCreate",
+    "bulk_create_sales",
+    "get_template_csv",
+    "list_alerts",
+    "get_unread_alerts_count",
+    "mark_alert_read",
+    "_normalise_header",
+    "_parse_date",
+    "_parse_csv_rows",
+    "_parse_xlsx_rows",
+    "_build_sale_record",
+]

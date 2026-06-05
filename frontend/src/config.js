@@ -4,7 +4,7 @@
 // Import IS_DEMO anywhere to gate auth flows, show banners, and adjust routing.
 
 /** True when the app is running in public demo mode (no auth required). */
-export const IS_DEMO = import.meta.env.VITE_DEMO_MODE === 'true'
+export const IS_DEMO = import.meta.env.VITE_DEMO_MODE !== 'false'
 
 /** API base URL — falls back to relative path for Vercel serverless proxy. */
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1'

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..core.db import get_db
+from ..core.validation import validate_file_magic
 from ..api.deps import get_current_user
 from ..models.db import User
 from ..services.scanner import scanner_service
@@ -30,6 +31,8 @@ async def scan_document(
         )
 
     content = await file.read()
+    # Validate magic bytes to prevent malicious/corrupt file uploads
+    validate_file_magic(content, filename)
     # 10 MB cap check
     if len(content) > 10 * 1024 * 1024:
         raise HTTPException(

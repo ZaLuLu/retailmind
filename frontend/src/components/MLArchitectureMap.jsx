@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './MLArchitectureMap.css';
 
 const ML_NODES = [
@@ -54,6 +54,27 @@ const ML_NODES = [
 
 const MLArchitectureMap = ({ onClose }) => {
   const [activeNode, setActiveNode] = useState(ML_NODES[0]);
+
+  useEffect(() => {
+    const previousFocus = document.activeElement;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    
+    const card = document.querySelector('.ml-map-card');
+    if (card) {
+      card.setAttribute('tabindex', '-1');
+      card.focus();
+    }
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      if (previousFocus) previousFocus.focus();
+    };
+  }, [onClose]);
 
   return (
     <div className="ml-map-overlay">

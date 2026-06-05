@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import './IntelligenceDashboard.css'
 import SalesLedger from './SalesLedger'
 import MLArchitectureMap from './MLArchitectureMap'
@@ -41,11 +41,44 @@ const IntelligenceDashboard = ({
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [ledgerProductFilter, setLedgerProductFilter] = useState(null)
-  const fileInputRef = React.useRef(null)
+  const fileInputRef = useRef(null)
+  const storeSelectorTriggerRef = useRef(null)
 
   const [showStoreModal, setShowStoreModal] = useState(false)
   const [newStoreName, setNewStoreName] = useState('')
   const [newStoreLoc, setNewStoreLoc] = useState('')
+
+  useEffect(() => {
+    if (!showStoreModal) return
+
+    const previousFocus = document.activeElement
+
+    // Try to focus the first input or the close button
+    const firstInput = document.querySelector('.store-modal input')
+    if (firstInput) {
+      firstInput.focus()
+    } else {
+      const closeBtn = document.querySelector('.store-modal .close-btn')
+      if (closeBtn) closeBtn.focus()
+    }
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowStoreModal(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      if (previousFocus) {
+        previousFocus.focus()
+      } else if (storeSelectorTriggerRef.current) {
+        storeSelectorTriggerRef.current.focus()
+      }
+    }
+  }, [showStoreModal])
 
   const handleCreateStoreSubmit = async (e) => {
     e.preventDefault()
@@ -155,7 +188,20 @@ const IntelligenceDashboard = ({
             })}
           </span>
           <span className="byline-edition">
-            <span className="byline-store-selector-trigger" onClick={() => setShowStoreModal(true)}>
+            <span
+              ref={storeSelectorTriggerRef}
+              className="byline-store-selector-trigger"
+              onClick={() => setShowStoreModal(true)}
+              tabIndex={0}
+              role="button"
+              aria-haspopup="dialog"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  setShowStoreModal(true)
+                }
+              }}
+            >
               🏬 <strong>{selectedStore ? selectedStore.name : 'Select Store'}</strong>
               {selectedStore?.location && <span className="store-loc"> ({selectedStore.location})</span>}
               <span className="dropdown-arrow"> ▼</span>
@@ -491,11 +537,11 @@ const IntelligenceDashboard = ({
       {/* Store Selector Modal */}
       {showStoreModal && (
         <div className="store-modal-overlay">
-          <div className="store-modal">
+          <div className="store-modal" role="dialog" aria-modal="true" aria-labelledby="store-modal-title">
             <div className="store-modal-header">
               <span className="mono-kicker">Location Roster</span>
-              <h2>Select Retail Store</h2>
-              <button className="close-btn" onClick={() => setShowStoreModal(false)}>✕</button>
+              <h2 id="store-modal-title">Select Retail Store</h2>
+              <button className="close-btn" onClick={() => setShowStoreModal(false)} aria-label="Close store selector">✕</button>
             </div>
             
             <div className="store-list">

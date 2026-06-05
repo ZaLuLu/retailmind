@@ -90,6 +90,26 @@ class CacheClient:
             return True
         return False
 
+    async def invalidate_chart_bundle(self, user_id: Any):
+        """Clears all cached chart bundles for a given user."""
+        user_id_str = str(user_id)
+        if self.is_redis_available and self.redis:
+            try:
+                # Find all keys matching the pattern and delete them
+                pattern = f"chart_bundle:{user_id_str}:*"
+                keys = await self.redis.keys(pattern)
+                if keys:
+                    await self.redis.delete(*keys)
+                # Also delete the "all" key just in case
+                await self.redis.delete(f"chart_bundle:{user_id_str}:all")
+            except Exception as e:
+                logger.warning(f"Failed to invalidate Redis cache: {e}")
+        
+        # Also clear from in-memory cache
+        keys_to_del = [k for k in self._in_memory_db.keys() if k.startswith(f"chart_bundle:{user_id_str}:")]
+        for k in keys_to_del:
+            del self._in_memory_db[k]
+
     async def clear_all(self):
         """Clears all cached keys."""
         if self.is_redis_available and self.redis:

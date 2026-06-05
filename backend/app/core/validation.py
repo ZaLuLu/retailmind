@@ -6,11 +6,14 @@ from fastapi import HTTPException
 # Standard magic bytes
 ZIP_MAGIC = b"PK\x03\x04"
 XLS_MAGIC = b"\xd0\xcf\x11\xe0"
+PDF_MAGIC = b"%PDF"
+PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
+JPEG_MAGIC = b"\xff\xd8\xff"
 
 def validate_file_magic(content: bytes, filename: str) -> None:
     """
     Validates file headers (magic bytes) to ensure the uploaded file format
-    matches its extension. Prevents uploading malicious binaries disguised as CSV/XLSX.
+    matches its extension. Prevents uploading malicious binaries disguised as CSV/XLSX or images/PDFs.
     """
     fn_lower = filename.lower()
     if fn_lower.endswith(".xlsx"):
@@ -24,6 +27,30 @@ def validate_file_magic(content: bytes, filename: str) -> None:
             raise HTTPException(
                 status_code=400,
                 detail="Invalid file format: File header does not match Excel (.xls) format."
+            )
+    elif fn_lower.endswith(".pdf"):
+        if not content.startswith(PDF_MAGIC):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid file format: File header does not match PDF format."
+            )
+    elif fn_lower.endswith(".png"):
+        if not content.startswith(PNG_MAGIC):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid file format: File header does not match PNG format."
+            )
+    elif fn_lower.endswith((".jpg", ".jpeg")):
+        if not content.startswith(JPEG_MAGIC):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid file format: File header does not match JPEG format."
+            )
+    elif fn_lower.endswith(".webp"):
+        if not (content.startswith(b"RIFF") and content[8:12] == b"WEBP"):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid file format: File header does not match WebP format."
             )
     elif fn_lower.endswith(".csv"):
         # Ensure it is a text-like file, not a binary executable

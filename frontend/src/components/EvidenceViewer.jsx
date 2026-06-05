@@ -1,10 +1,9 @@
-import React from 'react'
 
 function EvidenceViewer({ transaction, onClose }) {
   if (!transaction) return null
 
   const imageUrl = transaction.document_path
-    ? `http://localhost:8000/uploads/${transaction.document_path.split(/[\/\\]/).pop()}`
+    ? `http://localhost:8000/uploads/${transaction.document_path.split(/[/\\]/).pop()}`
     : null
 
   const confidence = transaction.confidence || 0.9

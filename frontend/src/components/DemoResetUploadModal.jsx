@@ -1,5 +1,5 @@
 // DemoResetUploadModal.jsx
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { api } from '../services/api'
 import './DemoResetUploadModal.css'
 
@@ -19,6 +19,7 @@ export default function DemoResetUploadModal({ onClose, onComplete }) {
   const eventSourceRef = useRef(null)
 
   useEffect(() => {
+    const previousFocus = document.activeElement
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         onClose()
@@ -26,11 +27,14 @@ export default function DemoResetUploadModal({ onClose, onComplete }) {
     }
     window.addEventListener('keydown', handleKeyDown)
 
-    // Cleanup EventSource and keydown on unmount
+    // Cleanup EventSource, keydown and restore focus on unmount
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
       if (eventSourceRef.current) {
         eventSourceRef.current.close()
+      }
+      if (previousFocus) {
+        previousFocus.focus()
       }
     }
   }, [onClose])

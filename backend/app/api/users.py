@@ -133,6 +133,8 @@ async def update_me(
     try:
         await db.commit()
         await db.refresh(current_user)
+        from ..core.redis import cache
+        await cache.invalidate_chart_bundle(current_user.id)
     except Exception as e:
         await db.rollback()
         logger.exception("Failed to update user %s", current_user.id)
