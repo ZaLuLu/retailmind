@@ -1,0 +1,16 @@
+﻿date,product_name,quantity,price,category,store_name
+2026-06-01,Fresh Tomatoes,50,45.00,Vegetables,Main Street Store
+2026-06-02,Basmati Rice,30,120.50,Grains,Main Street Store
+2026-06-03,,20,80.00,Dairy,Main Street Store
+2026-06-04,Whole Milk,-5,60.00,Dairy,Main Street Store
+2026-06-05,Cheddar Cheese,10,abc,Dairy,Main Street Store
+2026-06-06,Organic Bananas,200,25.00,Fruits,Main Street Store
+2026-06-07,Olive Oil,15,350.00,Oils,Main Street Store
+06/08/2026,Wheat Flour,100,55.00,Grains,Main Street Store
+2026-06-09,Green Tea,40,180.00,Beverages,Main Street Store
+2026-06-01,Fresh Tomatoes,50,45.00,Vegetables,Main Street Store
+2026-06-10,Potato Chips,0,70.00,Snacks,Main Street Store
+2026-06-11,Dark Chocolate,25,220.00,Confectionery,Main Street Store
+bad-date,Mango Juice,35,95.00,Beverages,Main Street Store
+2026-06-13,Almond Butter,8,450.00,Spreads,Main Street Store
+2026-06-14,Coconut Water,60,85.00,Beverages,Main Street Store
