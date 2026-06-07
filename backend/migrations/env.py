@@ -24,6 +24,15 @@ config = context.config
 
 # Dynamically set the database URL in the alembic config (strip sslmode parameter if present)
 db_url = settings.DATABASE_URL
+
+# Ensure we use the asyncpg driver (Railway/Postgres URLs often come as postgres:// or postgresql://)
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif db_url.startswith("postgresql://"):
+    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+elif not db_url.startswith("postgresql+asyncpg://"):
+    db_url = db_url  # already correct
+
 connect_args = {}
 if "sslmode=require" in db_url:
     connect_args["ssl"] = True
