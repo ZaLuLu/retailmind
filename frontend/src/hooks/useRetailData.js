@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect */
 import { useState, useEffect } from 'react'
 import { api } from '../services/api'
 import { IS_DEMO, DEMO_USER } from '../config'
@@ -20,8 +21,8 @@ export const EMPTY_SUMMARY = {
 export function useRetailData(isAuthenticated, showToast, handleLogout) {
   const [user, setUser] = useState(
     IS_DEMO
-      ? { fullName: DEMO_USER.fullName, storeName: DEMO_USER.storeName, currency: DEMO_USER.currency }
-      : { fullName: '', storeName: '', currency: 'INR' }
+      ? { id: DEMO_USER.id, fullName: DEMO_USER.fullName, storeName: DEMO_USER.storeName, currency: DEMO_USER.currency, plan: 'pro', is_demo: true }
+      : { id: '', fullName: '', storeName: '', currency: 'INR', plan: 'free', is_demo: false }
   )
   const [sales, setSales] = useState([])
   const [summary, setSummary] = useState(EMPTY_SUMMARY)
@@ -31,28 +32,6 @@ export function useRetailData(isAuthenticated, showToast, handleLogout) {
   const [hasCustomData, setHasCustomData] = useState(false)
   const [showImport, setShowImport] = useState(false)
   const [isOnboarded, setIsOnboarded] = useState(IS_DEMO)
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchUserData()
-    }
-  }, [isAuthenticated])
-
-  // Automatically reset all data states when logging out
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setUser(IS_DEMO
-        ? { fullName: DEMO_USER.fullName, storeName: DEMO_USER.storeName, currency: DEMO_USER.currency }
-        : { fullName: '', storeName: '', currency: 'INR' }
-      )
-      setSales([])
-      setSummary(EMPTY_SUMMARY)
-      setStores([])
-      setSelectedStore(null)
-      setHasCustomData(false)
-      setIsOnboarded(IS_DEMO)
-    }
-  }, [isAuthenticated])
 
   const fetchUserData = async (period, dateFrom, dateTo, storeIdOverride, forceRefresh = false) => {
     setLoading(true)
@@ -68,9 +47,12 @@ export function useRetailData(isAuthenticated, showToast, handleLogout) {
         const profileData = await api.get('/users/me')
         data = profileData
         setUser({
+          id: profileData.id,
           fullName: profileData.full_name || '',
           storeName: profileData.store_name || '',
           currency: profileData.currency || 'INR',
+          plan: profileData.plan || 'free',
+          is_demo: profileData.is_demo || false,
         })
         setIsOnboarded(profileData.is_onboarded)
       }
@@ -136,6 +118,28 @@ export function useRetailData(isAuthenticated, showToast, handleLogout) {
     }
   }
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchUserData()
+    }
+  }, [isAuthenticated])
+
+  // Automatically reset all data states when logging out
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setUser(IS_DEMO
+        ? { id: DEMO_USER.id, fullName: DEMO_USER.fullName, storeName: DEMO_USER.storeName, currency: DEMO_USER.currency, plan: 'pro', is_demo: true }
+        : { id: '', fullName: '', storeName: '', currency: 'INR', plan: 'free', is_demo: false }
+      )
+      setSales([])
+      setSummary(EMPTY_SUMMARY)
+      setStores([])
+      setSelectedStore(null)
+      setHasCustomData(false)
+      setIsOnboarded(IS_DEMO)
+    }
+  }, [isAuthenticated])
+
   const handleSelectStore = async (storeId) => {
     await fetchUserData(summary?.period, summary?.date_from, summary?.date_to, storeId)
   }
@@ -157,7 +161,6 @@ export function useRetailData(isAuthenticated, showToast, handleLogout) {
         store_name: data.storeName,
         initial_balance: 0,
         currency: data.currency || 'INR',
-        budgets: {},
       })
       await fetchUserData(undefined, undefined, undefined, undefined, true)
     } catch (err) {

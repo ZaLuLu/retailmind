@@ -26,6 +26,9 @@ import uuid
 from datetime import date, timedelta
 from typing import Any
 
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+
 # ── Path setup ────────────────────────────────────────────────────────────────
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -107,19 +110,9 @@ SPIKE_SKU = "E006"
 
 
 def _get_password_hash(password: str) -> str:
-    """Hash a password using passlib argon2/bcrypt (same as auth module)."""
-    try:
-        from passlib.context import CryptContext
-        ctx = CryptContext(schemes=["argon2", "bcrypt"], deprecated="auto")
-        return ctx.hash(password)
-    except Exception:
-        # Fallback: import from app security module
-        try:
-            from app.security.auth import get_password_hash
-            return get_password_hash(password)
-        except Exception:
-            from app.core.security import get_password_hash as gph
-            return gph(password)
+    """Hash a password using the app's core security module."""
+    from app.core.security import hash_password
+    return hash_password(password)
 
 
 def _generate_records(user_id: uuid.UUID, store_id: uuid.UUID) -> list[SaleRecord]:

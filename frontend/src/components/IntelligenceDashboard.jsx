@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './IntelligenceDashboard.css'
 import SalesLedger from './SalesLedger'
-import MLArchitectureMap from './MLArchitectureMap'
 import RevenueHero from './RevenueHero'
 import DemandSignals from './DemandSignals'
 import TopProductsTable from './TopProductsTable'
@@ -10,7 +9,9 @@ import DateRangeToggle from './DateRangeToggle'
 import PortfolioMatrix from './PortfolioMatrix'
 import CustomerSegmentsPanel from './CustomerSegmentsPanel'
 import UserManual from './UserManual'
-import DocumentScanner from './DocumentScanner'
+import PricingSimulator from './PricingSimulator'
+import TelexBriefing from './TelexBriefing'
+import AuditConsole from './AuditConsole'
 import { api } from '../services/api'
 import { useToast } from './Toast'
 import ErrorBoundary from './ErrorBoundary'
@@ -18,7 +19,6 @@ import ErrorBoundary from './ErrorBoundary'
 const IntelligenceDashboard = ({
   summary,
   sales,
-  user,
   loading,
   onShowSettings,
   onLogout,
@@ -30,11 +30,11 @@ const IntelligenceDashboard = ({
   onSelectStore,
   onCreateStore,
   onAskAdvisor,
+  onShowAdmin,
 }) => {
   const { showToast } = useToast()
   const [activeView, setActiveView] = useState('briefing')
-  const [showArchitecture, setShowArchitecture] = useState(false)
-  const [showScanner, setShowScanner] = useState(false)
+  const [showTelex, setShowTelex] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [period, setPeriod] = useState('mtd')
@@ -70,12 +70,13 @@ const IntelligenceDashboard = ({
 
     window.addEventListener('keydown', handleKeyDown)
 
+    const storeSelectorTrigger = storeSelectorTriggerRef.current
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
       if (previousFocus) {
         previousFocus.focus()
-      } else if (storeSelectorTriggerRef.current) {
-        storeSelectorTriggerRef.current.focus()
+      } else if (storeSelectorTrigger) {
+        storeSelectorTrigger.focus()
       }
     }
   }, [showStoreModal])
@@ -175,8 +176,9 @@ const IntelligenceDashboard = ({
             <span className="masthead-tagline">Business Intelligence Bulletin</span>
           </div>
           <div className="masthead-actions">
-            <button className="mono-btn" onClick={() => setShowArchitecture(true)}>System</button>
+            <button className="mono-btn" onClick={() => setShowTelex(true)}>📰 View Telex</button>
             <button className="mono-btn" onClick={onShowSettings}>Settings</button>
+            <button className="mono-btn" onClick={onShowAdmin}>Admin</button>
             <button className="mono-btn alert" onClick={onLogout}>Logout</button>
           </div>
         </div>
@@ -228,6 +230,12 @@ const IntelligenceDashboard = ({
           onClick={() => setActiveView('ledger')}
         >
           📋 Sales Ledger
+        </button>
+        <button
+          className={`view-nav-btn ${activeView === 'audit' ? 'active' : ''}`}
+          onClick={() => setActiveView('audit')}
+        >
+          ⚙ Audit Console
         </button>
       </nav>
 
@@ -304,8 +312,8 @@ const IntelligenceDashboard = ({
                       <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
                         <span className="mono" style={{ background: 'var(--ink-black)', color: 'var(--bg-paper)', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 700, fontSize: '0.75rem' }}>2</span>
                         <div>
-                          <h4 style={{ margin: '0 0 0.2rem', fontSize: '0.95rem', fontWeight: 700 }}>Or Scan Receipts</h4>
-                          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Click "AI Scan Receipt" to capture or upload an invoice/receipt. Our AI scanner extracts transaction data automatically.</p>
+                          <h4 style={{ margin: '0 0 0.2rem', fontSize: '0.95rem', fontWeight: 700 }}>Run Price Simulations</h4>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Simulate price and margin adjustments using the dynamic pricing simulator to optimize product profitability.</p>
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
@@ -430,6 +438,11 @@ const IntelligenceDashboard = ({
                     </ErrorBoundary>
                   </div>
 
+                  {/* Pricing Simulator */}
+                  <div className="section-pad">
+                    <PricingSimulator products={summary?.top_products ?? []} currency={currency} />
+                  </div>
+
                   {/* CSV Upload */}
                   <div className="section-pad upload-section" id="tour-upload">
                     <div className="section-kicker">
@@ -469,13 +482,6 @@ const IntelligenceDashboard = ({
                       <button className="template-btn" style={{ flex: 1, margin: 0 }} onClick={downloadTemplate}>
                         ↓ CSV Template
                       </button>
-                      <button 
-                        className="template-btn" 
-                        style={{ flex: 1, margin: 0, borderColor: 'var(--ink-red)', color: 'var(--ink-red)' }} 
-                        onClick={() => setShowScanner(true)}
-                      >
-                        📷 AI Scan Receipt
-                      </button>
                     </div>
                   </div>
 
@@ -492,6 +498,15 @@ const IntelligenceDashboard = ({
             </div>
           </div>
           </>
+        ) : activeView === 'audit' ? (
+          <div className="full-view-container">
+            <ErrorBoundary inline>
+              <AuditConsole
+                selectedStore={selectedStore}
+                onRefreshSummary={() => onRefresh(period, dateFrom, dateTo)}
+              />
+            </ErrorBoundary>
+          </div>
         ) : (
           <div className="full-view-container">
             <SalesLedger
@@ -509,7 +524,7 @@ const IntelligenceDashboard = ({
 
       {/* ── Footer ── */}
       <footer className="newsprint-footer">
-        <p>© 2025 RetailMind Intel Corp. · Powered by Gemini AI · All Rights Reserved</p>
+        <p>© 2026 RetailMind Intel Corp. · Powered by Groq Llama-3 · All Rights Reserved</p>
         <div className="footer-links">
           <span>Terms</span>
           <span>Privacy</span>
@@ -518,18 +533,11 @@ const IntelligenceDashboard = ({
       </footer>
 
       {/* ── Overlays ── */}
-      {showArchitecture && (
-        <MLArchitectureMap onClose={() => setShowArchitecture(false)} />
-      )}
-      
-      {showScanner && (
-        <DocumentScanner
-          onClose={() => setShowScanner(false)}
-          onComplete={() => {
-            onRefresh(period, dateFrom, dateTo)
-            setShowScanner(false)
-          }}
-          selectedStore={selectedStore}
+
+      {showTelex && (
+        <TelexBriefing
+          summary={summary}
+          onClose={() => setShowTelex(false)}
           currency={currency}
         />
       )}

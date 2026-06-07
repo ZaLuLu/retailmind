@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react'
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { formatMoneyDetailed } from '../services/currency'
 import { api } from '../services/api'
 import { useToast } from './Toast'
@@ -29,25 +30,27 @@ const SalesLedger = ({ sales = [], currency = 'INR', onBack, initialProductNames
   const [exporting, setExporting]         = useState(false)
   const PAGE_SIZE = 20
 
-  React.useEffect(() => {
+  useEffect(() => {
     setProductNamesFilter(initialProductNames)
   }, [initialProductNames])
 
   const categories = getCategories(sales)
 
   // ── Client-side filtering ──────────────────────────────────────────────────
-  const filtered = sales.filter(s => {
-    const q = search.toLowerCase()
-    const matchSearch = !q || (
-      s.product_name?.toLowerCase().includes(q) ||
-      s.product_sku?.toLowerCase().includes(q)
-    )
-    const matchCat = categoryFilter === 'All' || s.product_category === categoryFilter
-    const matchFrom = !dateFrom || s.sale_date >= dateFrom
-    const matchTo   = !dateTo   || s.sale_date <= dateTo
-    const matchProductNames = !productNamesFilter || productNamesFilter.includes(s.product_name)
-    return matchSearch && matchCat && matchFrom && matchTo && matchProductNames
-  })
+  const filtered = useMemo(() => {
+    return sales.filter(s => {
+      const q = search.toLowerCase()
+      const matchSearch = !q || (
+        s.product_name?.toLowerCase().includes(q) ||
+        s.product_sku?.toLowerCase().includes(q)
+      )
+      const matchCat = categoryFilter === 'All' || s.product_category === categoryFilter
+      const matchFrom = !dateFrom || s.sale_date >= dateFrom
+      const matchTo   = !dateTo   || s.sale_date <= dateTo
+      const matchProductNames = !productNamesFilter || productNamesFilter.includes(s.product_name)
+      return matchSearch && matchCat && matchFrom && matchTo && matchProductNames
+    })
+  }, [sales, search, categoryFilter, dateFrom, dateTo, productNamesFilter])
 
   // ── Sorting ────────────────────────────────────────────────────────────────
   const sorted = [...filtered].sort((a, b) => {

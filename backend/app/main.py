@@ -19,7 +19,7 @@ from .api.onboarding import router as onboarding_router
 from .api.users import router as users_router
 from .api.retail import router as retail_router
 from .api.analytics import router as analytics_router
-from .api.scan import router as scan_router
+from .api.admin import router as admin_router
 from .middleware.security import SecurityHeadersMiddleware
 from .core.limiter import limiter
 
@@ -61,15 +61,20 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS Middleware
-# On Vercel, .env is not deployed — ALLOWED_ORIGINS falls back to "*" so the
-# frontend serverless function can always reach the backend serverless function.
-_raw_origins = settings.ALLOWED_ORIGINS.strip() if settings.ALLOWED_ORIGINS else "*"
+# CORS Middleware Configuration
+_raw_origins = settings.ALLOWED_ORIGINS.strip() if settings.ALLOWED_ORIGINS else ""
+# Fallback to specific FRONTEND_URL in production to avoid dangerous wildcard defaults
+if not _raw_origins or _raw_origins == "*":
+    if settings.ENVIRONMENT == "production" and settings.FRONTEND_URL:
+        _raw_origins = settings.FRONTEND_URL
+    else:
+        _raw_origins = "*"
+
 if _raw_origins == "*":
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
-        allow_credentials=False,   # credentials=True is incompatible with allow_origins=["*"]
+        allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
     )
@@ -80,7 +85,7 @@ else:
         allow_origins=_origins_list,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-        allow_headers=["Content-Type", "Authorization", "X-CSRF-Token"],
+        allow_headers=["Content-Type", "Authorization", "X-CSRF-Token", "X-Admin-Pin"],
     )
 
 # Mount Secure Headers Middleware
@@ -103,7 +108,7 @@ app.include_router(onboarding_router, prefix="/api/v1")
 app.include_router(users_router, prefix="/api/v1")
 app.include_router(retail_router, prefix="/api/v1")
 app.include_router(analytics_router, prefix="/api/v1")
-app.include_router(scan_router, prefix="/api/v1")
+app.include_router(admin_router, prefix="/api/v1")
 
 @app.get("/health/live")
 async def health_check():

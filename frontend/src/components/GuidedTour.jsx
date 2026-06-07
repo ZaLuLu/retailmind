@@ -1,5 +1,5 @@
 // GuidedTour.jsx
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import './GuidedTour.css'
 
 const STEPS = [
@@ -19,21 +19,26 @@ const STEPS = [
     content: 'Audits dead stock, margin erosion, and spikes. Click "Ask Advisor" to open the advisor chat panel pre-filled with dynamic diagnostic instructions.'
   },
   {
-    selector: '#tour-upload',
-    title: '📷 AI Invoice Scanner',
-    content: 'Click "AI Scan Receipt" to feed supplier invoices to the Gemini Vision Engine, review parsed records, and commit them in bulk to the general ledger.'
+    selector: '.pricing-simulator',
+    title: '📊 Pricing Margin Simulator',
+    content: 'Simulate retail price changes (from -30% to +30%) to estimate the demand volume impact, gross profit margins, and overall category revenue elasticity.'
+  },
+  {
+    selector: '.user-manual-section',
+    title: '📖 Store Operating Manual',
+    content: 'Review this live manual to see the strict column format specifications for CSV/Excel uploads, and learn how our Holt-Winters and K-Means predictive models cluster your catalog.'
   }
 ]
 
 export default function GuidedTour() {
   const [activeStep, setActiveStep] = useState(0)
   const [isVisible, setIsVisible] = useState(false)
+  const [cardStyle, setCardStyle] = useState({ position: 'fixed', bottom: '2rem', right: '2rem' })
 
-  // Use function declaration so it is hoisted and available to all useEffects above it
-  function handleDismiss() {
+  const handleDismiss = useCallback(() => {
     localStorage.setItem('retailmind_tour_completed', 'true')
     setIsVisible(false)
-  }
+  }, [])
 
   useEffect(() => {
     // Check if user has already completed the tour
@@ -57,8 +62,7 @@ export default function GuidedTour() {
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isVisible])
+  }, [isVisible, handleDismiss])
 
   useEffect(() => {
     if (!isVisible) return
@@ -90,6 +94,81 @@ export default function GuidedTour() {
     }
   }, [activeStep, isVisible])
 
+  // Contextual floating positioning logic
+  useEffect(() => {
+    if (!isVisible) return
+
+    const updatePosition = () => {
+      const currentStepConfig = STEPS[activeStep]
+      if (!currentStepConfig) return
+
+      const target = document.querySelector(currentStepConfig.selector)
+      if (target) {
+        const rect = target.getBoundingClientRect()
+        const isMobile = window.innerWidth < 768
+
+        if (isMobile) {
+          setCardStyle({
+            position: 'fixed',
+            bottom: '1rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '90%',
+            maxWidth: '340px',
+            zIndex: 10001
+          })
+        } else {
+          const cardHeight = 180 // approximate height
+          const cardWidth = 340
+          const spaceBelow = window.innerHeight - rect.bottom
+          const spaceAbove = rect.top
+
+          let top = rect.bottom + window.scrollY + 12
+          let left = Math.max(12, rect.left + window.scrollX + (rect.width - cardWidth) / 2)
+
+          // Keep left inside viewport boundary
+          if (left + cardWidth > window.innerWidth - 24) {
+            left = window.innerWidth - cardWidth - 24
+          }
+
+          if (spaceBelow < cardHeight && spaceAbove > cardHeight) {
+            // Position above target
+            top = rect.top + window.scrollY - cardHeight - 12
+          }
+
+          setCardStyle({
+            position: 'absolute',
+            top: `${top}px`,
+            left: `${left}px`,
+            width: `${cardWidth}px`,
+            zIndex: 10001
+          })
+        }
+      } else {
+        // Fallback
+        setCardStyle({
+          position: 'fixed',
+          bottom: '2rem',
+          right: '2rem',
+          width: '340px',
+          zIndex: 10001
+        })
+      }
+    }
+
+    // Recalculate slightly after render/scroll
+    const timer = setTimeout(updatePosition, 300)
+
+    window.addEventListener('resize', updatePosition)
+    window.addEventListener('scroll', updatePosition)
+
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('resize', updatePosition)
+      window.removeEventListener('scroll', updatePosition)
+    }
+  }, [activeStep, isVisible])
+
   const handleNext = () => {
     if (activeStep < STEPS.length - 1) {
       setActiveStep(prev => prev + 1)
@@ -108,7 +187,7 @@ export default function GuidedTour() {
       <div className="tour-spotlight-backdrop" />
 
       {/* Floating Guided Tour Dispatch */}
-      <div className="tour-card-floating">
+      <div className="tour-card-floating" style={cardStyle}>
         
         <div className="tour-card-header">
           <span className="tour-card-kicker">Retail Intelligence Guide</span>

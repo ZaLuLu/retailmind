@@ -1,4 +1,4 @@
-import { API_BASE_URL, IS_DEMO } from '../config'
+import { API_BASE_URL } from '../config'
 
 const BASE_URL = API_BASE_URL
 
@@ -59,7 +59,14 @@ async function parseError(res) {
       err.message = body.error || `Request failed (${res.status})`
       err.details = body.details
     } else {
-      err.message = body.detail || body.message || `Request failed (${res.status})`
+      if (body && Array.isArray(body.detail)) {
+        // Unpack FastAPI validation errors into a human-readable string
+        err.message = body.detail
+          .map(item => `${item.loc[item.loc.length - 1]}: ${item.msg}`)
+          .join(', ')
+      } else {
+        err.message = (body && (body.detail || body.message)) || `Request failed (${res.status})`
+      }
     }
   } catch {
     err.message = `Request failed (${res.status})`
@@ -316,10 +323,46 @@ export const api = {
     return uploadFile(url, file)
   },
 
-  /** Upload a document (PDF/Image) for transaction extraction via AI Vision */
-  scanDocument: (file) => {
-    return uploadFile('/scan', file)
+  /** Fetch past upload history and error logs */
+  getUploadHistory: (limit = 20, offset = 0, storeId = '') => {
+    let params = [`limit=${limit}`, `offset=${offset}`]
+    if (storeId) params.push(`store_id=${storeId}`)
+    return request('GET', `/retail/upload-history?${params.join('&')}`)
   },
+
+  /** Fetch full per-row error log for a specific upload batch */
+  getUploadLog: (uploadId) => {
+    return request('GET', `/retail/upload-history/${uploadId}/log`)
+  },
+
+  /** Run a new AI audit */
+  runAudit: (storeId = '') => {
+    const query = storeId ? `?store_id=${storeId}` : ''
+    return request('POST', `/retail/audit/run${query}`)
+  },
+
+  /** List past AI audits */
+  getAudits: (storeId = '', limit = 20, offset = 0) => {
+    let params = [`limit=${limit}`, `offset=${offset}`]
+    if (storeId) params.push(`store_id=${storeId}`)
+    return request('GET', `/retail/audits?${params.join('&')}`)
+  },
+
+  /** Get full audit detail including anomaly_snapshot */
+  getAuditDetail: (auditId) => {
+    return request('GET', `/retail/audits/${auditId}`)
+  },
+
+  /** Get URL for print-to-PDF HTML audit report (opens in browser) */
+  getAuditExportUrl: (auditId) => {
+    return `${BASE_URL}/retail/audits/${auditId}/export`
+  },
+
+  /** Get URL for raw Markdown audit report download */
+  getAuditMarkdownUrl: (auditId) => {
+    return `${BASE_URL}/retail/audits/${auditId}/export/markdown`
+  },
+
 
   /** URL for template CSV download (no auth needed) */
   getTemplateCsvUrl: () => `${BASE_URL}/retail/template-csv`,
@@ -414,7 +457,7 @@ export const api = {
             const data = JSON.parse(jsonStr)
             if (data.error) { onError(data.error); return }
             if (data.chunk) onChunk(data.chunk)
-          } catch (e) {
+          } catch {
             // Non-fatal parse error on a single SSE chunk — continue streaming
           }
         }
@@ -455,4 +498,11 @@ export const api = {
    * Returns { job_id, status }
    */
   demoRestore: () => request('POST', '/demo/restore'),
+
+  // ── Admin Console ──────────────────────────────────────────────────────────
+  verifyAdminPin: (pin) => request('POST', '/admin/verify', { pin }),
+  getAdminStats: (pin) => request('GET', '/admin/stats', null, { headers: { 'X-Admin-Pin': pin } }),
+  clearAdminCache: (pin) => request('POST', '/admin/clear-cache', null, { headers: { 'X-Admin-Pin': pin } }),
+  triggerAdminReseed: (pin) => request('POST', '/admin/reseed', null, { headers: { 'X-Admin-Pin': pin } }),
+  toggleAdminBypass: (pin, userId, bypass) => request('POST', '/admin/bypass-limits', { user_id: userId, bypass }, { headers: { 'X-Admin-Pin': pin } }),
 }

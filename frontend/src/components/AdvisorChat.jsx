@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react'
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useState, useEffect, useRef } from 'react'
 import { api } from '../services/api'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
@@ -45,17 +46,20 @@ function AdvisorChat({ summary, prefill, clearPrefill, onClose }) {
     if (scrollRef.current) {
       scrollRef.current.scrollTo({
         top: scrollRef.current.scrollHeight,
-        behavior: 'smooth'
+        behavior: 'auto'
       })
     }
   }, [messages])
 
   const renderMarkdown = (content) => {
+    if (!content && !loading) {
+      return { __html: '<em style="color: var(--text-muted)">Response empty.</em>' }
+    }
     try {
       const rawHtml = marked.parse(content || '')
       const cleanHtml = DOMPurify.sanitize(rawHtml)
       return { __html: cleanHtml }
-    } catch (e) {
+    } catch {
       return { __html: content || '' }
     }
   }
@@ -94,7 +98,7 @@ function AdvisorChat({ summary, prefill, clearPrefill, onClose }) {
               : msg
           ))
         },
-        (error) => {
+        () => {
           setMessages(prev => prev.map(msg => 
             msg.id === streamId 
               ? { ...msg, content: 'The AI advisor encountered a connection issue. Please resubmit your request.' } 
@@ -108,7 +112,7 @@ function AdvisorChat({ summary, prefill, clearPrefill, onClose }) {
           sendingRef.current = false
         }
       )
-    } catch (e) {
+    } catch {
       setMessages(prev => prev.map(msg => 
         msg.id === streamId 
           ? { ...msg, content: 'The AI advisor encountered a connection issue. Please resubmit your request.' } 

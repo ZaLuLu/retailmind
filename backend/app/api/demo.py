@@ -243,10 +243,11 @@ async def demo_reset_and_upload(
     if len(raw_rows) == 0:
         raise HTTPException(422, "Uploaded file has no data rows.")
 
-    if len(raw_rows) > settings.MAX_UPLOAD_ROWS:
+    max_rows = 50000 if getattr(user, "plan", "free") == "enterprise" else settings.MAX_UPLOAD_ROWS
+    if len(raw_rows) > max_rows:
         raise HTTPException(
             413,
-            f"File exceeds maximum of {settings.MAX_UPLOAD_ROWS:,} rows.",
+            f"File exceeds maximum of {max_rows:,} rows.",
         )
 
     # 3. Delete existing records

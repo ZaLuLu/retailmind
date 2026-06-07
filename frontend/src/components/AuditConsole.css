@@ -1,0 +1,786 @@
+/* ═══════════════════════════════════════════════════════
+   AuditConsole — Phase 4 Stylesheet
+   2-panel layout: roster/tabs LEFT · report viewer RIGHT
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Layout ─────────────────────────────────────────────── */
+.audit-console-grid {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 1.5rem;
+  min-height: calc(100vh - 220px);
+  margin-top: 1rem;
+  align-items: start;
+}
+
+.audit-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-paper);
+  border: var(--border-light);
+  border-radius: 4px;
+  padding: 1.25rem;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+/* ── Panel Header ────────────────────────────────────────── */
+.panel-header {
+  border-bottom: 2px solid var(--ink-black);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.panel-header h2 {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.mono-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--ink-red);
+  letter-spacing: 0.12em;
+}
+
+/* ── Console Tabs ────────────────────────────────────────── */
+.console-tabs {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--ink-black);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 0.25rem;
+}
+
+.console-tab {
+  flex: 1;
+  padding: 0.45rem 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: background 0.12s, color 0.12s;
+}
+
+.console-tab:not(:last-child) {
+  border-right: 1px solid var(--ink-black);
+}
+
+.console-tab.active {
+  background: var(--ink-black);
+  color: var(--bg-paper);
+}
+
+.console-tab:hover:not(.active) {
+  background: var(--bg-tint);
+  color: var(--ink-black);
+}
+
+/* ── Roster Panel ────────────────────────────────────────── */
+.roster-panel {
+  flex-shrink: 0;
+  max-height: calc(100vh - 220px);
+  overflow: hidden;
+}
+
+.run-audit-btn {
+  width: 100%;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.refresh-btn {
+  width: 100%;
+  font-size: 0.78rem;
+  margin-bottom: 0.5rem;
+}
+
+.panel-helper-text {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.6rem;
+  background: var(--bg-tint);
+  border-left: 3px solid var(--ink-red);
+  border-radius: 0 2px 2px 0;
+}
+
+/* Audit List */
+.audits-list,
+.uploads-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 0.2rem;
+  max-height: calc(100vh - 420px);
+}
+
+.audit-roster-item {
+  border: var(--border-light);
+  border-radius: 4px;
+  padding: 0.8rem;
+  cursor: pointer;
+  background: var(--bg-tint);
+  transition: all 0.12s ease;
+  position: relative;
+}
+
+.audit-roster-item:hover {
+  border-color: var(--ink-black);
+  transform: translate(-1px, -1px);
+  box-shadow: 1px 1px 0 var(--ink-black);
+}
+
+.audit-roster-item.active {
+  border-color: var(--ink-black);
+  background: var(--bg-paper);
+  outline: 2px solid var(--ink-black);
+  box-shadow: 2px 2px 0 var(--ink-black);
+}
+
+.item-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.audit-date { font-size: 0.8rem; font-weight: 700; }
+.audit-id-badge { font-size: 0.68rem; color: var(--text-muted); }
+
+.item-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.stat-anomalies.alert { color: var(--ink-red); font-weight: 700; }
+
+/* Snapshot dot indicator */
+.snapshot-dot {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.5rem;
+  font-size: 0.55rem;
+  color: #6366f1;
+  title: "Full snapshot available";
+}
+
+/* ── Upload Log Cards ────────────────────────────────────── */
+.upload-log-card {
+  border: var(--border-light);
+  border-radius: 4px;
+  background: var(--bg-tint);
+  overflow: hidden;
+}
+
+.upload-log-card.success { border-left: 4px solid #4caf50; }
+.upload-log-card.partial { border-left: 4px solid #f59e0b; }
+.upload-log-card.failed  { border-left: 4px solid var(--ink-red); }
+
+.log-card-header {
+  background: rgba(0, 0, 0, 0.03);
+  padding: 0.6rem 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: var(--border-light);
+}
+
+.log-filename {
+  font-weight: 700;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 190px;
+}
+
+.log-status-badge {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 0.1rem 0.4rem;
+  border-radius: 2px;
+}
+
+.log-status-badge.success { background: #e8f5e9; color: #2e7d32; }
+.log-status-badge.partial { background: #fff8e1; color: #b45309; }
+.log-status-badge.failed  { background: #ffebee; color: var(--ink-red); }
+
+.log-card-body {
+  padding: 0.8rem;
+  font-size: 0.78rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* Stats pill row */
+.log-stats-row {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.log-pill {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  background: var(--bg-tint);
+  border: 1px solid rgba(0,0,0,0.1);
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.log-pill.success { background: #e8f5e9; color: #2e7d32; }
+.log-pill.warn    { background: #fff3e0; color: #b45309; }
+.log-pill.dupe    { background: #f3e8ff; color: #7c3aed; }
+
+.log-date {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.log-drill-btn {
+  font-size: 0.72rem;
+  margin-top: 0.25rem;
+  padding: 0.3rem 0.6rem;
+}
+
+/* ── Report Panel ────────────────────────────────────────── */
+.report-panel {
+  flex: 1;
+  overflow-y: auto;
+  max-height: calc(100vh - 220px);
+}
+
+.report-header {
+  flex-direction: row !important;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.report-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Center empty state */
+.center-empty {
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 320px;
+  color: var(--text-muted);
+}
+
+.empty-icon { font-size: 2.5rem; }
+
+/* ── Report Sheet ─────────────────────────────────────────── */
+.audit-report-sheet {
+  background: var(--bg-paper);
+  border: 1px solid var(--ink-black);
+  padding: 2rem 2.25rem;
+  width: 100%;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.04);
+  border-radius: 2px;
+}
+
+.sheet-masthead {
+  border-bottom: 4px double var(--ink-black);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.masthead-main-title {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 950;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.6rem;
+}
+
+.masthead-details {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+/* ── KPI Scorecard ─────────────────────────────────────────── */
+.ac-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.ac-stat-card {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-left: 4px solid #6366f1;
+  border-radius: 4px;
+  padding: 0.9rem 0.85rem;
+  background: var(--bg-tint);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.ac-stat-card.green { border-left-color: #16a34a; }
+.ac-stat-card.red   { border-left-color: #dc2626; }
+
+.ac-stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.ac-stat-value {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--ink-black);
+}
+
+.ac-stat-sub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+.ac-stat-card.green .ac-stat-sub { color: #16a34a; font-weight: 600; }
+.ac-stat-card.red   .ac-stat-sub { color: #dc2626; font-weight: 600; }
+
+/* ── Forecast Strip ─────────────────────────────────────────── */
+.ac-forecast-strip {
+  background: linear-gradient(135deg, #eef2ff 0%, #f0fdf4 100%);
+  border: 1px solid #c7d2fe;
+  border-radius: 4px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.forecast-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #4338ca;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.forecast-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.forecast-card {
+  background: white;
+  border: 1px solid #c7d2fe;
+  border-radius: 3px;
+  padding: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.forecast-card span {
+  font-size: 0.7rem;
+  color: #64748b;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.forecast-card strong {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #1e293b;
+  font-family: var(--font-display);
+}
+
+.forecast-card small {
+  font-size: 0.72rem;
+  color: #16a34a;
+  font-weight: 600;
+}
+
+/* ── Report Sections ─────────────────────────────────────────── */
+.report-section {
+  margin-bottom: 2rem;
+}
+
+.section-kicker-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #6366f1;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: block;
+}
+
+/* Markdown renderer */
+.md-h2 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 850;
+  margin: 1.5rem 0 0.5rem;
+  border-bottom: 1px solid var(--ink-black);
+  padding-bottom: 0.25rem;
+}
+
+.md-h3 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 1.25rem 0 0.4rem;
+  color: #4338ca;
+}
+
+.md-p { margin: 0 0 0.65rem; font-size: 0.9rem; line-height: 1.6; color: var(--ink-black); }
+.md-li { margin-left: 1.5rem; margin-bottom: 0.35rem; font-size: 0.88rem; line-height: 1.5; }
+.md-ol { list-style-type: decimal; }
+.md-spacer { height: 0.5rem; }
+
+.empty-note {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.88rem;
+}
+
+/* ── Anomaly Tables ─────────────────────────────────────────── */
+.ac-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.ac-table thead th {
+  background: var(--bg-tint);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+  border-bottom: 2px solid var(--ink-black);
+}
+
+.ac-table tbody td {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--bg-tint);
+  vertical-align: middle;
+}
+
+.ac-table tbody tr:hover td {
+  background: #fafafa;
+}
+
+/* ── Severity Badges ─────────────────────────────────────────── */
+.severity-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+}
+
+.severity-badge.critical { background: #fef2f2; color: #dc2626; }
+.severity-badge.warning  { background: #fffbeb; color: #b45309; }
+.severity-badge.info     { background: #eff6ff; color: #1d4ed8; }
+
+/* Margin chip */
+.margin-chip {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+}
+
+.margin-chip.good { background: #f0fdf4; color: #16a34a; }
+.margin-chip.warn { background: #fffbeb; color: #b45309; }
+.margin-chip.bad  { background: #fef2f2; color: #dc2626; }
+
+/* ── Clean Bill ─────────────────────────────────────────────── */
+.clean-bill {
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-left: 4px solid #16a34a;
+  border-radius: 4px;
+  font-size: 0.88rem;
+  color: #14532d;
+  font-weight: 600;
+}
+
+/* ── Sheet Footer ────────────────────────────────────────────── */
+.sheet-footer {
+  margin-top: 2.5rem;
+  border-top: 1px solid var(--ink-black);
+  padding-top: 0.65rem;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+/* ── Empty & Loading States ─────────────────────────────────── */
+.empty-panel-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  min-height: 180px;
+  color: var(--text-muted);
+  text-align: center;
+  font-size: 0.88rem;
+  padding: 1rem;
+  gap: 0.5rem;
+}
+
+.loading-spinner {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+
+/* ── Upload Log Drawer ─────────────────────────────────────── */
+.log-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.log-drawer {
+  background: var(--bg-paper);
+  border: 2px solid var(--ink-black);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.log-drawer-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 2px solid var(--ink-black);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: var(--bg-tint);
+}
+
+.log-drawer-header h3 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 0.2rem 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 400px;
+}
+
+.log-summary-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.85rem 1.5rem;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  background: white;
+}
+
+.log-category-group {
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px dashed rgba(0,0,0,0.06);
+}
+
+.log-cat-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.log-cat-badge {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 0.1rem 0.45rem;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+
+/* Category badge colours */
+.log-cat-badge.null       { background: #f3f4f6; color: #374151; }
+.log-cat-badge.type       { background: #fef3c7; color: #92400e; }
+.log-cat-badge.format     { background: #ffe4e6; color: #9f1239; }
+.log-cat-badge.validation { background: #fef9c3; color: #713f12; }
+.log-cat-badge.duplicate  { background: #f3e8ff; color: #6b21a8; }
+.log-cat-badge.schema     { background: #ffedd5; color: #9a3412; }
+.log-cat-badge.limit      { background: #dcfce7; color: #166534; }
+
+.log-cat-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.log-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-height: 200px;
+  overflow-y: auto;
+  background: #fafafa;
+  border: 1px solid rgba(0,0,0,0.07);
+  border-radius: 3px;
+  padding: 0.4rem 0.6rem;
+}
+
+.log-item-row {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.72rem;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.log-row-num {
+  color: #9ca3af;
+  flex-shrink: 0;
+  min-width: 50px;
+}
+
+.log-msg { word-break: break-word; }
+
+.log-overflow {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 0.35rem;
+  font-style: italic;
+}
+
+.close-btn {
+  background: none;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0.2rem 0.5rem;
+  color: var(--ink-black);
+  line-height: 1;
+  flex-shrink: 0;
+}
+.close-btn:hover { background: var(--bg-tint); }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .audit-console-grid {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .roster-panel,
+  .report-panel {
+    max-height: none;
+  }
+
+  .audits-list,
+  .uploads-list {
+    max-height: 320px;
+  }
+
+  .ac-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .forecast-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .ac-kpi-grid      { grid-template-columns: 1fr 1fr; }
+  .forecast-cards   { grid-template-columns: 1fr; }
+  .masthead-details { flex-direction: column; gap: 0.2rem; text-align: center; }
+}
+
+/* ── Print Styles ────────────────────────────────────────── */
+@media print {
+  body * { visibility: hidden; }
+
+  #printable-audit-report,
+  #printable-audit-report * { visibility: visible; }
+
+  #printable-audit-report {
+    position: absolute;
+    left: 0; top: 0;
+    width: 100%; height: auto;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+    margin: 0 !important; padding: 0 !important;
+  }
+
+  .no-print { display: none !important; }
+
+  .audit-report-sheet {
+    border: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 1rem !important;
+    overflow: visible !important;
+  }
+}

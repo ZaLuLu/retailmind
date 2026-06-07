@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api } from '../services/api'
 import { formatMoneyDetailed } from '../services/currency'
+import DashboardTooltip from './DashboardTooltip'
 import './PortfolioMatrix.css'
 
 const PortfolioMatrix = ({ period, dateFrom, dateTo, storeId, currency, onQuadrantSelect }) => {
@@ -130,7 +131,13 @@ const PortfolioMatrix = ({ period, dateFrom, dateTo, storeId, currency, onQuadra
   return (
     <div className="portfolio-matrix-section">
       <div className="section-kicker">
-        <span className="kicker-label">Product Portfolio Quadrants (K-Means Clustering)</span>
+        <span className="kicker-label">
+          Product Portfolio Quadrants (K-Means Clustering)
+          <DashboardTooltip 
+            title="Portfolio Quadrants" 
+            content="Uses unsupervised K-Means clustering to partition your product catalog into Stars, Hidden Gems, Cash Cows, and Dead Weight based on Revenue and Margin performance." 
+          />
+        </span>
         <div className="kicker-line" />
       </div>
 

@@ -3,10 +3,13 @@ import os
 import sys
 from dotenv import load_dotenv
 
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 load_dotenv()
 
-from app.services.gemini import gemini_service
+from app.services.llm import llm_service
 
 async def test_valid_questions():
     questions = [
@@ -20,7 +23,7 @@ async def test_valid_questions():
     for q in questions:
         print(f"Question: {q}")
         print("Thinking...")
-        answer = await gemini_service.ask_advisor(q, context="{'total_revenue': 120000, 'total_cogs': 80000, 'dead_stock_alerts': [{'product': 'A', 'days': 90}]}")
+        answer = await llm_service.ask_advisor(q, context="{'total_revenue': 120000, 'total_cogs': 80000, 'dead_stock_alerts': [{'product': 'A', 'days': 90}]}")
         print(f"Answer: {answer}\n")
         print("-" * 30 + "\n")
 

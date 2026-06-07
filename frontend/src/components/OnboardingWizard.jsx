@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 
-const RETAIL_CATEGORIES = ['Electronics', 'Apparel', 'Groceries', 'Home & Kitchen', 'Beauty']
 const CURRENCIES = [
   { code: 'INR', label: '₹ INR (Indian Rupee)' },
   { code: 'USD', label: '$ USD (US Dollar)' },
@@ -16,19 +15,8 @@ function OnboardingWizard({ onComplete }) {
     storeName: '',
     currency: 'INR',
     initialBalance: '0',
-    budgets: RETAIL_CATEGORIES.reduce((acc, cat) => ({ ...acc, [cat]: '100000' }), {})
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const nextStep = () => setStep(step + 1)
-  const prevStep = () => setStep(step - 1)
-
-  const handleBudgetChange = (cat, val) => {
-    setFormData({
-      ...formData,
-      budgets: { ...formData.budgets, [cat]: val }
-    })
-  }
 
   const handleSubmit = async () => {
     setIsSubmitting(true)
@@ -43,7 +31,6 @@ function OnboardingWizard({ onComplete }) {
       storeName: 'Sharma Retail & Co.',
       currency: 'INR',
       initialBalance: '0',
-      budgets: RETAIL_CATEGORIES.reduce((acc, cat) => ({ ...acc, [cat]: '500000' }), {})
     })
     setIsSubmitting(false)
   }
@@ -52,17 +39,15 @@ function OnboardingWizard({ onComplete }) {
     <div className="onboarding-overlay">
       <div className="wizard-card">
         <header className="step-indicator">
-          <span className="mono">Step {step} of 3</span>
+          <span className="mono">Step {step} of 2</span>
           <h2>
-            {step === 1 ? 'Store Profile Configuration'
-              : step === 2 ? 'Target Revenue Configuration'
-              : 'Launch Retail Intelligence'}
+            {step === 1 ? 'Store Profile Configuration' : 'Launch Retail Intelligence'}
           </h2>
         </header>
 
         {step === 1 && (
           <div className="wizard-step">
-            <p>Define your storefront coordinates and reporting standards.</p>
+            <p>Define your storefront details and reporting currency.</p>
             <div className="form-group">
               <label>Proprietor Name</label>
               <input
@@ -108,35 +93,11 @@ function OnboardingWizard({ onComplete }) {
 
         {step === 2 && (
           <div className="wizard-step">
-            <p>Set expected monthly sales targets per department for alert calculation.</p>
-            <div className="budget-list" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-              {RETAIL_CATEGORIES.map(cat => (
-                <div key={cat} className="category-budget-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <label className="mono" style={{ fontSize: '0.75rem' }}>{cat.toUpperCase()}</label>
-                  <input
-                    type="number"
-                    value={formData.budgets[cat]}
-                    onChange={(e) => handleBudgetChange(cat, e.target.value)}
-                    style={{ width: '120px', padding: '0.25rem' }}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div className="wizard-step">
-            <p>
-              Review your storefront configuration. Are these parameters correct?
-            </p>
+            <p>Review your storefront configuration. Are these parameters correct?</p>
             <div className="summary card" style={{ border: 'var(--border-heavy)', padding: '1rem', backgroundColor: 'rgba(0,0,0,0.02)' }}>
               <p className="mono"><strong>PROPRIETOR:</strong> {formData.fullName}</p>
               <p className="mono"><strong>STORE:</strong> {formData.storeName}</p>
               <p className="mono"><strong>REPORTING CURRENCY:</strong> {formData.currency}</p>
-              <p className="mono">
-                <strong>COMBINED REVENUE TARGET:</strong> {formData.currency} {Object.values(formData.budgets).reduce((a, b) => parseFloat(a || '0') + parseFloat(b || '0'), 0).toLocaleString()}
-              </p>
             </div>
           </div>
         )}
@@ -160,7 +121,7 @@ function OnboardingWizard({ onComplete }) {
             )}
             {step > 1 && (
               <button
-                onClick={prevStep}
+                onClick={() => setStep(step - 1)}
                 style={{ background: 'transparent', color: 'var(--ink-black)', border: 'var(--border-light)' }}
               >
                 ← Back
@@ -168,10 +129,10 @@ function OnboardingWizard({ onComplete }) {
             )}
           </div>
           <div>
-            {step < 3 ? (
-              <button 
-                onClick={nextStep} 
-                disabled={isSubmitting || (step === 1 && (!formData.fullName.trim() || !formData.storeName.trim()))}
+            {step < 2 ? (
+              <button
+                onClick={() => setStep(step + 1)}
+                disabled={isSubmitting || !formData.fullName.trim() || !formData.storeName.trim()}
               >
                 Continue →
               </button>

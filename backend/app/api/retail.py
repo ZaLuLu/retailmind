@@ -3,7 +3,7 @@ from fastapi.responses import StreamingResponse, PlainTextResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from ..core.db import get_db
-from ..models.db import User, SaleRecord, Store, Alert
+from ..models.db import User, SaleRecord, Store, Alert, UploadHistory, Audit
 from ..api.deps import get_current_user
 from ..services.retail_intelligence import retail_intelligence_service
 from datetime import date
@@ -60,7 +60,7 @@ async def create_store(
 ):
     """Create a new store for the current user."""
     # For demo users, limit store count to 3 stores max per session
-    if getattr(current_user, "is_demo", False):
+    if getattr(current_user, "is_demo", False) and getattr(current_user, "plan", "free") != "enterprise":
         stmt = select(Store).where(Store.user_id == current_user.id)
         res = await db.execute(stmt)
         existing_stores = res.scalars().all()
@@ -386,15 +386,38 @@ HEADER_ALIASES = {
     "product_sku": "sku", "item_code": "sku", "barcode": "sku",
 }
 
+# ISO 4217 currency allowlist (common codes; extend as needed)
+_VALID_CURRENCIES: set[str] = {
+    "AED", "AUD", "BDT", "BRL", "CAD", "CHF", "CNY", "CZK",
+    "DKK", "EGP", "EUR", "GBP", "HKD", "HUF", "IDR", "ILS",
+    "INR", "JPY", "KRW", "LKR", "MXN", "MYR", "NGN", "NOK",
+    "NZD", "PHP", "PKR", "PLN", "QAR", "RON", "RUB", "SAR",
+    "SEK", "SGD", "THB", "TRY", "TWD", "UAH", "USD", "VND",
+    "ZAR",
+}
+
 
 def _normalise_header(raw: str) -> str:
     cleaned = raw.strip().lower().replace(" ", "_").replace("-", "_")
     return HEADER_ALIASES.get(cleaned, cleaned)
 
 
+def _normalise_currency(raw: str, fallback: str) -> str:
+    """
+    Normalise a currency string to an uppercase ISO code.
+    Falls back to the user-level default if the value is absent or unrecognised.
+    """
+    code = raw.strip().upper() if raw and raw.strip() else ""
+    if code in _VALID_CURRENCIES:
+        return code
+    if code:  # present but unknown — fall back silently
+        logger.debug("Unknown currency code '%s'; falling back to '%s'", code, fallback)
+    return fallback
+
+
 def _parse_date(raw: str) -> date:
     from datetime import datetime
-    for fmt in ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%m/%d/%Y", "%Y/%m/%d"):
+    for fmt in ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%m/%d/%Y", "%Y/%m/%d", "%d %b %Y", "%d-%b-%Y"):
         try:
             return datetime.strptime(raw.strip(), fmt).date()
         except ValueError:
@@ -440,7 +463,6 @@ def _parse_xlsx_rows(content: bytes):
             f"Detected: {', '.join(normalised_headers.keys())}"
         )
 
-    # Build list of dicts matching CSV reader format
     result_rows = []
     for row in rows[1:]:
         row_dict = {}
@@ -452,53 +474,105 @@ def _parse_xlsx_rows(content: bytes):
     return result_rows, normalised_headers
 
 
-def _build_sale_record(norm_row: dict, user_id, user_currency: str, store_id: Optional[Any] = None) -> SaleRecord:
+def _build_sale_record(
+    norm_row: dict,
+    user_id,
+    user_currency: str,
+    store_id: Optional[Any] = None,
+    source: str = "csv_upload",
+) -> SaleRecord:
+    """
+    Validate and construct a SaleRecord ORM object from a normalised row dict.
+
+    Raises ValueError with a human-readable message on any validation failure.
+    String fields are sanitized against XSS and capped at model column lengths.
+    Numeric fields are validated to be finite, non-negative, and non-zero
+    (quantity and unit_price must be > 0).
+    """
+    import math
     from ..core.validation import sanitize_string
 
-    product_name_val = norm_row.get("product_name")
-    if not product_name_val or not str(product_name_val).strip():
-        raise ValueError("product_name cannot be empty")
+    # ── product_name ──────────────────────────────────────────────────────────
+    product_name_raw = norm_row.get("product_name")
+    if not product_name_raw or not str(product_name_raw).strip():
+        raise ValueError("[null] product_name is required and cannot be empty")
+    product_name = sanitize_string(product_name_raw)[:255]
 
+    # ── quantity ──────────────────────────────────────────────────────────────
     qty_raw = norm_row.get("quantity")
+    if qty_raw is None or str(qty_raw).strip() == "":
+        raise ValueError("[null] quantity is required")
+    try:
+        qty = float(qty_raw)
+    except (TypeError, ValueError):
+        raise ValueError(f"[type] quantity '{qty_raw}' is not a valid number")
+    if math.isnan(qty) or math.isinf(qty):
+        raise ValueError(f"[type] quantity '{qty_raw}' is NaN or Infinity")
+    if qty <= 0:
+        raise ValueError(f"[validation] quantity must be greater than 0, got {qty}")
+
+    # ── unit_price ────────────────────────────────────────────────────────────
     price_raw = norm_row.get("unit_price")
-    if qty_raw is None or price_raw is None:
-        raise ValueError("Missing quantity or unit_price field")
+    if price_raw is None or str(price_raw).strip() == "":
+        raise ValueError("[null] unit_price is required")
+    try:
+        unit_price = float(price_raw)
+    except (TypeError, ValueError):
+        raise ValueError(f"[type] unit_price '{price_raw}' is not a valid number")
+    if math.isnan(unit_price) or math.isinf(unit_price):
+        raise ValueError(f"[type] unit_price '{price_raw}' is NaN or Infinity")
+    if unit_price <= 0:
+        raise ValueError(f"[validation] unit_price must be greater than 0, got {unit_price}")
 
-    qty = float(qty_raw)
-    unit_price = float(price_raw)
-    
-    import math
-    if math.isnan(qty) or math.isnan(unit_price) or math.isinf(qty) or math.isinf(unit_price):
-        raise ValueError("quantity or unit_price is not a valid number (NaN or Infinity)")
+    total_revenue = round(qty * unit_price, 4)
 
-    total_revenue = qty * unit_price
-    cogs_raw = norm_row.get("cogs", "").strip()
-    
-    cogs = None
+    # ── cogs (optional) ───────────────────────────────────────────────────────
+    cogs_raw = str(norm_row.get("cogs", "")).strip()
+    cogs: Optional[float] = None
     if cogs_raw:
-        cogs = float(cogs_raw)
+        try:
+            cogs = float(cogs_raw)
+        except (TypeError, ValueError):
+            raise ValueError(f"[type] cogs '{cogs_raw}' is not a valid number")
         if math.isnan(cogs) or math.isinf(cogs):
-            raise ValueError("cogs is not a valid number (NaN or Infinity)")
+            raise ValueError(f"[type] cogs '{cogs_raw}' is NaN or Infinity")
+        if cogs < 0:
+            raise ValueError(f"[validation] cogs cannot be negative, got {cogs}")
 
-    margin = None
+    margin: Optional[float] = None
     if cogs is not None and total_revenue > 0:
         margin = round(((total_revenue - (cogs * qty)) / total_revenue) * 100, 2)
+
+    # ── sale_date ─────────────────────────────────────────────────────────────
+    date_raw = str(norm_row.get("date", "")).strip()
+    if not date_raw:
+        raise ValueError("[null] date is required")
+    sale_date = _parse_date(date_raw)   # raises ValueError with [format] hint
+
+    # ── currency (normalised, fallback to user default) ───────────────────────
+    currency_raw = str(norm_row.get("currency", "")).strip()
+    currency = _normalise_currency(currency_raw, user_currency)
+
+    # ── optional string fields ────────────────────────────────────────────────
+    product_sku = sanitize_string(norm_row.get("sku", ""))[:100] or None
+    product_category = sanitize_string(norm_row.get("category", "Other"))[:100] or "Other"
+    customer_segment = sanitize_string(norm_row.get("customer_segment", ""))[:50] or None
 
     return SaleRecord(
         user_id=user_id,
         store_id=store_id,
-        product_name=sanitize_string(norm_row["product_name"]),
-        product_sku=sanitize_string(norm_row.get("sku", "")) or None,
-        product_category=sanitize_string(norm_row.get("category", "Other")) or "Other",
+        product_name=product_name,
+        product_sku=product_sku,
+        product_category=product_category,
         quantity_sold=qty,
         unit_price=unit_price,
         total_revenue=total_revenue,
         cogs=(cogs * qty) if cogs is not None else None,
         gross_margin=margin,
-        sale_date=_parse_date(norm_row["date"]),
-        customer_segment=sanitize_string(norm_row.get("customer_segment", "")) or None,
-        currency=sanitize_string(norm_row.get("currency", "")) or user_currency,
-        source="csv_upload",
+        sale_date=sale_date,
+        customer_segment=customer_segment,
+        currency=currency,
+        source=source,
     )
 
 
@@ -513,62 +587,354 @@ async def upload_sales_csv(
 ):
     """
     Upload a CSV or Excel (.xlsx) file of sales records.
-    Auto-detects column headers using alias mapping (15+ aliases).
 
-    Supported formats: .csv, .txt, .xlsx
-    Required columns: product_name, quantity, unit_price, date
-    Optional: sku, category, cogs, customer_segment, currency
+    Performs a full Phase 2 ingestion pipeline:
+    - File magic bytes validation (no binary disguised as CSV)
+    - Strict schema / column-header check with 15+ alias mappings
+    - Row-level sanitization: null checks, type coercion, positive-value enforcement,
+      ISO currency normalisation, date format detection (7 formats), string sanitization
+    - Exact-duplicate detection within the uploaded batch
+    - Structured per-row error log stored in UploadHistory
+
+    Supported formats : .csv  .txt  .xlsx
+    Required columns  : product_name, quantity, unit_price, date
+    Optional columns  : sku, category, cogs, customer_segment, currency
     """
     from ..core.validation import validate_file_magic
+    import uuid
 
-    filename = file.filename or ""
+    filename = file.filename or "unknown_upload"
     is_xlsx = filename.lower().endswith(".xlsx")
     is_csv = filename.lower().endswith((".csv", ".txt"))
 
     if not is_xlsx and not is_csv:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Supported formats: .csv, .txt, .xlsx",
+            detail="Unsupported file type. Please upload a .csv, .txt, or .xlsx file.",
         )
 
     content = await file.read()
 
-    # Validate file magic bytes
+    # ── Security: validate file magic bytes ───────────────────────────────────
     validate_file_magic(content, filename)
 
-    # File size check (10 MB)
+    # ── Size guard (10 MB) ────────────────────────────────────────────────────
     if len(content) > 10 * 1024 * 1024:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File exceeds 10 MB limit.",
+            detail="File exceeds the 10 MB size limit.",
         )
 
+    # ── Optional store ownership check ────────────────────────────────────────
+    parsed_store_id = None
+    if store_id:
+        try:
+            parsed_store_id = uuid.UUID(store_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid store_id format.",
+            )
+        store_stmt = select(Store).where(Store.id == parsed_store_id, Store.user_id == current_user.id)
+        store_res = await db.execute(store_stmt)
+        if not store_res.scalars().first():
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Store not found or access denied.",
+            )
+
+    # ── Pre-create UploadHistory record (status=failed until we succeed) ──────
+    upload_record = UploadHistory(
+        user_id=current_user.id,
+        store_id=parsed_store_id,
+        filename=filename,
+        status="failed",
+        rows_total=0,
+        records_processed=0,
+        duplicates_skipped=0,
+        errors_logged=[],
+    )
+    db.add(upload_record)
+    await db.commit()
+    await db.refresh(upload_record)
+
+    # ── Parse raw rows from file ──────────────────────────────────────────────
     try:
         if is_xlsx:
-            raw_rows, normalised_headers = _parse_xlsx_rows(content)
+            raw_rows, _ = _parse_xlsx_rows(content)
             source = "excel_upload"
         else:
             try:
                 text = content.decode("utf-8-sig")
             except UnicodeDecodeError:
                 text = content.decode("latin-1")
-            raw_rows, normalised_headers = _parse_csv_rows(text)
+            raw_rows, _ = _parse_csv_rows(text)
             source = "csv_upload"
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
-
-    # For demo users, limit upload row size to prevent database bloating
-    max_upload_rows = 500 if getattr(current_user, "is_demo", False) else 50000
-    if len(raw_rows) > max_upload_rows:
+    except ValueError as parse_err:
+        upload_record.errors_logged = [{"row": 0, "category": "schema", "message": str(parse_err)}]
+        await db.commit()
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Upload limited to a maximum of {max_upload_rows} rows in portfolio showcase mode. Got {len(raw_rows)} rows."
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(parse_err),
         )
 
-    user_currency = current_user.currency or "INR"
-    records = []
-    errors = []
+    # ── Demo row-count guard ──────────────────────────────────────────────────
+    is_demo = getattr(current_user, "is_demo", False)
+    max_upload_rows = (
+        500
+        if is_demo and getattr(current_user, "plan", "free") != "enterprise"
+        else 50_000
+    )
+    if len(raw_rows) > max_upload_rows:
+        msg = (
+            f"Upload limited to {max_upload_rows} rows in demo mode. "
+            f"Your file contains {len(raw_rows)} rows."
+        )
+        upload_record.errors_logged = [{"row": 0, "category": "limit", "message": msg}]
+        await db.commit()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=msg)
 
+    # ── Row-level sanitization + validation ───────────────────────────────────
+    user_currency = current_user.currency or "INR"
+    records: list[SaleRecord] = []
+    error_log: list[dict] = []     # structured: {row, category, message}
+    seen_sigs: set = set()
+    duplicates_skipped = 0
+
+    for line_num, row in enumerate(raw_rows, start=2):
+        norm_row = {_normalise_header(k): v for k, v in row.items()}
+
+        # ── Exact-duplicate detection (within this batch) ─────────────────────
+        sig = (
+            str(norm_row.get("product_name", "")).strip().lower(),
+            str(norm_row.get("sku", "")).strip().lower(),
+            str(norm_row.get("quantity", "")).strip(),
+            str(norm_row.get("unit_price", "")).strip(),
+            str(norm_row.get("date", "")).strip(),
+        )
+        if sig in seen_sigs:
+            duplicates_skipped += 1
+            error_log.append({
+                "row": line_num,
+                "category": "duplicate",
+                "message": "Exact duplicate row — skipped.",
+            })
+            continue
+        seen_sigs.add(sig)
+
+        # ── Validate + build ORM record ───────────────────────────────────────
+        try:
+            record = _build_sale_record(
+                norm_row,
+                current_user.id,
+                user_currency,
+                store_id=parsed_store_id,
+                source=source,
+            )
+            record.upload_id = upload_record.id
+            records.append(record)
+        except ValueError as row_err:
+            msg = str(row_err)
+            # Extract category prefix inserted by _build_sale_record (e.g. "[null]", "[type]")
+            category = "validation"
+            for tag in ("null", "type", "format", "validation"):
+                if msg.startswith(f"[{tag}]"):
+                    category = tag
+                    break
+            error_log.append({"row": line_num, "category": category, "message": msg})
+
+    # ── Persist ingestion summary ─────────────────────────────────────────────
+    upload_record.rows_total = len(raw_rows)
+    upload_record.records_processed = len(records)
+    upload_record.duplicates_skipped = duplicates_skipped
+    upload_record.errors_logged = error_log
+
+    if not records:
+        upload_record.status = "failed"
+        await db.commit()
+        first_err = error_log[0]["message"] if error_log else "Empty dataset — no rows found."
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"No valid rows could be imported. First issue: {first_err}",
+        )
+
+    # ── Determine final status ────────────────────────────────────────────────
+    validation_errors = [e for e in error_log if e["category"] != "duplicate"]
+    upload_record.status = "partial" if validation_errors else "success"
+
+    # ── Batch insert in chunks of 100 ─────────────────────────────────────────
+    batch_size = 100
+    for i in range(0, len(records), batch_size):
+        db.add_all(records[i : i + batch_size])
+    await db.commit()
+
+    await cache.invalidate_chart_bundle(current_user.id)
+    logger.info(
+        "Upload completed: user=%s file='%s' inserted=%d duplicates=%d errors=%d status=%s",
+        current_user.id, filename, len(records), duplicates_skipped, len(validation_errors),
+        upload_record.status,
+    )
+
+    return {
+        "upload_id": str(upload_record.id),
+        "status": upload_record.status,
+        "format": "xlsx" if is_xlsx else "csv",
+        "rows_total": len(raw_rows),
+        "inserted": len(records),
+        "duplicates_skipped": duplicates_skipped,
+        "errors": len(validation_errors),
+        "error_summary": error_log[:25],    # first 25 for inline display
+        "message": (
+            f"Imported {len(records)} of {len(raw_rows)} rows. "
+            f"{duplicates_skipped} duplicates skipped. "
+            f"{len(validation_errors)} rows had validation errors."
+        ),
+    }
+
+
+@router.get("/upload-history")
+async def get_upload_history(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    store_id: Optional[str] = Query(default=None, description="Filter by store UUID"),
+    limit: int = Query(default=20, le=100),
+    offset: int = Query(default=0, ge=0),
+):
+    """
+    List past CSV / Excel upload batches for the authenticated user.
+
+    Each record includes a concise ingestion summary (rows total, inserted,
+    duplicates skipped, validation error count). Use the companion
+    `/upload-history/{upload_id}/log` endpoint to fetch the full per-row log.
+    """
+    import uuid as _uuid
+
+    try:
+        stmt = select(UploadHistory).where(UploadHistory.user_id == current_user.id)
+
+        if store_id:
+            try:
+                stmt = stmt.where(UploadHistory.store_id == _uuid.UUID(store_id))
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid store_id format.",
+                )
+
+        stmt = stmt.order_by(UploadHistory.created_at.desc()).limit(limit).offset(offset)
+        result = await db.execute(stmt)
+        uploads = result.scalars().all()
+
+        return {
+            "success": True,
+            "data": [
+                {
+                    "id": str(up.id),
+                    "filename": up.filename,
+                    "status": up.status,                    # success | partial | failed
+                    "rows_total": up.rows_total or 0,
+                    "records_processed": up.records_processed,
+                    "duplicates_skipped": up.duplicates_skipped or 0,
+                    "error_count": len(
+                        [e for e in (up.errors_logged or []) if isinstance(e, dict) and e.get("category") != "duplicate"]
+                    ),
+                    "created_at": up.created_at.isoformat() if up.created_at else None,
+                }
+                for up in uploads
+            ],
+        }
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Failed to fetch upload history")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch upload history.",
+        )
+
+
+@router.get("/upload-history/{upload_id}/log")
+async def get_upload_log(
+    upload_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Retrieve the full per-row error and diagnostic log for a specific upload batch.
+
+    Returns the complete `errors_logged` JSON array, which includes every
+    skipped/errored row with its row number, error category, and human-readable
+    message. Categories: null | type | format | validation | duplicate | schema | limit.
+    """
+    import uuid as _uuid
+
+    try:
+        parsed_id = _uuid.UUID(upload_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid upload_id format.",
+        )
+
+    stmt = select(UploadHistory).where(
+        UploadHistory.id == parsed_id,
+        UploadHistory.user_id == current_user.id,
+    )
+    result = await db.execute(stmt)
+    upload = result.scalars().first()
+
+    if not upload:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Upload record not found.",
+        )
+
+    error_log = upload.errors_logged or []
+    validation_errors = [e for e in error_log if isinstance(e, dict) and e.get("category") != "duplicate"]
+    duplicates = [e for e in error_log if isinstance(e, dict) and e.get("category") == "duplicate"]
+
+    return {
+        "success": True,
+        "data": {
+            "upload_id": str(upload.id),
+            "filename": upload.filename,
+            "status": upload.status,
+            "rows_total": upload.rows_total or 0,
+            "records_processed": upload.records_processed,
+            "duplicates_skipped": upload.duplicates_skipped or 0,
+            "validation_error_count": len(validation_errors),
+            "created_at": upload.created_at.isoformat() if upload.created_at else None,
+            "log": error_log,          # full structured log
+        },
+    }
+
+
+@router.post("/audit/run")
+@limiter.limit("5/hour")
+async def run_audit(
+    request: Request,
+    store_id: Optional[str] = Query(default=None),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Phase 3 — Trigger a full retail audit.
+
+    Computes:
+    - MTD financial summary (revenue, margin, MoM change)
+    - Z-Score demand spike detection
+    - Dead stock identification
+    - Margin erosion alerts
+    - 14-day Holt-Winters revenue forecast
+    - Top-3 per-product demand forecasts
+
+    Feeds all results to Groq Cloud API (1200-token audit prompt) to generate a
+    structured executive Markdown report with 4 sections:
+    Executive Summary | Anomaly Breakdown | Demand Outlook | Action Plan.
+
+    The full `anomaly_snapshot` dict is persisted on the Audit row for export.
+    Rate-limited to 5 audits per hour per user.
+    """
     parsed_store_id = None
     if store_id:
         try:
@@ -577,7 +943,6 @@ async def upload_sales_csv(
         except ValueError:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid store_id format")
 
-        # Verify the store belongs to the current authenticated user
         store_stmt = select(Store).where(Store.id == parsed_store_id, Store.user_id == current_user.id)
         store_res = await db.execute(store_stmt)
         if not store_res.scalars().first():
@@ -586,36 +951,459 @@ async def upload_sales_csv(
                 detail="Store not found or access denied"
             )
 
-    for line_num, row in enumerate(raw_rows, start=2):
-        norm_row = {_normalise_header(k): v for k, v in row.items()}
-        try:
-            record = _build_sale_record(norm_row, current_user.id, user_currency, store_id=parsed_store_id)
-            record.source = source
-            records.append(record)
-        except Exception as e:
-            errors.append(f"Row {line_num}: {e}")
-
-    if not records and errors:
+    try:
+        audit = await retail_intelligence_service.run_store_audit(
+            db, current_user.id, store_id=parsed_store_id
+        )
+        return {
+            "success": True,
+            "data": {
+                "id": str(audit.id),
+                "audit_date": str(audit.audit_date),
+                "total_products_checked": audit.total_products_checked,
+                "anomalies_detected": audit.anomalies_detected,
+                "ai_audit_summary": audit.ai_audit_summary,
+                "anomaly_snapshot": audit.anomaly_snapshot,
+                "created_at": audit.created_at.isoformat() if audit.created_at else None,
+            }
+        }
+    except Exception as e:
+        logger.exception("Failed to execute store audit")
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"No valid rows parsed. First error: {errors[0]}",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to execute store audit: {e}",
         )
 
-    # Batch insert
-    batch_size = 100
-    for i in range(0, len(records), batch_size):
-        db.add_all(records[i: i + batch_size])
-        await db.commit()
 
-    await cache.invalidate_chart_bundle(current_user.id)
+@router.get("/audits")
+async def list_audits(
+    store_id: Optional[str] = Query(default=None),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    limit: int = Query(default=20, le=100),
+    offset: int = Query(default=0, ge=0),
+):
+    """List past audits for the authenticated user. Returns concise metadata (no full snapshot)."""
+    try:
+        stmt = select(Audit).where(Audit.user_id == current_user.id)
+        if store_id:
+            try:
+                import uuid
+                stmt = stmt.where(Audit.store_id == uuid.UUID(store_id))
+            except ValueError:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid store_id format")
+        
+        stmt = stmt.order_by(Audit.created_at.desc()).limit(limit).offset(offset)
+        result = await db.execute(stmt)
+        audits = result.scalars().all()
+        return {
+            "success": True,
+            "data": [
+                {
+                    "id": str(a.id),
+                    "audit_date": str(a.audit_date),
+                    "total_products_checked": a.total_products_checked,
+                    "anomalies_detected": a.anomalies_detected,
+                    "has_snapshot": a.anomaly_snapshot is not None,
+                    "summary_preview": (a.ai_audit_summary or "")[:200] + "..."
+                        if a.ai_audit_summary and len(a.ai_audit_summary) > 200
+                        else a.ai_audit_summary,
+                    "created_at": a.created_at.isoformat() if a.created_at else None,
+                }
+                for a in audits
+            ]
+        }
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Failed to fetch past audits")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch past audits",
+        )
+
+
+@router.get("/audits/{audit_id}")
+async def get_audit_detail(
+    audit_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get full detail of a specific audit including the anomaly snapshot and AI report."""
+    try:
+        import uuid
+        parsed_id = uuid.UUID(audit_id)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid audit_id format")
+
+    stmt = select(Audit).where(Audit.id == parsed_id, Audit.user_id == current_user.id)
+    result = await db.execute(stmt)
+    audit = result.scalars().first()
+    if not audit:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Audit not found")
 
     return {
-        "inserted": len(records),
-        "errors": len(errors),
-        "error_details": errors[:10],
-        "message": f"Successfully imported {len(records)} sale records.",
-        "format": "xlsx" if is_xlsx else "csv",
+        "success": True,
+        "data": {
+            "id": str(audit.id),
+            "audit_date": str(audit.audit_date),
+            "total_products_checked": audit.total_products_checked,
+            "anomalies_detected": audit.anomalies_detected,
+            "ai_audit_summary": audit.ai_audit_summary,
+            "anomaly_snapshot": audit.anomaly_snapshot,      # Full structured data
+            "created_at": audit.created_at.isoformat() if audit.created_at else None,
+        }
     }
+
+
+@router.get("/audits/{audit_id}/export")
+async def export_audit_html(
+    audit_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Export audit report as a print-optimised HTML document.
+
+    Returns a self-contained HTML page styled with internal CSS for clean
+    browser printing (File → Print → Save as PDF). Includes:
+    - Header block with audit metadata
+    - KPI scorecard (Revenue, Margin, MoM Change, Anomalies)
+    - Colour-coded anomaly tables (demand spikes, dead stock, margin erosion)
+    - Top 5 products by revenue
+    - Groq AI narrative report (Markdown rendered as HTML)
+    - Print-to-PDF footer
+    """
+    try:
+        import uuid
+        parsed_id = uuid.UUID(audit_id)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid audit_id format")
+
+    stmt = select(Audit).where(Audit.id == parsed_id, Audit.user_id == current_user.id)
+    result = await db.execute(stmt)
+    audit = result.scalars().first()
+    if not audit:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Audit not found")
+
+    snap = audit.anomaly_snapshot or {}
+    total_revenue = snap.get("total_revenue", 0.0)
+    gross_profit = snap.get("gross_profit", 0.0)
+    margin_pct = snap.get("overall_margin_pct", 0.0)
+    mom_pct = snap.get("mom_revenue_change_pct", 0.0)
+    products_checked = audit.total_products_checked
+    anomalies = audit.anomalies_detected
+    demand_spikes = snap.get("demand_signals", [])
+    dead_stock = snap.get("dead_stock_alerts", [])
+    margin_erosion = snap.get("margin_erosion_alerts", [])
+    top_products = snap.get("top_products", [])
+    forecast_summary = snap.get("revenue_forecast_14d_summary", {})
+    report_md = audit.ai_audit_summary or "No AI report generated."
+    generated_at = audit.created_at.strftime("%Y-%m-%d %H:%M") if audit.created_at else ""
+
+    # ── Simple Markdown → HTML conversion (no extra dependencies) ────────
+    def md_to_html(text: str) -> str:
+        import re
+        # Headers
+        text = re.sub(r"^### (.+)$", r"<h3>\1</h3>", text, flags=re.MULTILINE)
+        text = re.sub(r"^## (.+)$", r"<h2>\1</h2>", text, flags=re.MULTILINE)
+        # Bold
+        text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+        # Bullet points
+        lines = text.split("\n")
+        html_lines = []
+        in_ul = False
+        for line in lines:
+            stripped = line.strip()
+            if stripped.startswith("- ") or stripped.startswith("* "):
+                if not in_ul:
+                    html_lines.append("<ul>")
+                    in_ul = True
+                html_lines.append(f"<li>{stripped[2:]}</li>")
+            else:
+                if in_ul:
+                    html_lines.append("</ul>")
+                    in_ul = False
+                html_lines.append(line)
+        if in_ul:
+            html_lines.append("</ul>")
+        text = "\n".join(html_lines)
+        # Numbered lists
+        text = re.sub(r"^(\d+)\. (.+)$", r"<li>\2</li>", text, flags=re.MULTILINE)
+        # Paragraphs (double newlines)
+        text = re.sub(r"\n\n", "</p><p>", text)
+        return f"<p>{text}</p>"
+
+    report_html = md_to_html(report_md)
+
+    def spike_row(s: dict) -> str:
+        z = s.get("z_score", 0.0)
+        badge = "badge-critical" if z > 3.0 else "badge-warning"
+        return (
+            f"<tr>"
+            f"<td><strong>{s.get('product_name', '')}</strong></td>"
+            f"<td class='{badge}'>{z:.2f}</td>"
+            f"<td>+{s.get('deviation_pct', 0):.0f}%</td>"
+            f"<td>{s.get('recent_qty', 0):.0f} units</td>"
+            f"</tr>"
+        )
+
+    def dead_row(d: dict) -> str:
+        days = d.get("last_sale_days_ago", 0)
+        badge = "badge-critical" if days > 45 else "badge-warning"
+        return (
+            f"<tr>"
+            f"<td><strong>{d.get('product_name', '')}</strong></td>"
+            f"<td class='{badge}'>{days} days</td>"
+            f"<td>{d.get('message', '')}</td>"
+            f"</tr>"
+        )
+
+    def margin_row(m: dict) -> str:
+        pct = m.get("margin_pct", 0.0)
+        badge = "badge-critical" if pct < 5.0 else "badge-warning"
+        return (
+            f"<tr>"
+            f"<td><strong>{m.get('product_name', '')}</strong></td>"
+            f"<td class='{badge}'>{pct:.1f}%</td>"
+            f"<td>₹{m.get('revenue', 0):,.0f}</td>"
+            f"</tr>"
+        )
+
+    def product_row(p: dict) -> str:
+        return (
+            f"<tr>"
+            f"<td><strong>{p.get('product_name', '')}</strong></td>"
+            f"<td>{p.get('category', '')}</td>"
+            f"<td>₹{p.get('revenue', 0):,.0f}</td>"
+            f"<td>{p.get('quantity', 0):.0f}</td>"
+            f"<td>{p.get('margin_pct', 0):.1f}%</td>"
+            f"</tr>"
+        )
+
+    mom_color = "#16a34a" if mom_pct >= 0 else "#dc2626"
+    mom_sign = "+" if mom_pct >= 0 else ""
+
+    spike_rows_html = "".join(spike_row(s) for s in demand_spikes) or "<tr><td colspan='4' class='empty'>No demand spikes detected.</td></tr>"
+    dead_rows_html = "".join(dead_row(d) for d in dead_stock) or "<tr><td colspan='3' class='empty'>No dead stock detected.</td></tr>"
+    margin_rows_html = "".join(margin_row(m) for m in margin_erosion) or "<tr><td colspan='3' class='empty'>No margin erosion detected.</td></tr>"
+    product_rows_html = "".join(product_row(p) for p in top_products) or "<tr><td colspan='5' class='empty'>No product data available.</td></tr>"
+
+    forecast_block = ""
+    if forecast_summary:
+        forecast_block = f"""
+        <div class="kpi-grid" style="margin-top:0;">
+            <div class="kpi-card">
+                <div class="kpi-label">Projected 14-Day Revenue</div>
+                <div class="kpi-value">₹{forecast_summary.get('projected_total_14d', 0):,.0f}</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Peak Forecast Day</div>
+                <div class="kpi-value" style="font-size:1.4rem">{forecast_summary.get('peak_day', 'N/A')}</div>
+                <div class="kpi-sub">₹{forecast_summary.get('peak_revenue', 0):,.0f}</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Trough Forecast Day</div>
+                <div class="kpi-value" style="font-size:1.4rem">{forecast_summary.get('trough_day', 'N/A')}</div>
+                <div class="kpi-sub">₹{forecast_summary.get('trough_revenue', 0):,.0f}</div>
+            </div>
+        </div>
+        """
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RetailMind Audit Report — {audit.audit_date}</title>
+<style>
+  *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
+  body {{ font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 13px; color: #1e293b; background: #f8fafc; }}
+  .page {{ max-width: 860px; margin: 0 auto; background: #fff; padding: 48px 52px; }}
+  /* Header */
+  .header {{ display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0f172a; padding-bottom: 20px; margin-bottom: 32px; }}
+  .brand {{ font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }}
+  .brand span {{ color: #6366f1; }}
+  .meta {{ text-align: right; color: #64748b; font-size: 11px; line-height: 1.8; }}
+  .meta strong {{ color: #0f172a; font-size: 12px; }}
+  /* Section */
+  .section {{ margin-bottom: 36px; }}
+  .section-title {{ font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #6366f1; margin-bottom: 14px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0; }}
+  /* KPI Cards */
+  .kpi-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 36px; }}
+  .kpi-card {{ background: #f1f5f9; border-radius: 8px; padding: 16px 14px; border-left: 3px solid #6366f1; }}
+  .kpi-label {{ font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }}
+  .kpi-value {{ font-size: 1.6rem; font-weight: 800; color: #0f172a; line-height: 1; }}
+  .kpi-sub {{ font-size: 11px; color: #94a3b8; margin-top: 4px; }}
+  /* Tables */
+  table {{ width: 100%; border-collapse: collapse; font-size: 12px; }}
+  thead th {{ background: #f8fafc; color: #64748b; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; padding: 8px 10px; text-align: left; border-bottom: 2px solid #e2e8f0; }}
+  tbody td {{ padding: 9px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }}
+  tbody tr:hover {{ background: #f8fafc; }}
+  td.empty {{ color: #94a3b8; font-style: italic; padding: 14px 10px; }}
+  /* Badges */
+  .badge-critical {{ background: #fef2f2; color: #dc2626; font-weight: 700; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }}
+  .badge-warning {{ background: #fffbeb; color: #d97706; font-weight: 700; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }}
+  /* AI Report */
+  .ai-report {{ background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px 28px; line-height: 1.7; }}
+  .ai-report h3 {{ font-size: 13px; font-weight: 700; color: #6366f1; margin-top: 20px; margin-bottom: 8px; }}
+  .ai-report h3:first-child {{ margin-top: 0; }}
+  .ai-report p {{ margin-bottom: 10px; }}
+  .ai-report ul {{ padding-left: 20px; margin-bottom: 10px; }}
+  .ai-report li {{ margin-bottom: 4px; }}
+  .ai-report strong {{ color: #0f172a; }}
+  /* Footer */
+  .footer {{ margin-top: 40px; padding-top: 16px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; color: #94a3b8; font-size: 10px; }}
+  /* Print */
+  @media print {{
+    body {{ background: #fff; }}
+    .page {{ padding: 0; max-width: 100%; }}
+    .no-print {{ display: none; }}
+  }}
+</style>
+</head>
+<body>
+<div class="page">
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <div class="brand">Retail<span>Mind</span></div>
+      <div style="color:#64748b;font-size:11px;margin-top:4px;">Operational Intelligence Platform</div>
+    </div>
+    <div class="meta">
+      <strong>AUDIT REPORT</strong><br>
+      Audit Date: {audit.audit_date}<br>
+      Audit ID: {str(audit.id)[:8].upper()}...<br>
+      Generated: {generated_at} UTC
+    </div>
+  </div>
+
+  <!-- KPI Scorecard -->
+  <div class="section">
+    <div class="section-title">Financial Scorecard — Month to Date</div>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Revenue</div>
+        <div class="kpi-value">₹{total_revenue:,.0f}</div>
+        <div class="kpi-sub" style="color:{mom_color};font-weight:700;">{mom_sign}{mom_pct:.1f}% vs prior period</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Gross Profit</div>
+        <div class="kpi-value">₹{gross_profit:,.0f}</div>
+        <div class="kpi-sub">Margin: {margin_pct:.1f}%</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Products Audited</div>
+        <div class="kpi-value">{products_checked}</div>
+        <div class="kpi-sub">Unique SKUs tracked</div>
+      </div>
+      <div class="kpi-card" style="border-left-color:{'#dc2626' if anomalies > 0 else '#16a34a'};">
+        <div class="kpi-label">Risk Alerts</div>
+        <div class="kpi-value" style="color:{'#dc2626' if anomalies > 0 else '#16a34a'}">{anomalies}</div>
+        <div class="kpi-sub">Operational risks</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demand Forecast -->
+  {('<div class="section"><div class="section-title">14-Day Revenue Forecast</div>' + forecast_block + '</div>') if forecast_block else ''}
+
+  <!-- AI Report -->
+  <div class="section">
+    <div class="section-title">AI Executive Audit Report</div>
+    <div class="ai-report">{report_html}</div>
+  </div>
+
+  <!-- Top Products -->
+  <div class="section">
+    <div class="section-title">Top 5 Products by Revenue</div>
+    <table>
+      <thead><tr><th>Product</th><th>Category</th><th>Revenue</th><th>Units Sold</th><th>Margin %</th></tr></thead>
+      <tbody>{product_rows_html}</tbody>
+    </table>
+  </div>
+
+  <!-- Anomaly Tables -->
+  <div class="section">
+    <div class="section-title">Demand Spike Alerts ({len(demand_spikes)} detected)</div>
+    <table>
+      <thead><tr><th>Product</th><th>Z-Score</th><th>Deviation</th><th>Recent Volume</th></tr></thead>
+      <tbody>{spike_rows_html}</tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Dead Stock Alerts ({len(dead_stock)} detected)</div>
+    <table>
+      <thead><tr><th>Product</th><th>Days Inactive</th><th>Note</th></tr></thead>
+      <tbody>{dead_rows_html}</tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Margin Erosion Alerts ({len(margin_erosion)} detected)</div>
+    <table>
+      <thead><tr><th>Product</th><th>Avg Margin</th><th>Total Revenue</th></tr></thead>
+      <tbody>{margin_rows_html}</tbody>
+    </table>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span>RetailMind Audit Platform &copy; 2025 — Confidential</span>
+    <span class="no-print">Use browser Print (Ctrl+P) → Save as PDF to export</span>
+  </div>
+</div>
+</body>
+</html>"""
+
+    filename = f"retailmind_audit_{audit.audit_date}_{str(audit.id)[:8]}.html"
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(
+        content=html,
+        headers={"Content-Disposition": f"inline; filename={filename}"},
+    )
+
+
+@router.get("/audits/{audit_id}/export/markdown")
+async def export_audit_markdown(
+    audit_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Download the raw Groq Markdown audit report as a .md file."""
+    try:
+        import uuid
+        parsed_id = uuid.UUID(audit_id)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid audit_id format")
+
+    stmt = select(Audit).where(Audit.id == parsed_id, Audit.user_id == current_user.id)
+    result = await db.execute(stmt)
+    audit = result.scalars().first()
+    if not audit:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Audit not found")
+
+    snap = audit.anomaly_snapshot or {}
+    header = (
+        f"# RetailMind Audit Report\n\n"
+        f"**Audit Date:** {audit.audit_date}  \n"
+        f"**Audit ID:** {audit.id}  \n"
+        f"**Products Audited:** {audit.total_products_checked}  \n"
+        f"**Anomalies Detected:** {audit.anomalies_detected}  \n"
+        f"**Total Revenue (MTD):** ₹{snap.get('total_revenue', 0.0):,.2f}  \n"
+        f"**Gross Margin:** {snap.get('overall_margin_pct', 0.0):.1f}%  \n"
+        f"**Generated:** {audit.created_at.strftime('%Y-%m-%d %H:%M') if audit.created_at else 'N/A'} UTC  \n"
+        f"\n---\n\n"
+    )
+    md_content = header + (audit.ai_audit_summary or "_No AI report generated._")
+    filename = f"retailmind_audit_{audit.audit_date}_{str(audit.id)[:8]}.md"
+    return PlainTextResponse(
+        content=md_content,
+        media_type="text/markdown",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
 
 
 class SaleRecordCreate(BaseModel):
@@ -641,76 +1429,127 @@ async def bulk_create_sales(
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Bulk insert sale records manually entered or extracted via document scanner.
-    Maximum 500 records per request.
+    Bulk-insert sale records entered manually (e.g. from the UI form).
+
+    Applies the same Phase 2 numeric validation as the CSV upload pipeline:
+    quantity and unit_price must be finite and > 0; currency is validated
+    against the ISO 4217 allowlist. An UploadHistory record is created with
+    source='manual_bulk' for full audit traceability.
+
+    Maximum records per request: 500 (50 for demo sessions).
     """
     from ..core.config import settings as _settings
-    import math
+    from ..core.validation import sanitize_string
+    import math, uuid
 
-    # For demo users, limit bulk insert size to 50 records max
-    max_records = 50 if getattr(current_user, "is_demo", False) else getattr(_settings, "BULK_SALES_MAX_RECORDS", 500)
+    is_demo = getattr(current_user, "is_demo", False)
+    max_records = (
+        50
+        if is_demo and getattr(current_user, "plan", "free") != "enterprise"
+        else getattr(_settings, "BULK_SALES_MAX_RECORDS", 500)
+    )
     if len(payload.sales) > max_records:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Bulk insert limited to {max_records} records per request for this session. Got {len(payload.sales)}.",
+            detail=f"Bulk insert limited to {max_records} records per request. Got {len(payload.sales)}.",
         )
 
     parsed_store_id = None
     if store_id:
         try:
-            import uuid
             parsed_store_id = uuid.UUID(store_id)
         except ValueError:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid store_id format")
-
-        # Verify the store belongs to the current authenticated user
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid store_id format.",
+            )
         store_stmt = select(Store).where(Store.id == parsed_store_id, Store.user_id == current_user.id)
         store_res = await db.execute(store_stmt)
         if not store_res.scalars().first():
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Store not found or access denied"
+                detail="Store not found or access denied.",
             )
 
     user_currency = current_user.currency or "INR"
-    records = []
-    for s in payload.sales:
+    records: list[SaleRecord] = []
+    errors: list[dict] = []
+
+    for idx, s in enumerate(payload.sales, start=1):
         qty = s.quantity_sold
         unit_p = s.unit_price
 
-        if math.isnan(qty) or math.isnan(unit_p) or math.isinf(qty) or math.isinf(unit_p):
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Quantity or unit price is not a valid number (NaN or Infinity)"
-            )
+        # ── Numeric guards ──────────────────────────────────────────────────
+        if math.isnan(qty) or math.isinf(qty):
+            errors.append({"index": idx, "category": "type", "message": f"quantity_sold is NaN or Infinity"})
+            continue
+        if qty <= 0:
+            errors.append({"index": idx, "category": "validation", "message": f"quantity_sold must be > 0, got {qty}"})
+            continue
+        if math.isnan(unit_p) or math.isinf(unit_p):
+            errors.append({"index": idx, "category": "type", "message": f"unit_price is NaN or Infinity"})
+            continue
+        if unit_p <= 0:
+            errors.append({"index": idx, "category": "validation", "message": f"unit_price must be > 0, got {unit_p}"})
+            continue
 
-        total_rev = qty * unit_p
+        total_rev = round(qty * unit_p, 4)
+        currency = _normalise_currency(s.currency or "", user_currency)
 
         record = SaleRecord(
             user_id=current_user.id,
             store_id=parsed_store_id,
-            product_name=s.product_name.strip(),
-            product_sku=s.product_sku.strip() if s.product_sku else None,
-            product_category=s.product_category.strip() or "Other",
+            product_name=sanitize_string(s.product_name)[:255],
+            product_sku=sanitize_string(s.product_sku or "")[:100] or None,
+            product_category=sanitize_string(s.product_category or "Other")[:100] or "Other",
             quantity_sold=qty,
             unit_price=unit_p,
             total_revenue=total_rev,
-            cogs=None,         # COGS unknown — not estimated; user can update later
-            gross_margin=None, # Cannot compute without COGS
+            cogs=None,
+            gross_margin=None,
             sale_date=s.sale_date,
-            customer_segment=s.customer_segment.strip() if s.customer_segment else "Walk-in",
-            currency=s.currency or user_currency,
-            source="scan",
+            customer_segment=sanitize_string(s.customer_segment or "Walk-in")[:50] or "Walk-in",
+            currency=currency,
+            source="manual_bulk",
         )
         records.append(record)
 
+    # ── Create UploadHistory for traceability ──────────────────────────────
+    upload_record = UploadHistory(
+        user_id=current_user.id,
+        store_id=parsed_store_id,
+        filename="manual_bulk_entry",
+        status="success" if records and not errors else ("partial" if records else "failed"),
+        rows_total=len(payload.sales),
+        records_processed=len(records),
+        duplicates_skipped=0,
+        errors_logged=errors or None,
+    )
+    db.add(upload_record)
+
     if records:
+        for record in records:
+            record.upload_id = upload_record.id  # back-link will be set after flush
         db.add_all(records)
+
+    await db.commit()
+    await db.refresh(upload_record)
+
+    # Patch upload_id now that we have the PK
+    if records:
+        for record in records:
+            record.upload_id = upload_record.id
         await db.commit()
 
     await cache.invalidate_chart_bundle(current_user.id)
 
-    return {"success": True, "inserted": len(records)}
+    return {
+        "success": True,
+        "upload_id": str(upload_record.id),
+        "inserted": len(records),
+        "errors": len(errors),
+        "error_summary": errors,
+    }
 
 
 # ── CSV Template Download ─────────────────────────────────────────────────────
@@ -852,6 +1691,12 @@ __all__ = [
     "get_portfolio_clusters",
     "export_sales_csv",
     "upload_sales_csv",
+    "get_upload_history",
+    "get_upload_log",
+    "run_audit",
+    "list_audits",
+    "get_audit_detail",
+    "export_audit_text",
     "SaleRecordCreate",
     "BulkSalesCreate",
     "bulk_create_sales",
@@ -860,6 +1705,7 @@ __all__ = [
     "get_unread_alerts_count",
     "mark_alert_read",
     "_normalise_header",
+    "_normalise_currency",
     "_parse_date",
     "_parse_csv_rows",
     "_parse_xlsx_rows",

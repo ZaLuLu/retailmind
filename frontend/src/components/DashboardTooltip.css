@@ -1,0 +1,80 @@
+/* DashboardTooltip.css */
+
+.dashboard-tooltip-container {
+  display: inline-block;
+  position: relative;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.tooltip-trigger {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--ink, #1a1a1a);
+  background: var(--paper-dark, #F5F2E9);
+  color: var(--ink, #1a1a1a);
+  font-family: var(--mono, monospace);
+  font-size: 10px;
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.tooltip-trigger:hover {
+  background: var(--ink, #1a1a1a);
+  color: var(--paper, #FDFCF0);
+}
+
+.tooltip-popup-bubble {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  background: var(--paper, #FDFCF0);
+  border: 2px solid var(--ink, #1a1a1a);
+  box-shadow: 4px 4px 0 rgba(26, 26, 26, 0.15);
+  padding: 10px 12px;
+  z-index: 1010;
+  animation: tooltipFadeIn 0.18s ease-out;
+}
+
+.tooltip-popup-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: var(--ink, #1a1a1a) transparent transparent transparent;
+}
+
+.tooltip-title {
+  font-family: var(--serif, Georgia);
+  font-size: 11px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-red, #8B0000);
+}
+
+.tooltip-content {
+  font-family: var(--serif, Georgia);
+  font-size: 11px;
+  line-height: 1.4;
+  margin: 0;
+  color: var(--ink, #1a1a1a);
+  text-align: left;
+}
+
+@keyframes tooltipFadeIn {
+  from { opacity: 0; transform: translate(-50%, 4px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}

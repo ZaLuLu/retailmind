@@ -12,7 +12,7 @@ load_dotenv()
 
 from app.core.db import async_session_factory
 from app.models.db import User, Store, SaleRecord
-from app.security.auth import get_password_hash
+from app.core.security import hash_password as get_password_hash
 from app.services.retail_intelligence import retail_intelligence_service
 from sqlalchemy import delete, select
 

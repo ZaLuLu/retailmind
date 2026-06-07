@@ -1,7 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
-from ..models.db import SaleRecord, MLResult, Alert
-from ..services.gemini import gemini_service
+from ..models.db import SaleRecord, MLResult, Alert, Audit
+from ..services.llm import llm_service
+from ..core.config import settings
 from datetime import date, timedelta, datetime
 from typing import Dict, Any, List, Optional, Tuple
 import logging
@@ -91,7 +92,8 @@ def custom_holt_winters_additive(series: List[float], seasonal_periods: int = 7,
         s_idx = (n + m - 1) % L
         forecast_vals.append(l + m * b + s[s_idx])
         
-    return [max(float(val), 0.0) for val in forecast_vals]
+    import math
+    return [max(float(val), 0.0) if math.isfinite(val) else 0.0 for val in forecast_vals]
 
 
 def custom_kmeans(X: np.ndarray, n_clusters: int = 4, max_iter: int = 300, random_state: int = 42) -> Tuple[np.ndarray, np.ndarray]:
@@ -113,7 +115,7 @@ def custom_kmeans(X: np.ndarray, n_clusters: int = 4, max_iter: int = 300, rando
     initial_indices = rng.choice(n_samples, size=n_clusters, replace=False)
     centroids = X[initial_indices].copy()
     
-    labels = np.zeros(n_samples, dtype=int)
+    labels = np.full(n_samples, -1, dtype=int)
     
     for _ in range(max_iter):
         # Euclidean distance from each sample to each centroid
@@ -195,10 +197,12 @@ class RetailIntelligenceService:
         prev_end = start_date - timedelta(days=1)
 
         # ── Cache Check (Phase 4) ─────────────────────────────────────────────
-        # Get count and max created_at of sale records to detect data changes
+        # Get count, max created_at, sum of total_revenue, and sum of quantity_sold to detect data changes and updates
         stmt_hash = select(
             func.count(SaleRecord.id).label("count"),
-            func.max(SaleRecord.created_at).label("max_created_at")
+            func.max(SaleRecord.created_at).label("max_created_at"),
+            func.coalesce(func.sum(SaleRecord.total_revenue), 0).label("sum_revenue"),
+            func.coalesce(func.sum(SaleRecord.quantity_sold), 0).label("sum_qty")
         ).where(SaleRecord.user_id == user_id)
         if store_id is not None:
             stmt_hash = stmt_hash.where(SaleRecord.store_id == store_id)
@@ -207,10 +211,13 @@ class RetailIntelligenceService:
         hash_row = res_hash.one()
         rec_count = hash_row.count
         max_created_at = hash_row.max_created_at
+        sum_revenue = float(hash_row.sum_revenue)
+        sum_qty = float(hash_row.sum_qty)
+
+        max_created_str = max_created_at.isoformat() if max_created_at else "none"
 
         # Calculate a unique data hash
-        max_created_str = max_created_at.isoformat() if max_created_at else "never"
-        data_hash_source = f"{rec_count}_{max_created_str}_{period}_{start_date}_{end_date}_{store_id or 'all'}"
+        data_hash_source = f"{rec_count}_{max_created_str}_{sum_revenue}_{sum_qty}_{period}_{start_date}_{end_date}_{store_id or 'all'}"
         data_hash = hashlib.sha256(data_hash_source.encode("utf-8")).hexdigest()
 
         # Try to retrieve from DB cache
@@ -418,8 +425,8 @@ class RetailIntelligenceService:
         demand_signals = sorted(demand_signals, key=lambda x: x["recent_qty"], reverse=True)[:5]
 
         # ── 6. Dead stock alerts ──────────────────────────────────────────────
-        thirty_days_ago_simple = today - timedelta(days=30)
-        ninety_days_ago = today - timedelta(days=90)
+        thirty_days_ago_simple = today - timedelta(days=settings.DEAD_STOCK_THRESHOLD_DAYS)
+        ninety_days_ago = today - timedelta(days=settings.DEAD_STOCK_LOOKBACK_DAYS)
 
         had_cond = [
             SaleRecord.user_id == user_id,
@@ -478,7 +485,7 @@ class RetailIntelligenceService:
             )
             .where(and_(*margin_cond))
             .group_by(SaleRecord.product_name)
-            .having(func.avg(SaleRecord.gross_margin) < 20)
+            .having(func.avg(SaleRecord.gross_margin) < settings.MARGIN_EROSION_THRESHOLD_PCT)
             .having(func.count(SaleRecord.id) >= 2)
             .order_by(func.avg(SaleRecord.gross_margin).asc())
             .limit(5)
@@ -489,7 +496,7 @@ class RetailIntelligenceService:
                 "product_name": row.product_name,
                 "margin_pct": round(float(row.avg_margin), 2),
                 "revenue": round(float(row.revenue), 2),
-                "message": f"Margin at {round(float(row.avg_margin), 1)}% — below 20% threshold",
+                "message": f"Margin at {round(float(row.avg_margin), 1)}% — below {settings.MARGIN_EROSION_THRESHOLD_PCT}% threshold",
             }
             for row in r_margin.all()
         ]
@@ -672,7 +679,7 @@ class RetailIntelligenceService:
                 f"Dead stock items: {len(dead_stock_alerts)} | "
                 f"Margin alerts: {len(margin_erosion_alerts)}"
             )
-            ai_insight = await gemini_service.ask_advisor(
+            ai_insight = await llm_service.ask_advisor(
                 "You are a retail business intelligence analyst. "
                 "Write ONE sharp, actionable sentence (max 20 words) summarising the most important insight from this data. "
                 "Sound like a Financial Times headline — factual, direct, no fluff.",
@@ -725,7 +732,7 @@ class RetailIntelligenceService:
                 severity = "warning"
                 if alert_type == "demand_spike":
                     severity = "info"
-                elif alert_type == "margin_erosion" and alert_data.get("margin_pct", 0) < 10:
+                elif alert_type == "margin_erosion" and alert_data.get("margin_pct", 0) < settings.MARGIN_EROSION_THRESHOLD_PCT / 2:
                     severity = "critical"
                 
                 if p_name in existing_alerts:
@@ -1164,6 +1171,136 @@ class RetailIntelligenceService:
             }
 
         return {"clusters": clusters_out, "centroids": centroids}
+
+    async def run_store_audit(self, db: AsyncSession, user_id: Any, store_id: Optional[Any] = None) -> Audit:
+        """
+        Phase 3 — Comprehensive retail audit engine.
+
+        Steps:
+        1.  Pull MTD summary (revenue, margin, demand signals, dead stock, margin erosion).
+        2.  Pull 14-day Holt-Winters revenue forecast for context richness.
+        3.  Pull top-3 product demand forecasts for the report context.
+        4.  Assemble a structured anomaly_snapshot dict (persisted to DB for export).
+        5.  Call llm_service.generate_audit_report() with a 1200-token audit prompt.
+        6.  Persist an Audit row and return it.
+        """
+        from .llm import llm_service
+
+        # ── 1. MTD statistical summary ──────────────────────────────────────
+        summary = await self.get_retail_summary(db, user_id, period="mtd", store_id=store_id)
+
+        # ── 2. Total unique products in all-time data ────────────────────────
+        stmt_products = select(func.count(func.distinct(SaleRecord.product_name))).where(
+            SaleRecord.user_id == user_id
+        )
+        if store_id is not None:
+            stmt_products = stmt_products.where(SaleRecord.store_id == store_id)
+        r_products = await db.execute(stmt_products)
+        total_products_checked = r_products.scalar() or 0
+
+        # ── 3. Anomaly counts ────────────────────────────────────────────────
+        demand_signals = summary.get("demand_signals", [])
+        dead_stock_alerts = summary.get("dead_stock_alerts", [])
+        margin_erosion_alerts = summary.get("margin_erosion_alerts", [])
+        anomalies_detected = len(demand_signals) + len(dead_stock_alerts) + len(margin_erosion_alerts)
+
+        # ── 4. 14-day revenue forecast (top-3 most recent forecast days) ────
+        revenue_forecast_14d = summary.get("revenue_forecast_14d", [])
+        forecast_summary: dict = {}
+        if revenue_forecast_14d:
+            revenues = [f["revenue"] for f in revenue_forecast_14d]
+            peak_entry = max(revenue_forecast_14d, key=lambda x: x["revenue"])
+            trough_entry = min(revenue_forecast_14d, key=lambda x: x["revenue"])
+            forecast_summary = {
+                "period": f"{revenue_forecast_14d[0]['date']} → {revenue_forecast_14d[-1]['date']}",
+                "projected_total_14d": round(sum(revenues), 2),
+                "peak_day": peak_entry["date"],
+                "peak_revenue": peak_entry["revenue"],
+                "trough_day": trough_entry["date"],
+                "trough_revenue": trough_entry["revenue"],
+            }
+
+        # ── 5. Per-product demand forecasts (top 3 by volume) ───────────────
+        try:
+            product_forecasts = await self.get_demand_forecast(db, user_id, store_id=store_id)
+            top_product_forecasts = [
+                {
+                    "product": f["product_name"],
+                    "category": f["category"],
+                    "forecast_7d_units": f["forecast_qty_7d"],
+                    "trend": f["trend"],
+                    "confidence": f["confidence"],
+                }
+                for f in product_forecasts[:3]
+            ]
+        except Exception:
+            logger.warning("Could not fetch product forecasts for audit context")
+            top_product_forecasts = []
+
+        # ── 6. Build full anomaly_snapshot (persisted to DB) ─────────────────
+        anomaly_snapshot = {
+            # Store context
+            "store_id": str(store_id) if store_id else "All Stores",
+            "audit_date": str(date.today()),
+            "total_products_checked": total_products_checked,
+            "anomalies_detected": anomalies_detected,
+            # Financial summary
+            "total_revenue": summary.get("total_revenue", 0.0),
+            "gross_profit": summary.get("gross_profit", 0.0),
+            "overall_margin_pct": summary.get("overall_margin_pct", 0.0),
+            "mom_revenue_change_pct": summary.get("mom_revenue_change_pct", 0.0),
+            "num_sales": summary.get("num_sales", 0),
+            # Anomalies
+            "demand_signals": demand_signals,
+            "dead_stock_alerts": dead_stock_alerts,
+            "margin_erosion_alerts": margin_erosion_alerts,
+            # Top products
+            "top_products": summary.get("top_products", [])[:5],
+            # Category breakdown
+            "category_breakdown": summary.get("category_breakdown", [])[:5],
+            # Forecast
+            "revenue_forecast_14d_summary": forecast_summary,
+            "top_product_forecasts": top_product_forecasts,
+        }
+
+        # ── 7. Generate Groq AI report (1200 tokens, dedicated audit prompt) ──
+        try:
+            ai_commentary = await llm_service.generate_audit_report(anomaly_snapshot)
+        except Exception:
+            logger.exception("Groq audit report generation failed — using structured fallback")
+            ai_commentary = await llm_service.generate_audit_report.__wrapped__(
+                llm_service, anomaly_snapshot
+            ) if hasattr(llm_service.generate_audit_report, "__wrapped__") else (
+                "### 1. Executive Summary\n"
+                f"Audit completed for {total_products_checked} products. "
+                f"Revenue: ₹{anomaly_snapshot['total_revenue']:,.2f} | "
+                f"Margin: {anomaly_snapshot['overall_margin_pct']:.1f}% | "
+                f"Anomalies: {anomalies_detected}\n\n"
+                "### 2. Anomaly & Risk Breakdown\nSee anomaly_snapshot for full detail.\n\n"
+                "### 3. Demand Outlook\nSee revenue_forecast_14d_summary.\n\n"
+                "### 4. Recommended Action Plan\n"
+                "Review demand spike alerts, clear dead stock, and audit low-margin products."
+            )
+
+        # ── 8. Persist Audit row ──────────────────────────────────────────────
+        audit = Audit(
+            user_id=user_id,
+            store_id=store_id,
+            audit_date=date.today(),
+            total_products_checked=total_products_checked,
+            anomalies_detected=anomalies_detected,
+            ai_audit_summary=ai_commentary,
+            anomaly_snapshot=anomaly_snapshot,
+        )
+        db.add(audit)
+        await db.commit()
+        await db.refresh(audit)
+
+        logger.info(
+            "Audit completed: user=%s store=%s products=%d anomalies=%d",
+            user_id, store_id or "all", total_products_checked, anomalies_detected,
+        )
+        return audit
 
 
 retail_intelligence_service = RetailIntelligenceService()

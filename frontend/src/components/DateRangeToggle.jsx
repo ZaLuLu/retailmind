@@ -11,7 +11,7 @@
  *   onChange     - fn({ period, dateFrom, dateTo })
  */
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 
 const PERIODS = [
   { value: 'mtd',    label: 'MTD' },

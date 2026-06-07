@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { BookOpen, ChevronDown, ChevronUp, FileSpreadsheet, Brain, TrendingUp, AlertTriangle } from 'lucide-react';
 
 export default function UserManual() {
@@ -127,7 +127,7 @@ export default function UserManual() {
                 <span className="mono" style={{ fontSize: '0.72rem', fontWeight: 700 }}>3. AI Advisor & Alerts</span>
               </div>
               <p className="serif italic" style={{ fontSize: '0.85rem', margin: 0 }}>
-                Secure, state-of-the-art Gemini 2.5 models power your automated retail advisor.
+                Secure, state-of-the-art Groq Llama-3 models power your automated retail advisor.
               </p>
               <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.82rem', lineHeight: '1.5' }}>
                 <li>

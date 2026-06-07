@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -15,6 +15,62 @@ import {
   Legend
 } from 'recharts';
 import { formatMoneyCompact, formatMoneyDetailed } from '../services/currency';
+
+// Custom tooltips with newsprint broadsheet aesthetics defined outside render
+const CustomTooltip = ({ active, payload, label, currency }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div style={{
+        background: '#FDFCF0',
+        color: '#1A1A1A',
+        padding: '0.65rem 0.95rem',
+        border: '2px solid #1A1A1A',
+        fontFamily: 'var(--font-mono)',
+        fontSize: '0.7rem',
+        boxShadow: '4px 4px 0 #1A1A1A',
+        pointerEvents: 'none'
+      }}>
+        <div style={{ fontWeight: 'bold', borderBottom: '1px dashed #1A1A1A', paddingBottom: '0.2rem', marginBottom: '0.3rem', color: '#8B0000' }}>
+          {label || data.category || data.name}
+        </div>
+        {payload.map((p, idx) => {
+          if (p.value !== undefined && p.value !== null) {
+            if (Array.isArray(p.value)) {
+              return (
+                <div key={idx} style={{ margin: '0.1rem 0', fontStyle: 'italic', color: '#B8860B' }}>
+                  {p.name}: <span>{formatMoneyDetailed(p.value[0], currency)} - {formatMoneyDetailed(p.value[1], currency)}</span>
+                </div>
+              );
+            }
+            return (
+              <div key={idx} style={{ margin: '0.1rem 0' }}>
+                {p.name}: <span style={{ color: p.color || '#003366', fontWeight: 700 }}>{formatMoneyDetailed(p.value, currency)}</span>
+              </div>
+            );
+          }
+          return null;
+        })}
+        {data.margin !== undefined && (
+          <div style={{ marginTop: '0.2rem', color: '#1A4D2E', fontWeight: 'bold', borderTop: '1px dotted #1A1A1A', paddingTop: '0.15rem' }}>
+            Margin: {data.margin.toFixed(1)}%
+          </div>
+        )}
+        {data.percent !== undefined && (
+          <div style={{ marginTop: '0.2rem', color: '#8B0000', fontWeight: 'bold', borderTop: '1px dotted #1A1A1A', paddingTop: '0.15rem' }}>
+            Share: {data.percent.toFixed(1)}%
+          </div>
+        )}
+        {data.isAnomaly && (
+          <div style={{ marginTop: '0.25rem', color: '#8B0000', fontWeight: 'bold', borderTop: '1px dashed #8B0000', paddingTop: '0.2rem', fontSize: '0.62rem' }}>
+            ⚠️ EXTREME VOLUME SPIKE DETECTED (&gt;3σ)
+          </div>
+        )}
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], forecast = [], currency = 'INR' }) {
   const [activeTab, setActiveTab] = useState('trend'); // 'trend' | 'comparison' | 'share'
@@ -65,7 +121,9 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
           const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
           displayDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }
-      } catch (e) {}
+      } catch {
+        // fallback to original date format
+      }
 
       const rev = dailyMap[d];
       const isAnomaly = histStd > 0 && Math.abs(rev - histMean) > 3 * histStd;
@@ -87,7 +145,9 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
           const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
           displayDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }
-      } catch (e) {}
+      } catch {
+        // fallback to original date format
+      }
 
       return {
         date: displayDate,
@@ -151,59 +211,6 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
   const totalRevenue = useMemo(() => {
     return comparisonData.reduce((acc, curr) => acc + curr.revenue, 0);
   }, [comparisonData]);
-
-  // Custom tooltips with newsprint broadsheet aesthetics
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div style={{
-          background: '#FDFCF0',
-          color: '#1A1A1A',
-          padding: '0.65rem 0.95rem',
-          border: '2px solid #1A1A1A',
-          fontFamily: 'var(--font-mono)',
-          fontSize: '0.7rem',
-          boxShadow: '4px 4px 0 #1A1A1A',
-          pointerEvents: 'none'
-        }}>
-          <div style={{ fontWeight: 'bold', borderBottom: '1px dashed #1A1A1A', paddingBottom: '0.2rem', marginBottom: '0.3rem', color: '#8B0000' }}>
-            {label || data.category || data.name}
-          </div>
-          {payload.map((p, idx) => {
-            if (Array.isArray(p.value)) {
-              return (
-                <div key={idx} style={{ margin: '0.1rem 0', fontStyle: 'italic', color: '#B8860B' }}>
-                  {p.name}: <span>{formatMoneyDetailed(p.value[0], currency)} - {formatMoneyDetailed(p.value[1], currency)}</span>
-                </div>
-              );
-            }
-            return (
-              <div key={idx} style={{ margin: '0.1rem 0' }}>
-                {p.name}: <span style={{ color: p.color || '#003366', fontWeight: 700 }}>{formatMoneyDetailed(p.value, currency)}</span>
-              </div>
-            );
-          })}
-          {data.margin !== undefined && (
-            <div style={{ marginTop: '0.2rem', color: '#1A4D2E', fontWeight: 'bold', borderTop: '1px dotted #1A1A1A', paddingTop: '0.15rem' }}>
-              Margin: {data.margin.toFixed(1)}%
-            </div>
-          )}
-          {data.percent !== undefined && (
-            <div style={{ marginTop: '0.2rem', color: '#8B0000', fontWeight: 'bold', borderTop: '1px dotted #1A1A1A', paddingTop: '0.15rem' }}>
-              Share: {data.percent.toFixed(1)}%
-            </div>
-          )}
-          {data.isAnomaly && (
-            <div style={{ marginTop: '0.25rem', color: '#8B0000', fontWeight: 'bold', borderTop: '1px dashed #8B0000', paddingTop: '0.2rem', fontSize: '0.62rem' }}>
-              ⚠️ EXTREME VOLUME SPIKE DETECTED (&gt;3σ)
-            </div>
-          )}
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className="card newsprint-chart-card" style={{
@@ -280,7 +287,7 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
                 tickFormatter={(v) => formatMoneyCompact(v, currency)}
                 tick={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem' }}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip currency={currency} />} />
               <Area
                 name="95% Confidence Band"
                 type="monotone"
@@ -344,7 +351,7 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
                 tickFormatter={(v) => formatMoneyCompact(v, currency)}
                 tick={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem' }}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip currency={currency} />} />
               <Bar name="Total Revenue" dataKey="revenue" fill="#003366" stroke="#1A1A1A" strokeWidth={1} />
               <Bar name="Cost of Goods Sold (COGS)" dataKey="cogs" fill="#B8860B" stroke="#1A1A1A" strokeWidth={1} />
               <Legend
@@ -372,7 +379,7 @@ export default function SalesTrendGraph({ sales = [], categoryBreakdown = [], fo
                       <Cell key={`cell-${index}`} fill={colors[index % colors.length]} stroke="#1A1A1A" strokeWidth={1} />
                     ))}
                   </Pie>
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip content={<CustomTooltip currency={currency} />} />
                 </PieChart>
               </ResponsiveContainer>
             </div>

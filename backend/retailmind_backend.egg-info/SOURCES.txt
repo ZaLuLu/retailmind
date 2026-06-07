@@ -1,0 +1,7 @@
+pyproject.toml
+app/main.py
+retailmind_backend.egg-info/PKG-INFO
+retailmind_backend.egg-info/SOURCES.txt
+retailmind_backend.egg-info/dependency_links.txt
+retailmind_backend.egg-info/requires.txt
+retailmind_backend.egg-info/top_level.txt

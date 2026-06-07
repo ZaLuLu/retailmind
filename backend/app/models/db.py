@@ -14,6 +14,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     DECIMAL,
+    Integer,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
@@ -95,6 +96,38 @@ class Store(Base):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Upload History
+# ─────────────────────────────────────────────────────────────────────────────
+
+class UploadHistory(Base):
+    """
+    Metadata about batch imports (CSV/Excel).
+    Tracks file structure validation, records ingested, and logs row errors.
+    """
+
+    __tablename__ = "upload_history"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    store_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("stores.id", ondelete="CASCADE"),
+        nullable=True,
+    )
+    filename = Column(String(255), nullable=False)
+    status = Column(String(20), default="success")        # success | failed | partial
+    rows_total = Column(Integer, default=0)               # Total rows in the uploaded file
+    records_processed = Column(Integer, default=0)        # Rows successfully inserted
+    duplicates_skipped = Column(Integer, default=0)       # Rows skipped as exact duplicates
+    errors_logged = Column(JSONB, nullable=True)          # Structured row-level error log
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Sale Records  (core RetailMind model)
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -116,6 +149,12 @@ class SaleRecord(Base):
     store_id = Column(
         UUID(as_uuid=True),
         ForeignKey("stores.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    upload_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("upload_history.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
@@ -261,46 +300,37 @@ class MLResult(Base):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Legacy (scheduled for removal — upgrade plan §3.2)
+# System Audits
 # ─────────────────────────────────────────────────────────────────────────────
 
-class Budget(Base):
-    """LEGACY — personal finance model, scheduled for removal in a future migration."""
+class Audit(Base):
+    """
+    Persisted periodic operational audits.
+    Combines calculated statistical results with AI summaries/briefings.
+    """
 
-    __tablename__ = "budgets"
+    __tablename__ = "audits"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
-    category = Column(String(50), nullable=False)
-    monthly_limit = Column(DECIMAL(10, 2), nullable=False)
-    month = Column(Date, nullable=False)
-# 
-    __table_args__ = (
-        Index("idx_user_category_month", "user_id", "category", "month", unique=True),
-    )
-# 
-
-class Transaction(Base):
-    """LEGACY — personal finance model, scheduled for removal in a future migration."""
-    __tablename__ = "transactions"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(
+    store_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False,
+        ForeignKey("stores.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
     )
-    vendor_name = Column(String(255))
-    amount = Column(DECIMAL(10, 2), nullable=False)
-    category = Column(String(50), nullable=False, default="Other")
-    transaction_date = Column(Date, nullable=False)
-    confidence = Column(DECIMAL(5, 2))
-    notes = Column(Text)
-    document_path = Column(String(500))
-    intelligence_meta = Column(JSONB, nullable=True)
-    created_by_ai = Column(Boolean, default=False)
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    audit_date = Column(Date, nullable=False, default=func.current_date)
+    total_products_checked = Column(Integer, default=0)
+    anomalies_detected = Column(Integer, default=0)
+    ai_audit_summary = Column(Text, nullable=True)        # Groq-generated narrative report (Markdown)
+    anomaly_snapshot = Column(JSONB, nullable=True)        # Structured breakdown persisted at audit time
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+
+

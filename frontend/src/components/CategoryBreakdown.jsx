@@ -1,5 +1,3 @@
-import React from 'react';
-
 const CategoryBreakdown = ({ categories, totalSpent }) => {
   return (
     <section>
@@ -15,17 +13,13 @@ const CategoryBreakdown = ({ categories, totalSpent }) => {
           </p>
         )}
         {categories.map((cat, idx) => {
-          let percentage = 0;
-          let isOverLimit = false;
-          let metaText = `₹${cat.amount.toLocaleString('en-IN')}`;
-
-          if (cat.limit > 0) {
-            percentage = Math.min((cat.amount / cat.limit) * 100, 100);
-            isOverLimit = cat.amount > cat.limit;
-            metaText += ` / ₹${cat.limit.toLocaleString('en-IN')}`;
-          } else {
-            percentage = totalSpent > 0 ? (cat.amount / totalSpent) * 100 : 0;
-          }
+          const percentage = cat.limit > 0
+            ? Math.min((cat.amount / cat.limit) * 100, 100)
+            : (totalSpent > 0 ? (cat.amount / totalSpent) * 100 : 0);
+          const isOverLimit = cat.limit > 0 && cat.amount > cat.limit;
+          const metaText = cat.limit > 0
+            ? `₹${cat.amount.toLocaleString('en-IN')} / ₹${cat.limit.toLocaleString('en-IN')}`
+            : `₹${cat.amount.toLocaleString('en-IN')}`;
 
           return (
             <div key={idx} className="category-item">

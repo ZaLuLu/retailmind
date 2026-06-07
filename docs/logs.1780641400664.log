@@ -1,0 +1,1001 @@
+2026-06-05T06:26:25.308159855Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:25.308164285Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1445, in main
+2026-06-05T06:26:25.308167945Z [err]      rv = self.invoke(ctx)
+2026-06-05T06:26:25.308172015Z [err]           ^^^^^^^^^^^^^^^^
+2026-06-05T06:26:25.308175795Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1308, in invoke
+2026-06-05T06:26:25.308179825Z [err]      return ctx.invoke(self.callback, **ctx.params)
+2026-06-05T06:26:25.308183365Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:25.308187715Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 877, in invoke
+2026-06-05T06:26:25.309020400Z [err]      return callback(*args, **kwargs)
+2026-06-05T06:26:25.309024039Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:25.309028159Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 412, in main
+2026-06-05T06:26:25.309032689Z [err]      run(
+2026-06-05T06:26:25.309036469Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 579, in run
+2026-06-05T06:26:25.309040009Z [err]      server.run()
+2026-06-05T06:26:25.309043649Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 65, in run
+2026-06-05T06:26:25.309047619Z [err]      return asyncio.run(self.serve(sockets=sockets))
+2026-06-05T06:26:25.309051479Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:25.309054939Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+2026-06-05T06:26:25.309058369Z [err]      return runner.run(main)
+2026-06-05T06:26:25.309062019Z [err]             ^^^^^^^^^^^^^^^^
+2026-06-05T06:26:25.309065859Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+2026-06-05T06:26:25.309069909Z [err]      return self._loop.run_until_complete(task)
+2026-06-05T06:26:25.309073719Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:25.309077049Z [err]    File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-06-05T06:26:25.309081128Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 69, in serve
+2026-06-05T06:26:25.309084888Z [err]      await self._serve(sockets)
+2026-06-05T06:26:25.309088848Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 76, in _serve
+2026-06-05T06:26:25.309092558Z [err]      config.load()
+2026-06-05T06:26:25.309095918Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/config.py", line 434, in load
+2026-06-05T06:26:25.309099638Z [err]      self.loaded_app = import_from_string(self.app)
+2026-06-05T06:26:25.309103218Z [err]                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:25.309107078Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+2026-06-05T06:26:25.309111248Z [err]      module = importlib.import_module(module_str)
+2026-06-05T06:26:25.309115048Z [err]               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:25.309118968Z [err]    File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-06-05T06:26:25.309122348Z [err]      return _bootstrap._gcd_import(name[level:], package, level)
+2026-06-05T06:26:25.309125998Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:25.309129428Z [err]    File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-06-05T06:26:25.309132768Z [err]    File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-06-05T06:26:25.309136237Z [err]    File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-06-05T06:26:25.309139427Z [err]    File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-06-05T06:26:25.309142897Z [err]    File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-06-05T06:26:25.309146457Z [err]    File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-06-05T06:26:25.309149977Z [err]    File "/app/app/main.py", line 14, in <module>
+2026-06-05T06:26:25.309153977Z [err]      from .core.config import settings
+2026-06-05T06:26:25.309157527Z [err]    File "/app/app/core/config.py", line 102, in <module>
+2026-06-05T06:26:25.309161157Z [err]      settings = Settings()
+2026-06-05T06:26:25.309164177Z [err]                 ^^^^^^^^^^
+2026-06-05T06:26:25.309167277Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic_settings/main.py", line 171, in __init__
+2026-06-05T06:26:25.309477692Z [err]      super().__init__(
+2026-06-05T06:26:25.309483072Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 214, in __init__
+2026-06-05T06:26:25.309487692Z [err]      validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-06-05T06:26:25.309491992Z [err]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:25.309497032Z [err]  pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+2026-06-05T06:26:25.309501402Z [err]    Value error, Missing required env vars: DATABASE_URL [type=value_error, input_value={'ENVIRONMENT': 'producti...us-projects.vercel.app'}, input_type=dict]
+2026-06-05T06:26:25.309509452Z [err]      For further information visit https://errors.pydantic.dev/2.10/v/value_error
+2026-06-05T06:26:26.284764991Z [err]  FATAL: Missing required environment variables for production: DATABASE_URL
+2026-06-05T06:26:26.284769201Z [err]  Traceback (most recent call last):
+2026-06-05T06:26:26.284772941Z [err]    File "/usr/local/bin/uvicorn", line 8, in <module>
+2026-06-05T06:26:26.284776161Z [err]      sys.exit(main())
+2026-06-05T06:26:26.284779691Z [err]               ^^^^^^
+2026-06-05T06:26:26.284783441Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1524, in __call__
+2026-06-05T06:26:26.284787441Z [err]      return self.main(*args, **kwargs)
+2026-06-05T06:26:26.284791841Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:26.284795231Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1445, in main
+2026-06-05T06:26:26.285786613Z [err]    File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-06-05T06:26:26.285792173Z [err]      return callback(*args, **kwargs)
+2026-06-05T06:26:26.285796103Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:26.285800083Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 412, in main
+2026-06-05T06:26:26.285808772Z [err]      run(
+2026-06-05T06:26:26.285812152Z [err]      rv = self.invoke(ctx)
+2026-06-05T06:26:26.285814852Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 579, in run
+2026-06-05T06:26:26.285822472Z [err]           ^^^^^^^^^^^^^^^^
+2026-06-05T06:26:26.285822672Z [err]      server.run()
+2026-06-05T06:26:26.285831422Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:26.285832092Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 65, in run
+2026-06-05T06:26:26.285841102Z [err]             ^^^^^^^^^^^^^^^^
+2026-06-05T06:26:26.285844502Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1308, in invoke
+2026-06-05T06:26:26.285851192Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+2026-06-05T06:26:26.285851982Z [err]      return ctx.invoke(self.callback, **ctx.params)
+2026-06-05T06:26:26.285855722Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 877, in invoke
+2026-06-05T06:26:26.285858152Z [err]      return self._loop.run_until_complete(task)
+2026-06-05T06:26:26.285861991Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:26.285885462Z [err]      return asyncio.run(self.serve(sockets=sockets))
+2026-06-05T06:26:26.285896392Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:26.285901182Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+2026-06-05T06:26:26.285905232Z [err]      return runner.run(main)
+2026-06-05T06:26:26.286170717Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 69, in serve
+2026-06-05T06:26:26.286178537Z [err]      await self._serve(sockets)
+2026-06-05T06:26:26.286180787Z [err]    File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-06-05T06:26:26.286188037Z [err]      self.loaded_app = import_from_string(self.app)
+2026-06-05T06:26:26.286189467Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 76, in _serve
+2026-06-05T06:26:26.286192276Z [err]    File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-06-05T06:26:26.286197906Z [err]                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:26.286198236Z [err]      config.load()
+2026-06-05T06:26:26.286201626Z [err]    File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-06-05T06:26:26.286210076Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/config.py", line 434, in load
+2026-06-05T06:26:26.286210656Z [err]    File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-06-05T06:26:26.286212156Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+2026-06-05T06:26:26.286218166Z [err]      module = importlib.import_module(module_str)
+2026-06-05T06:26:26.286222886Z [err]               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:26.286227296Z [err]    File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-06-05T06:26:26.286231766Z [err]      return _bootstrap._gcd_import(name[level:], package, level)
+2026-06-05T06:26:26.286235616Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:26.286239416Z [err]    File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-06-05T06:26:26.286244156Z [err]    File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-06-05T06:26:26.286933423Z [err]    File "/app/app/main.py", line 14, in <module>
+2026-06-05T06:26:26.286936743Z [err]      from .core.config import settings
+2026-06-05T06:26:26.286939753Z [err]    File "/app/app/core/config.py", line 102, in <module>
+2026-06-05T06:26:26.286942813Z [err]      settings = Settings()
+2026-06-05T06:26:26.286946073Z [err]                 ^^^^^^^^^^
+2026-06-05T06:26:26.286948843Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic_settings/main.py", line 171, in __init__
+2026-06-05T06:26:26.286951303Z [err]      super().__init__(
+2026-06-05T06:26:26.286954443Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 214, in __init__
+2026-06-05T06:26:26.286956973Z [err]      validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-06-05T06:26:26.286959793Z [err]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:26.286962453Z [err]  pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+2026-06-05T06:26:26.286965062Z [err]    Value error, Missing required env vars: DATABASE_URL [type=value_error, input_value={'ENVIRONMENT': 'producti...us-projects.vercel.app'}, input_type=dict]
+2026-06-05T06:26:26.286967832Z [err]      For further information visit https://errors.pydantic.dev/2.10/v/value_error
+2026-06-05T06:26:27.203793458Z [err]      return self.main(*args, **kwargs)
+2026-06-05T06:26:27.203805617Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:27.203812037Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1445, in main
+2026-06-05T06:26:27.203817347Z [err]      rv = self.invoke(ctx)
+2026-06-05T06:26:27.203821777Z [err]           ^^^^^^^^^^^^^^^^
+2026-06-05T06:26:27.203826387Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1308, in invoke
+2026-06-05T06:26:27.203831597Z [err]      return ctx.invoke(self.callback, **ctx.params)
+2026-06-05T06:26:27.203835617Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:27.203840237Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 877, in invoke
+2026-06-05T06:26:27.203844577Z [err]      return callback(*args, **kwargs)
+2026-06-05T06:26:27.203848787Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:27.203853017Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 412, in main
+2026-06-05T06:26:27.203857107Z [err]      run(
+2026-06-05T06:26:27.203861566Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 579, in run
+2026-06-05T06:26:27.203867016Z [err]      server.run()
+2026-06-05T06:26:27.203872776Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 65, in run
+2026-06-05T06:26:27.204002204Z [err]  FATAL: Missing required environment variables for production: DATABASE_URL
+2026-06-05T06:26:27.204006774Z [err]  Traceback (most recent call last):
+2026-06-05T06:26:27.204010404Z [err]    File "/usr/local/bin/uvicorn", line 8, in <module>
+2026-06-05T06:26:27.204014464Z [err]      sys.exit(main())
+2026-06-05T06:26:27.204017874Z [err]               ^^^^^^
+2026-06-05T06:26:27.204020964Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1524, in __call__
+2026-06-05T06:26:27.204495095Z [err]                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:27.204501025Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+2026-06-05T06:26:27.204508215Z [err]      module = importlib.import_module(module_str)
+2026-06-05T06:26:27.204513655Z [err]               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:27.204517874Z [err]    File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-06-05T06:26:27.204521624Z [err]      return _bootstrap._gcd_import(name[level:], package, level)
+2026-06-05T06:26:27.204530504Z [err]      return asyncio.run(self.serve(sockets=sockets))
+2026-06-05T06:26:27.204540564Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:27.204546734Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+2026-06-05T06:26:27.204552794Z [err]      return runner.run(main)
+2026-06-05T06:26:27.204557814Z [err]             ^^^^^^^^^^^^^^^^
+2026-06-05T06:26:27.204563024Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+2026-06-05T06:26:27.204568794Z [err]      return self._loop.run_until_complete(task)
+2026-06-05T06:26:27.204573683Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:27.204578413Z [err]    File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-06-05T06:26:27.204582863Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 69, in serve
+2026-06-05T06:26:27.204587463Z [err]      await self._serve(sockets)
+2026-06-05T06:26:27.204591833Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 76, in _serve
+2026-06-05T06:26:27.204595923Z [err]      config.load()
+2026-06-05T06:26:27.204599383Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/config.py", line 434, in load
+2026-06-05T06:26:27.204603183Z [err]      self.loaded_app = import_from_string(self.app)
+2026-06-05T06:26:27.205055265Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:27.205059065Z [err]    File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-06-05T06:26:27.205062425Z [err]    File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-06-05T06:26:27.205070585Z [err]    File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-06-05T06:26:27.205074125Z [err]    File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-06-05T06:26:27.205077405Z [err]    File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-06-05T06:26:27.205080935Z [err]    File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-06-05T06:26:27.205085675Z [err]    File "/app/app/main.py", line 14, in <module>
+2026-06-05T06:26:27.205088885Z [err]      from .core.config import settings
+2026-06-05T06:26:27.205092105Z [err]    File "/app/app/core/config.py", line 102, in <module>
+2026-06-05T06:26:27.205094875Z [err]      settings = Settings()
+2026-06-05T06:26:27.205097775Z [err]                 ^^^^^^^^^^
+2026-06-05T06:26:27.205101265Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic_settings/main.py", line 171, in __init__
+2026-06-05T06:26:27.205104785Z [err]      super().__init__(
+2026-06-05T06:26:27.205107985Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 214, in __init__
+2026-06-05T06:26:27.205111815Z [err]      validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-06-05T06:26:27.205114935Z [err]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:27.205118105Z [err]  pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+2026-06-05T06:26:27.205121444Z [err]    Value error, Missing required env vars: DATABASE_URL [type=value_error, input_value={'ENVIRONMENT': 'producti...us-projects.vercel.app'}, input_type=dict]
+2026-06-05T06:26:27.205124714Z [err]      For further information visit https://errors.pydantic.dev/2.10/v/value_error
+2026-06-05T06:26:28.120153389Z [err]  FATAL: Missing required environment variables for production: DATABASE_URL
+2026-06-05T06:26:28.120583902Z [err]  Traceback (most recent call last):
+2026-06-05T06:26:28.120587562Z [err]    File "/usr/local/bin/uvicorn", line 8, in <module>
+2026-06-05T06:26:28.120590022Z [err]      sys.exit(main())
+2026-06-05T06:26:28.120593652Z [err]               ^^^^^^
+2026-06-05T06:26:28.120596742Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1524, in __call__
+2026-06-05T06:26:28.120599922Z [err]      return self.main(*args, **kwargs)
+2026-06-05T06:26:28.120603052Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:28.120605932Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1445, in main
+2026-06-05T06:26:28.121178592Z [err]      rv = self.invoke(ctx)
+2026-06-05T06:26:28.121183531Z [err]           ^^^^^^^^^^^^^^^^
+2026-06-05T06:26:28.121185291Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+2026-06-05T06:26:28.121187781Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1308, in invoke
+2026-06-05T06:26:28.121191501Z [err]      return self._loop.run_until_complete(task)
+2026-06-05T06:26:28.121194381Z [err]      return ctx.invoke(self.callback, **ctx.params)
+2026-06-05T06:26:28.121195801Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 65, in run
+2026-06-05T06:26:28.121197751Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:28.121199591Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:28.121204901Z [err]    File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-06-05T06:26:28.121206281Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 877, in invoke
+2026-06-05T06:26:28.121207291Z [err]      return asyncio.run(self.serve(sockets=sockets))
+2026-06-05T06:26:28.121212351Z [err]      return callback(*args, **kwargs)
+2026-06-05T06:26:28.121214801Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:28.121219111Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:28.121221551Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+2026-06-05T06:26:28.121225691Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 412, in main
+2026-06-05T06:26:28.121228661Z [err]      return runner.run(main)
+2026-06-05T06:26:28.121232451Z [err]      run(
+2026-06-05T06:26:28.121236520Z [err]             ^^^^^^^^^^^^^^^^
+2026-06-05T06:26:28.121239310Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 579, in run
+2026-06-05T06:26:28.121243340Z [err]      server.run()
+2026-06-05T06:26:28.197442188Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 69, in serve
+2026-06-05T06:26:28.197446668Z [err]      await self._serve(sockets)
+2026-06-05T06:26:28.197450088Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 76, in _serve
+2026-06-05T06:26:28.197453508Z [err]      config.load()
+2026-06-05T06:26:28.197456708Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/config.py", line 434, in load
+2026-06-05T06:26:28.197461338Z [err]      self.loaded_app = import_from_string(self.app)
+2026-06-05T06:26:28.197465768Z [err]                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:28.197469978Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+2026-06-05T06:26:28.197474318Z [err]      module = importlib.import_module(module_str)
+2026-06-05T06:26:28.197478757Z [err]               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:28.197485937Z [err]    File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-06-05T06:26:28.197490817Z [err]      return _bootstrap._gcd_import(name[level:], package, level)
+2026-06-05T06:26:28.197494977Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:28.197499497Z [err]    File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-06-05T06:26:28.197503967Z [err]    File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-06-05T06:26:28.197508977Z [err]    File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-06-05T06:26:28.197513677Z [err]    File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-06-05T06:26:28.197518567Z [err]    File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-06-05T06:26:28.197523367Z [err]    File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-06-05T06:26:28.197620645Z [err]    File "/app/app/main.py", line 14, in <module>
+2026-06-05T06:26:28.197625825Z [err]      from .core.config import settings
+2026-06-05T06:26:28.197630115Z [err]    File "/app/app/core/config.py", line 102, in <module>
+2026-06-05T06:26:28.197635015Z [err]      settings = Settings()
+2026-06-05T06:26:28.197639695Z [err]                 ^^^^^^^^^^
+2026-06-05T06:26:28.197644374Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic_settings/main.py", line 171, in __init__
+2026-06-05T06:26:28.197648784Z [err]      super().__init__(
+2026-06-05T06:26:28.197652964Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 214, in __init__
+2026-06-05T06:26:28.197658124Z [err]      validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-06-05T06:26:28.197662684Z [err]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:28.197667814Z [err]  pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+2026-06-05T06:26:28.197672944Z [err]    Value error, Missing required env vars: DATABASE_URL [type=value_error, input_value={'ENVIRONMENT': 'producti...us-projects.vercel.app'}, input_type=dict]
+2026-06-05T06:26:28.197677724Z [err]      For further information visit https://errors.pydantic.dev/2.10/v/value_error
+2026-06-05T06:26:29.050150986Z [err]  FATAL: Missing required environment variables for production: DATABASE_URL
+2026-06-05T06:26:29.051276716Z [err]  Traceback (most recent call last):
+2026-06-05T06:26:29.051281946Z [err]    File "/usr/local/bin/uvicorn", line 8, in <module>
+2026-06-05T06:26:29.051285696Z [err]      sys.exit(main())
+2026-06-05T06:26:29.051289646Z [err]               ^^^^^^
+2026-06-05T06:26:29.051294066Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1524, in __call__
+2026-06-05T06:26:29.051298006Z [err]      return self.main(*args, **kwargs)
+2026-06-05T06:26:29.051301346Z [err]           ^^^^^^^^^^^^^^^^
+2026-06-05T06:26:29.051302706Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:29.051306816Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1445, in main
+2026-06-05T06:26:29.051310536Z [err]      rv = self.invoke(ctx)
+2026-06-05T06:26:29.051315406Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1308, in invoke
+2026-06-05T06:26:29.051323286Z [err]      return ctx.invoke(self.callback, **ctx.params)
+2026-06-05T06:26:29.051327945Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:29.051333715Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 877, in invoke
+2026-06-05T06:26:29.051339975Z [err]      return callback(*args, **kwargs)
+2026-06-05T06:26:29.051345535Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:29.051350755Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 412, in main
+2026-06-05T06:26:29.051621770Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+2026-06-05T06:26:29.051623880Z [err]      run(
+2026-06-05T06:26:29.051630620Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 579, in run
+2026-06-05T06:26:29.051635870Z [err]      server.run()
+2026-06-05T06:26:29.051641390Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 65, in run
+2026-06-05T06:26:29.051646020Z [err]      return asyncio.run(self.serve(sockets=sockets))
+2026-06-05T06:26:29.051651130Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:29.051656150Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+2026-06-05T06:26:29.051662229Z [err]      return runner.run(main)
+2026-06-05T06:26:29.051666589Z [err]             ^^^^^^^^^^^^^^^^
+2026-06-05T06:26:29.051670989Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+2026-06-05T06:26:29.051675029Z [err]      return self._loop.run_until_complete(task)
+2026-06-05T06:26:29.051679299Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:29.051683729Z [err]    File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-06-05T06:26:29.051687769Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 69, in serve
+2026-06-05T06:26:29.051696119Z [err]      await self._serve(sockets)
+2026-06-05T06:26:29.051699939Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 76, in _serve
+2026-06-05T06:26:29.051703939Z [err]      config.load()
+2026-06-05T06:26:29.051707849Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/config.py", line 434, in load
+2026-06-05T06:26:29.051711619Z [err]      self.loaded_app = import_from_string(self.app)
+2026-06-05T06:26:29.051715598Z [err]                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:29.052912288Z [err]      module = importlib.import_module(module_str)
+2026-06-05T06:26:29.052916558Z [err]               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:29.052920298Z [err]    File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-06-05T06:26:29.052925258Z [err]      return _bootstrap._gcd_import(name[level:], package, level)
+2026-06-05T06:26:29.052929697Z [err]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:29.052931987Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:26:29.052939547Z [err]  pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+2026-06-05T06:26:29.052939807Z [err]    File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-06-05T06:26:29.052946467Z [err]    Value error, Missing required env vars: DATABASE_URL [type=value_error, input_value={'ENVIRONMENT': 'producti...us-projects.vercel.app'}, input_type=dict]
+2026-06-05T06:26:29.052949297Z [err]    File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-06-05T06:26:29.052954527Z [err]      For further information visit https://errors.pydantic.dev/2.10/v/value_error
+2026-06-05T06:26:29.052956187Z [err]    File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-06-05T06:26:29.052960487Z [err]    File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-06-05T06:26:29.052963907Z [err]    File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-06-05T06:26:29.052967907Z [err]    File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-06-05T06:26:29.052971957Z [err]    File "/app/app/main.py", line 14, in <module>
+2026-06-05T06:26:29.052975897Z [err]      from .core.config import settings
+2026-06-05T06:26:29.052980647Z [err]    File "/app/app/core/config.py", line 102, in <module>
+2026-06-05T06:26:29.052984286Z [err]      settings = Settings()
+2026-06-05T06:26:29.052987816Z [err]                 ^^^^^^^^^^
+2026-06-05T06:26:29.052993596Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic_settings/main.py", line 171, in __init__
+2026-06-05T06:26:29.052997086Z [err]      super().__init__(
+2026-06-05T06:26:29.053000836Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 214, in __init__
+2026-06-05T06:26:29.053004456Z [err]      validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-06-05T06:36:19.074310989Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 579, in run
+2026-06-05T06:36:19.074318289Z [err]      server.run()
+2026-06-05T06:36:19.074319539Z [err]  FATAL: Missing required environment variables for production: DATABASE_URL
+2026-06-05T06:36:19.074324139Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 65, in run
+2026-06-05T06:36:19.074327479Z [err]  Traceback (most recent call last):
+2026-06-05T06:36:19.074332089Z [err]    File "/usr/local/bin/uvicorn", line 8, in <module>
+2026-06-05T06:36:19.074336539Z [err]      sys.exit(main())
+2026-06-05T06:36:19.074340549Z [err]               ^^^^^^
+2026-06-05T06:36:19.074345609Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1524, in __call__
+2026-06-05T06:36:19.074349788Z [err]      return self.main(*args, **kwargs)
+2026-06-05T06:36:19.074353838Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.074357708Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1445, in main
+2026-06-05T06:36:19.074362158Z [err]      rv = self.invoke(ctx)
+2026-06-05T06:36:19.074366548Z [err]           ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.074370748Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1308, in invoke
+2026-06-05T06:36:19.074374238Z [err]      return ctx.invoke(self.callback, **ctx.params)
+2026-06-05T06:36:19.074379008Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.074382588Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 877, in invoke
+2026-06-05T06:36:19.074386238Z [err]      return callback(*args, **kwargs)
+2026-06-05T06:36:19.074390708Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.074394738Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 412, in main
+2026-06-05T06:36:19.074398498Z [err]      run(
+2026-06-05T06:36:19.074684673Z [err]      return _bootstrap._gcd_import(name[level:], package, level)
+2026-06-05T06:36:19.074689393Z [err]      return asyncio.run(self.serve(sockets=sockets))
+2026-06-05T06:36:19.074694603Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.074698083Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+2026-06-05T06:36:19.074702473Z [err]      return runner.run(main)
+2026-06-05T06:36:19.074705853Z [err]             ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.074709173Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+2026-06-05T06:36:19.074712603Z [err]      return self._loop.run_until_complete(task)
+2026-06-05T06:36:19.074715523Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.074718643Z [err]    File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-06-05T06:36:19.074721583Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 69, in serve
+2026-06-05T06:36:19.074724883Z [err]      await self._serve(sockets)
+2026-06-05T06:36:19.074728203Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 76, in _serve
+2026-06-05T06:36:19.074731633Z [err]      config.load()
+2026-06-05T06:36:19.074734833Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/config.py", line 434, in load
+2026-06-05T06:36:19.074737702Z [err]      self.loaded_app = import_from_string(self.app)
+2026-06-05T06:36:19.074740452Z [err]                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.074743262Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+2026-06-05T06:36:19.074746652Z [err]      module = importlib.import_module(module_str)
+2026-06-05T06:36:19.074749952Z [err]               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.074753462Z [err]    File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-06-05T06:36:19.075786524Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.075793034Z [err]    File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-06-05T06:36:19.075797504Z [err]    File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-06-05T06:36:19.075801704Z [err]    File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-06-05T06:36:19.075806574Z [err]    File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-06-05T06:36:19.075810384Z [err]    File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-06-05T06:36:19.075814894Z [err]    File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-06-05T06:36:19.075819934Z [err]    File "/app/app/main.py", line 14, in <module>
+2026-06-05T06:36:19.075825214Z [err]      from .core.config import settings
+2026-06-05T06:36:19.075831254Z [err]    File "/app/app/core/config.py", line 102, in <module>
+2026-06-05T06:36:19.075836064Z [err]      settings = Settings()
+2026-06-05T06:36:19.075840494Z [err]                 ^^^^^^^^^^
+2026-06-05T06:36:19.075844803Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic_settings/main.py", line 171, in __init__
+2026-06-05T06:36:19.075849753Z [err]      super().__init__(
+2026-06-05T06:36:19.075854553Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 214, in __init__
+2026-06-05T06:36:19.075858963Z [err]      validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-06-05T06:36:19.075863433Z [err]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.075867903Z [err]  pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+2026-06-05T06:36:19.075874873Z [err]    Value error, Missing required env vars: DATABASE_URL [type=value_error, input_value={'ENVIRONMENT': 'producti...us-projects.vercel.app'}, input_type=dict]
+2026-06-05T06:36:19.076722088Z [err]      server.run()
+2026-06-05T06:36:19.076728427Z [err]      For further information visit https://errors.pydantic.dev/2.10/v/value_error
+2026-06-05T06:36:19.076733537Z [err]  FATAL: Missing required environment variables for production: DATABASE_URL
+2026-06-05T06:36:19.076737137Z [err]  Traceback (most recent call last):
+2026-06-05T06:36:19.076740627Z [err]    File "/usr/local/bin/uvicorn", line 8, in <module>
+2026-06-05T06:36:19.076743927Z [err]      sys.exit(main())
+2026-06-05T06:36:19.076746567Z [err]               ^^^^^^
+2026-06-05T06:36:19.076749577Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1524, in __call__
+2026-06-05T06:36:19.076752497Z [err]      return self.main(*args, **kwargs)
+2026-06-05T06:36:19.076755737Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.076758937Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1445, in main
+2026-06-05T06:36:19.076762027Z [err]      rv = self.invoke(ctx)
+2026-06-05T06:36:19.076764947Z [err]           ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.076767887Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1308, in invoke
+2026-06-05T06:36:19.076770597Z [err]      return ctx.invoke(self.callback, **ctx.params)
+2026-06-05T06:36:19.076773477Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.076776387Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 877, in invoke
+2026-06-05T06:36:19.076779367Z [err]      return callback(*args, **kwargs)
+2026-06-05T06:36:19.076782016Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.076785526Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 412, in main
+2026-06-05T06:36:19.076788306Z [err]      run(
+2026-06-05T06:36:19.076791056Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 579, in run
+2026-06-05T06:36:19.076888275Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 65, in run
+2026-06-05T06:36:19.076902924Z [err]      return asyncio.run(self.serve(sockets=sockets))
+2026-06-05T06:36:19.076906934Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.076916544Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+2026-06-05T06:36:19.076920514Z [err]      return runner.run(main)
+2026-06-05T06:36:19.076924894Z [err]             ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.076928754Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+2026-06-05T06:36:19.076981683Z [err]    File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-06-05T06:36:19.076984653Z [err]      return self._loop.run_until_complete(task)
+2026-06-05T06:36:19.076991043Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.076995383Z [err]    File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-06-05T06:36:19.076999993Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 69, in serve
+2026-06-05T06:36:19.077004842Z [err]      await self._serve(sockets)
+2026-06-05T06:36:19.077009352Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 76, in _serve
+2026-06-05T06:36:19.077021212Z [err]      config.load()
+2026-06-05T06:36:19.077026082Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/config.py", line 434, in load
+2026-06-05T06:36:19.077030352Z [err]      self.loaded_app = import_from_string(self.app)
+2026-06-05T06:36:19.077034482Z [err]                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.077038303Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+2026-06-05T06:36:19.077042403Z [err]      module = importlib.import_module(module_str)
+2026-06-05T06:36:19.077047933Z [err]               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.077446925Z [err]      return _bootstrap._gcd_import(name[level:], package, level)
+2026-06-05T06:36:19.077454405Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.077461375Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 214, in __init__
+2026-06-05T06:36:19.077463295Z [err]    File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-06-05T06:36:19.077463855Z [err]      from .core.config import settings
+2026-06-05T06:36:19.077470965Z [err]      validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-06-05T06:36:19.077473065Z [err]    File "/app/app/core/config.py", line 102, in <module>
+2026-06-05T06:36:19.077473995Z [err]    File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-06-05T06:36:19.077481945Z [err]      settings = Settings()
+2026-06-05T06:36:19.077482845Z [err]    File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-06-05T06:36:19.077488805Z [err]                 ^^^^^^^^^^
+2026-06-05T06:36:19.077491025Z [err]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.077491325Z [err]    File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-06-05T06:36:19.077497814Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic_settings/main.py", line 171, in __init__
+2026-06-05T06:36:19.077500424Z [err]  pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+2026-06-05T06:36:19.077501334Z [err]    File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-06-05T06:36:19.077505864Z [err]      super().__init__(
+2026-06-05T06:36:19.077509064Z [err]    File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-06-05T06:36:19.077513944Z [err]    File "/app/app/main.py", line 14, in <module>
+2026-06-05T06:36:19.077881248Z [err]    Value error, Missing required env vars: DATABASE_URL [type=value_error, input_value={'ENVIRONMENT': 'producti...us-projects.vercel.app'}, input_type=dict]
+2026-06-05T06:36:19.077886617Z [err]      For further information visit https://errors.pydantic.dev/2.10/v/value_error
+2026-06-05T06:36:19.077890747Z [err]  FATAL: Missing required environment variables for production: DATABASE_URL
+2026-06-05T06:36:19.077895037Z [err]  Traceback (most recent call last):
+2026-06-05T06:36:19.077899187Z [err]    File "/usr/local/bin/uvicorn", line 8, in <module>
+2026-06-05T06:36:19.077902937Z [err]      sys.exit(main())
+2026-06-05T06:36:19.077906547Z [err]               ^^^^^^
+2026-06-05T06:36:19.077910357Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1524, in __call__
+2026-06-05T06:36:19.077914707Z [err]      return self.main(*args, **kwargs)
+2026-06-05T06:36:19.077918397Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.077922007Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1445, in main
+2026-06-05T06:36:19.077925917Z [err]      rv = self.invoke(ctx)
+2026-06-05T06:36:19.077929387Z [err]           ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.077933087Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1308, in invoke
+2026-06-05T06:36:19.077937297Z [err]      return ctx.invoke(self.callback, **ctx.params)
+2026-06-05T06:36:19.077941376Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.077945266Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 877, in invoke
+2026-06-05T06:36:19.077949356Z [err]      return callback(*args, **kwargs)
+2026-06-05T06:36:19.077954076Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.077957786Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 412, in main
+2026-06-05T06:36:19.079050447Z [err]      run(
+2026-06-05T06:36:19.079055817Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 579, in run
+2026-06-05T06:36:19.079059837Z [err]      server.run()
+2026-06-05T06:36:19.079063257Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 65, in run
+2026-06-05T06:36:19.079067287Z [err]      return asyncio.run(self.serve(sockets=sockets))
+2026-06-05T06:36:19.079071597Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.079076217Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+2026-06-05T06:36:19.079082097Z [err]      return runner.run(main)
+2026-06-05T06:36:19.079085777Z [err]             ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.079090857Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+2026-06-05T06:36:19.079094847Z [err]      return self._loop.run_until_complete(task)
+2026-06-05T06:36:19.079098457Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.079102856Z [err]    File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-06-05T06:36:19.079106626Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 69, in serve
+2026-06-05T06:36:19.079110356Z [err]      await self._serve(sockets)
+2026-06-05T06:36:19.079113806Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 76, in _serve
+2026-06-05T06:36:19.079117596Z [err]      config.load()
+2026-06-05T06:36:19.079121186Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/config.py", line 434, in load
+2026-06-05T06:36:19.079124576Z [err]      self.loaded_app = import_from_string(self.app)
+2026-06-05T06:36:19.079127986Z [err]                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.079131216Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+2026-06-05T06:36:19.079451700Z [err]      validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-06-05T06:36:19.079462990Z [err]      module = importlib.import_module(module_str)
+2026-06-05T06:36:19.079468740Z [err]               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.079475870Z [err]    File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-06-05T06:36:19.079479920Z [err]      return _bootstrap._gcd_import(name[level:], package, level)
+2026-06-05T06:36:19.079485050Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.079501209Z [err]    File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-06-05T06:36:19.079504989Z [err]    File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-06-05T06:36:19.079516739Z [err]    File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-06-05T06:36:19.079520529Z [err]    File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-06-05T06:36:19.079524929Z [err]    File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-06-05T06:36:19.079537179Z [err]    File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-06-05T06:36:19.079541529Z [err]    File "/app/app/main.py", line 14, in <module>
+2026-06-05T06:36:19.079546918Z [err]      from .core.config import settings
+2026-06-05T06:36:19.079550608Z [err]    File "/app/app/core/config.py", line 102, in <module>
+2026-06-05T06:36:19.079594808Z [err]      settings = Settings()
+2026-06-05T06:36:19.079598907Z [err]                 ^^^^^^^^^^
+2026-06-05T06:36:19.079602557Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic_settings/main.py", line 171, in __init__
+2026-06-05T06:36:19.079606787Z [err]      super().__init__(
+2026-06-05T06:36:19.079611137Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 214, in __init__
+2026-06-05T06:36:19.079711256Z [err]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.079715236Z [err]  pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+2026-06-05T06:36:19.079718916Z [err]    Value error, Missing required env vars: DATABASE_URL [type=value_error, input_value={'ENVIRONMENT': 'producti...us-projects.vercel.app'}, input_type=dict]
+2026-06-05T06:36:19.079723056Z [err]      For further information visit https://errors.pydantic.dev/2.10/v/value_error
+2026-06-05T06:36:19.886339733Z [err]  FATAL: Missing required environment variables for production: DATABASE_URL
+2026-06-05T06:36:19.886346022Z [err]  Traceback (most recent call last):
+2026-06-05T06:36:19.886350842Z [err]    File "/usr/local/bin/uvicorn", line 8, in <module>
+2026-06-05T06:36:19.886355482Z [err]      sys.exit(main())
+2026-06-05T06:36:19.886359932Z [err]               ^^^^^^
+2026-06-05T06:36:19.886364782Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1524, in __call__
+2026-06-05T06:36:19.886368702Z [err]      return self.main(*args, **kwargs)
+2026-06-05T06:36:19.886372562Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.886377522Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1445, in main
+2026-06-05T06:36:19.886381782Z [err]      rv = self.invoke(ctx)
+2026-06-05T06:36:19.886385412Z [err]           ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.886389422Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1308, in invoke
+2026-06-05T06:36:19.886393082Z [err]      return ctx.invoke(self.callback, **ctx.params)
+2026-06-05T06:36:19.886396902Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.886401721Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 877, in invoke
+2026-06-05T06:36:19.887314346Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 76, in _serve
+2026-06-05T06:36:19.887319686Z [err]      return callback(*args, **kwargs)
+2026-06-05T06:36:19.887321596Z [err]      config.load()
+2026-06-05T06:36:19.887326646Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/config.py", line 434, in load
+2026-06-05T06:36:19.887327136Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.887333296Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 412, in main
+2026-06-05T06:36:19.887338056Z [err]      run(
+2026-06-05T06:36:19.887342195Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 579, in run
+2026-06-05T06:36:19.887346455Z [err]      server.run()
+2026-06-05T06:36:19.887350345Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 65, in run
+2026-06-05T06:36:19.887354095Z [err]      return asyncio.run(self.serve(sockets=sockets))
+2026-06-05T06:36:19.887358365Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.887363365Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+2026-06-05T06:36:19.887368065Z [err]      return runner.run(main)
+2026-06-05T06:36:19.887371965Z [err]             ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.887375785Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+2026-06-05T06:36:19.887379115Z [err]      return self._loop.run_until_complete(task)
+2026-06-05T06:36:19.887382685Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.887386425Z [err]    File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-06-05T06:36:19.887389865Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 69, in serve
+2026-06-05T06:36:19.887393285Z [err]      await self._serve(sockets)
+2026-06-05T06:36:19.887877096Z [err]      self.loaded_app = import_from_string(self.app)
+2026-06-05T06:36:19.887884636Z [err]      settings = Settings()
+2026-06-05T06:36:19.887885186Z [err]                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.887892756Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+2026-06-05T06:36:19.887893036Z [err]                 ^^^^^^^^^^
+2026-06-05T06:36:19.887900135Z [err]      module = importlib.import_module(module_str)
+2026-06-05T06:36:19.887900285Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic_settings/main.py", line 171, in __init__
+2026-06-05T06:36:19.887906175Z [err]               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.887911295Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.887912915Z [err]      from .core.config import settings
+2026-06-05T06:36:19.887913705Z [err]    File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-06-05T06:36:19.887918335Z [err]    File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-06-05T06:36:19.887920875Z [err]      return _bootstrap._gcd_import(name[level:], package, level)
+2026-06-05T06:36:19.887920945Z [err]    File "/app/app/core/config.py", line 102, in <module>
+2026-06-05T06:36:19.887942775Z [err]    File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-06-05T06:36:19.887955254Z [err]    File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-06-05T06:36:19.887965174Z [err]    File "/app/app/main.py", line 14, in <module>
+2026-06-05T06:36:19.887990854Z [err]    File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-06-05T06:36:19.888005014Z [err]    File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-06-05T06:36:19.888011553Z [err]    File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-06-05T06:36:19.888258979Z [err]      super().__init__(
+2026-06-05T06:36:19.888265299Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 214, in __init__
+2026-06-05T06:36:19.888270219Z [err]      validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-06-05T06:36:19.888275769Z [err]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:19.888280519Z [err]  pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+2026-06-05T06:36:19.888285189Z [err]    Value error, Missing required env vars: DATABASE_URL [type=value_error, input_value={'ENVIRONMENT': 'producti...us-projects.vercel.app'}, input_type=dict]
+2026-06-05T06:36:19.888289308Z [err]      For further information visit https://errors.pydantic.dev/2.10/v/value_error
+2026-06-05T06:36:20.766555386Z [err]  FATAL: Missing required environment variables for production: DATABASE_URL
+2026-06-05T06:36:20.766559906Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 65, in run
+2026-06-05T06:36:20.766563436Z [err]  Traceback (most recent call last):
+2026-06-05T06:36:20.766567566Z [err]    File "/usr/local/bin/uvicorn", line 8, in <module>
+2026-06-05T06:36:20.766573316Z [err]      sys.exit(main())
+2026-06-05T06:36:20.766574146Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:20.766580286Z [err]               ^^^^^^
+2026-06-05T06:36:20.766582466Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 412, in main
+2026-06-05T06:36:20.766583176Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 877, in invoke
+2026-06-05T06:36:20.766587756Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1524, in __call__
+2026-06-05T06:36:20.766594396Z [err]      return callback(*args, **kwargs)
+2026-06-05T06:36:20.766594526Z [err]      run(
+2026-06-05T06:36:20.766594636Z [err]      return self.main(*args, **kwargs)
+2026-06-05T06:36:20.766604065Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:20.766606285Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:20.766607175Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 579, in run
+2026-06-05T06:36:20.766614125Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1445, in main
+2026-06-05T06:36:20.766614285Z [err]      server.run()
+2026-06-05T06:36:20.766618835Z [err]      rv = self.invoke(ctx)
+2026-06-05T06:36:20.766622565Z [err]           ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:20.766626145Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1308, in invoke
+2026-06-05T06:36:20.766629555Z [err]      return ctx.invoke(self.callback, **ctx.params)
+2026-06-05T06:36:20.767187645Z [err]      return asyncio.run(self.serve(sockets=sockets))
+2026-06-05T06:36:20.767190335Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:20.767193485Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+2026-06-05T06:36:20.767195905Z [err]      return runner.run(main)
+2026-06-05T06:36:20.767198315Z [err]             ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:20.767200915Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+2026-06-05T06:36:20.767203595Z [err]      return self._loop.run_until_complete(task)
+2026-06-05T06:36:20.767206594Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:20.767210204Z [err]    File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-06-05T06:36:20.767213384Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 69, in serve
+2026-06-05T06:36:20.767216064Z [err]      await self._serve(sockets)
+2026-06-05T06:36:20.767218664Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 76, in _serve
+2026-06-05T06:36:20.767221064Z [err]      config.load()
+2026-06-05T06:36:20.767223685Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/config.py", line 434, in load
+2026-06-05T06:36:20.767226385Z [err]      self.loaded_app = import_from_string(self.app)
+2026-06-05T06:36:20.767229195Z [err]                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:20.767232675Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+2026-06-05T06:36:20.767236595Z [err]      module = importlib.import_module(module_str)
+2026-06-05T06:36:20.767239755Z [err]               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:20.767242435Z [err]    File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-06-05T06:36:20.767245355Z [err]      return _bootstrap._gcd_import(name[level:], package, level)
+2026-06-05T06:36:20.767997361Z [err]    Value error, Missing required env vars: DATABASE_URL [type=value_error, input_value={'ENVIRONMENT': 'producti...us-projects.vercel.app'}, input_type=dict]
+2026-06-05T06:36:20.768005311Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:20.768010211Z [err]    File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-06-05T06:36:20.768012851Z [err]      super().__init__(
+2026-06-05T06:36:20.768016551Z [err]    File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-06-05T06:36:20.768020511Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 214, in __init__
+2026-06-05T06:36:20.768022971Z [err]    File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-06-05T06:36:20.768027151Z [err]      validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-06-05T06:36:20.768030651Z [err]    File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-06-05T06:36:20.768036321Z [err]    File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-06-05T06:36:20.768036461Z [err]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:20.768043740Z [err]    File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-06-05T06:36:20.768044610Z [err]  pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+2026-06-05T06:36:20.768048710Z [err]    File "/app/app/main.py", line 14, in <module>
+2026-06-05T06:36:20.768052230Z [err]      from .core.config import settings
+2026-06-05T06:36:20.768056440Z [err]    File "/app/app/core/config.py", line 102, in <module>
+2026-06-05T06:36:20.768060170Z [err]      settings = Settings()
+2026-06-05T06:36:20.768063770Z [err]                 ^^^^^^^^^^
+2026-06-05T06:36:20.768067530Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic_settings/main.py", line 171, in __init__
+2026-06-05T06:36:20.768297116Z [err]      For further information visit https://errors.pydantic.dev/2.10/v/value_error
+2026-06-05T06:36:21.757972647Z [err]  FATAL: Missing required environment variables for production: DATABASE_URL
+2026-06-05T06:36:21.757978397Z [err]  Traceback (most recent call last):
+2026-06-05T06:36:21.757982787Z [err]    File "/usr/local/bin/uvicorn", line 8, in <module>
+2026-06-05T06:36:21.757987087Z [err]      sys.exit(main())
+2026-06-05T06:36:21.757991537Z [err]               ^^^^^^
+2026-06-05T06:36:21.757995377Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1524, in __call__
+2026-06-05T06:36:21.758000806Z [err]      return self.main(*args, **kwargs)
+2026-06-05T06:36:21.758004976Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:21.758011176Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1445, in main
+2026-06-05T06:36:21.758015226Z [err]      rv = self.invoke(ctx)
+2026-06-05T06:36:21.758019486Z [err]           ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:21.758024396Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1308, in invoke
+2026-06-05T06:36:21.759481441Z [err]      return ctx.invoke(self.callback, **ctx.params)
+2026-06-05T06:36:21.759486021Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:21.759489111Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 877, in invoke
+2026-06-05T06:36:21.759491621Z [err]      return callback(*args, **kwargs)
+2026-06-05T06:36:21.759493970Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:21.759496290Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 412, in main
+2026-06-05T06:36:21.759498390Z [err]      run(
+2026-06-05T06:36:21.759500670Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 579, in run
+2026-06-05T06:36:21.759504320Z [err]      server.run()
+2026-06-05T06:36:21.759506750Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 65, in run
+2026-06-05T06:36:21.759509120Z [err]      return asyncio.run(self.serve(sockets=sockets))
+2026-06-05T06:36:21.759511980Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:21.759514580Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+2026-06-05T06:36:21.759517100Z [err]      return runner.run(main)
+2026-06-05T06:36:21.759519850Z [err]             ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:21.759522760Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+2026-06-05T06:36:21.759525230Z [err]      return self._loop.run_until_complete(task)
+2026-06-05T06:36:21.759528210Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:21.759530740Z [err]    File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-06-05T06:36:21.759533410Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 69, in serve
+2026-06-05T06:36:21.759586989Z [err]      await self._serve(sockets)
+2026-06-05T06:36:21.760513282Z [err]    File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-06-05T06:36:21.760520312Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 76, in _serve
+2026-06-05T06:36:21.760521762Z [err]    File "/app/app/main.py", line 14, in <module>
+2026-06-05T06:36:21.760529622Z [err]      config.load()
+2026-06-05T06:36:21.760529872Z [err]      from .core.config import settings
+2026-06-05T06:36:21.760535373Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/config.py", line 434, in load
+2026-06-05T06:36:21.760539263Z [err]      self.loaded_app = import_from_string(self.app)
+2026-06-05T06:36:21.760542862Z [err]                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:21.760549712Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+2026-06-05T06:36:21.760553292Z [err]      module = importlib.import_module(module_str)
+2026-06-05T06:36:21.760558322Z [err]               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:21.760562192Z [err]    File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-06-05T06:36:21.760566252Z [err]      return _bootstrap._gcd_import(name[level:], package, level)
+2026-06-05T06:36:21.760570062Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:21.760573862Z [err]    File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-06-05T06:36:21.760577772Z [err]    File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-06-05T06:36:21.760581142Z [err]    File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-06-05T06:36:21.760584452Z [err]    File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-06-05T06:36:21.760588012Z [err]    File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-06-05T06:36:21.761578444Z [err]    File "/app/app/core/config.py", line 102, in <module>
+2026-06-05T06:36:21.761582744Z [err]      settings = Settings()
+2026-06-05T06:36:21.761587854Z [err]                 ^^^^^^^^^^
+2026-06-05T06:36:21.761591703Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic_settings/main.py", line 171, in __init__
+2026-06-05T06:36:21.761595433Z [err]      super().__init__(
+2026-06-05T06:36:21.761598903Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 214, in __init__
+2026-06-05T06:36:21.761602223Z [err]      validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-06-05T06:36:21.761606213Z [err]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:21.761610123Z [err]  pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+2026-06-05T06:36:21.761614353Z [err]    Value error, Missing required env vars: DATABASE_URL [type=value_error, input_value={'ENVIRONMENT': 'producti...us-projects.vercel.app'}, input_type=dict]
+2026-06-05T06:36:21.761618343Z [err]      For further information visit https://errors.pydantic.dev/2.10/v/value_error
+2026-06-05T06:36:22.609472236Z [err]  FATAL: Missing required environment variables for production: DATABASE_URL
+2026-06-05T06:36:22.609478536Z [err]  Traceback (most recent call last):
+2026-06-05T06:36:22.609482206Z [err]    File "/usr/local/bin/uvicorn", line 8, in <module>
+2026-06-05T06:36:22.609485116Z [err]      sys.exit(main())
+2026-06-05T06:36:22.609487916Z [err]               ^^^^^^
+2026-06-05T06:36:22.609490706Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1524, in __call__
+2026-06-05T06:36:22.610779634Z [err]      return runner.run(main)
+2026-06-05T06:36:22.610782944Z [err]             ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:22.610787214Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+2026-06-05T06:36:22.610790554Z [err]      return self.main(*args, **kwargs)
+2026-06-05T06:36:22.610796464Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:22.610800774Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1445, in main
+2026-06-05T06:36:22.610804833Z [err]      rv = self.invoke(ctx)
+2026-06-05T06:36:22.610809003Z [err]           ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:22.610812773Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1308, in invoke
+2026-06-05T06:36:22.610817213Z [err]      return ctx.invoke(self.callback, **ctx.params)
+2026-06-05T06:36:22.610820683Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:22.610824233Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 877, in invoke
+2026-06-05T06:36:22.610828014Z [err]      return callback(*args, **kwargs)
+2026-06-05T06:36:22.610831854Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:22.610835324Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 412, in main
+2026-06-05T06:36:22.610839214Z [err]      run(
+2026-06-05T06:36:22.610842834Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 579, in run
+2026-06-05T06:36:22.610846554Z [err]      server.run()
+2026-06-05T06:36:22.610852324Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 65, in run
+2026-06-05T06:36:22.610855794Z [err]      return asyncio.run(self.serve(sockets=sockets))
+2026-06-05T06:36:22.610859163Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:22.610862803Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+2026-06-05T06:36:22.611183768Z [err]    File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-06-05T06:36:22.611188137Z [err]    File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-06-05T06:36:22.611192157Z [err]    File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-06-05T06:36:22.611209457Z [err]      return self._loop.run_until_complete(task)
+2026-06-05T06:36:22.611219077Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:22.611224437Z [err]    File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-06-05T06:36:22.611232427Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 69, in serve
+2026-06-05T06:36:22.611237317Z [err]      await self._serve(sockets)
+2026-06-05T06:36:22.611241457Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 76, in _serve
+2026-06-05T06:36:22.611247126Z [err]      config.load()
+2026-06-05T06:36:22.611251356Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/config.py", line 434, in load
+2026-06-05T06:36:22.611255456Z [err]      self.loaded_app = import_from_string(self.app)
+2026-06-05T06:36:22.611259986Z [err]                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:22.611265436Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+2026-06-05T06:36:22.611269956Z [err]      module = importlib.import_module(module_str)
+2026-06-05T06:36:22.611275146Z [err]               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:22.611291696Z [err]    File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-06-05T06:36:22.611296996Z [err]      return _bootstrap._gcd_import(name[level:], package, level)
+2026-06-05T06:36:22.611301945Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:22.611306755Z [err]    File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-06-05T06:36:22.611645999Z [err]    File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-06-05T06:36:22.611649039Z [err]    File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-06-05T06:36:22.611651909Z [err]    File "/app/app/main.py", line 14, in <module>
+2026-06-05T06:36:22.611654709Z [err]      from .core.config import settings
+2026-06-05T06:36:22.611657189Z [err]    File "/app/app/core/config.py", line 102, in <module>
+2026-06-05T06:36:22.611659889Z [err]      settings = Settings()
+2026-06-05T06:36:22.611662519Z [err]                 ^^^^^^^^^^
+2026-06-05T06:36:22.611665419Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic_settings/main.py", line 171, in __init__
+2026-06-05T06:36:22.611667759Z [err]      super().__init__(
+2026-06-05T06:36:22.611670389Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 214, in __init__
+2026-06-05T06:36:22.611673049Z [err]      validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-06-05T06:36:22.611676349Z [err]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:22.611679409Z [err]  pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+2026-06-05T06:36:22.611682269Z [err]    Value error, Missing required env vars: DATABASE_URL [type=value_error, input_value={'ENVIRONMENT': 'producti...us-projects.vercel.app'}, input_type=dict]
+2026-06-05T06:36:22.611684838Z [err]      For further information visit https://errors.pydantic.dev/2.10/v/value_error
+2026-06-05T06:36:23.531928690Z [err]  FATAL: Missing required environment variables for production: DATABASE_URL
+2026-06-05T06:36:23.531936350Z [err]  Traceback (most recent call last):
+2026-06-05T06:36:23.531942000Z [err]    File "/usr/local/bin/uvicorn", line 8, in <module>
+2026-06-05T06:36:23.531947040Z [err]      sys.exit(main())
+2026-06-05T06:36:23.531951220Z [err]               ^^^^^^
+2026-06-05T06:36:23.531955150Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1524, in __call__
+2026-06-05T06:36:23.531959290Z [err]      return self.main(*args, **kwargs)
+2026-06-05T06:36:23.531963050Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:23.531967149Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1445, in main
+2026-06-05T06:36:23.531971549Z [err]      rv = self.invoke(ctx)
+2026-06-05T06:36:23.531976209Z [err]           ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:23.531979519Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1308, in invoke
+2026-06-05T06:36:23.531983249Z [err]      return ctx.invoke(self.callback, **ctx.params)
+2026-06-05T06:36:23.531987149Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:23.531990809Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 877, in invoke
+2026-06-05T06:36:23.531994439Z [err]      return callback(*args, **kwargs)
+2026-06-05T06:36:23.531998219Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:23.532002139Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 412, in main
+2026-06-05T06:36:23.532006929Z [err]      run(
+2026-06-05T06:36:23.532010459Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 579, in run
+2026-06-05T06:36:23.532013829Z [err]      server.run()
+2026-06-05T06:36:23.532016879Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 65, in run
+2026-06-05T06:36:23.532517390Z [err]               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:23.532527029Z [err]      return asyncio.run(self.serve(sockets=sockets))
+2026-06-05T06:36:23.532527489Z [err]    File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-06-05T06:36:23.532535099Z [err]      return _bootstrap._gcd_import(name[level:], package, level)
+2026-06-05T06:36:23.532540119Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:23.532544829Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+2026-06-05T06:36:23.532549729Z [err]      return runner.run(main)
+2026-06-05T06:36:23.532555719Z [err]             ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:23.532561229Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+2026-06-05T06:36:23.532566299Z [err]      return self._loop.run_until_complete(task)
+2026-06-05T06:36:23.532571129Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:23.532576098Z [err]    File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-06-05T06:36:23.532581058Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 69, in serve
+2026-06-05T06:36:23.532585858Z [err]      await self._serve(sockets)
+2026-06-05T06:36:23.532590228Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 76, in _serve
+2026-06-05T06:36:23.532594638Z [err]      config.load()
+2026-06-05T06:36:23.532598458Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/config.py", line 434, in load
+2026-06-05T06:36:23.532602508Z [err]      self.loaded_app = import_from_string(self.app)
+2026-06-05T06:36:23.532606828Z [err]                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:23.532611158Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+2026-06-05T06:36:23.532615078Z [err]      module = importlib.import_module(module_str)
+2026-06-05T06:36:23.532987922Z [err]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:23.532995862Z [err]  pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+2026-06-05T06:36:23.533001152Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:23.533002202Z [err]    Value error, Missing required env vars: DATABASE_URL [type=value_error, input_value={'ENVIRONMENT': 'producti...us-projects.vercel.app'}, input_type=dict]
+2026-06-05T06:36:23.533020571Z [err]    File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-06-05T06:36:23.533026281Z [err]    File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-06-05T06:36:23.533031501Z [err]    File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-06-05T06:36:23.533037691Z [err]    File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-06-05T06:36:23.533041631Z [err]    File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-06-05T06:36:23.533045841Z [err]    File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-06-05T06:36:23.533049721Z [err]    File "/app/app/main.py", line 14, in <module>
+2026-06-05T06:36:23.533054131Z [err]      from .core.config import settings
+2026-06-05T06:36:23.533058081Z [err]    File "/app/app/core/config.py", line 102, in <module>
+2026-06-05T06:36:23.533061741Z [err]      settings = Settings()
+2026-06-05T06:36:23.533065471Z [err]                 ^^^^^^^^^^
+2026-06-05T06:36:23.533069911Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic_settings/main.py", line 171, in __init__
+2026-06-05T06:36:23.533074140Z [err]      super().__init__(
+2026-06-05T06:36:23.533078350Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 214, in __init__
+2026-06-05T06:36:23.533082130Z [err]      validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-06-05T06:36:23.533211288Z [err]      For further information visit https://errors.pydantic.dev/2.10/v/value_error
+2026-06-05T06:36:24.451985515Z [err]  FATAL: Missing required environment variables for production: DATABASE_URL
+2026-06-05T06:36:24.451989225Z [err]      return ctx.invoke(self.callback, **ctx.params)
+2026-06-05T06:36:24.451992095Z [err]  Traceback (most recent call last):
+2026-06-05T06:36:24.451996095Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:24.451996255Z [err]    File "/usr/local/bin/uvicorn", line 8, in <module>
+2026-06-05T06:36:24.451999875Z [err]      sys.exit(main())
+2026-06-05T06:36:24.452000875Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 877, in invoke
+2026-06-05T06:36:24.452003785Z [err]               ^^^^^^
+2026-06-05T06:36:24.452004285Z [err]      return callback(*args, **kwargs)
+2026-06-05T06:36:24.452006785Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1524, in __call__
+2026-06-05T06:36:24.452007735Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:24.452010114Z [err]      return self.main(*args, **kwargs)
+2026-06-05T06:36:24.452011144Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 412, in main
+2026-06-05T06:36:24.452013444Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:24.452014044Z [err]      run(
+2026-06-05T06:36:24.452016304Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1445, in main
+2026-06-05T06:36:24.452018094Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 579, in run
+2026-06-05T06:36:24.452019274Z [err]      rv = self.invoke(ctx)
+2026-06-05T06:36:24.452021344Z [err]      server.run()
+2026-06-05T06:36:24.452022124Z [err]           ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:24.452024984Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 65, in run
+2026-06-05T06:36:24.452025384Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1308, in invoke
+2026-06-05T06:36:24.453212434Z [err]      return asyncio.run(self.serve(sockets=sockets))
+2026-06-05T06:36:24.453217724Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:24.453221634Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+2026-06-05T06:36:24.453225504Z [err]      return runner.run(main)
+2026-06-05T06:36:24.453229014Z [err]             ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:24.453233013Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+2026-06-05T06:36:24.453237083Z [err]      return self._loop.run_until_complete(task)
+2026-06-05T06:36:24.453240673Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:24.453244463Z [err]    File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-06-05T06:36:24.453248633Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 69, in serve
+2026-06-05T06:36:24.453252943Z [err]      await self._serve(sockets)
+2026-06-05T06:36:24.453256383Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 76, in _serve
+2026-06-05T06:36:24.453260043Z [err]      config.load()
+2026-06-05T06:36:24.453263643Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/config.py", line 434, in load
+2026-06-05T06:36:24.453267573Z [err]      self.loaded_app = import_from_string(self.app)
+2026-06-05T06:36:24.453270923Z [err]                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:24.453275223Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+2026-06-05T06:36:24.453278863Z [err]      module = importlib.import_module(module_str)
+2026-06-05T06:36:24.453282613Z [err]               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:24.453286543Z [err]    File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-06-05T06:36:24.453290582Z [err]      return _bootstrap._gcd_import(name[level:], package, level)
+2026-06-05T06:36:24.453771934Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 214, in __init__
+2026-06-05T06:36:24.453774084Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:24.453776794Z [err]      validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-06-05T06:36:24.453779114Z [err]    File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-06-05T06:36:24.453782114Z [err]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:24.453783204Z [err]    File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-06-05T06:36:24.453785974Z [err]  pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+2026-06-05T06:36:24.453787013Z [err]    File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-06-05T06:36:24.453790563Z [err]    Value error, Missing required env vars: DATABASE_URL [type=value_error, input_value={'ENVIRONMENT': 'producti...us-projects.vercel.app'}, input_type=dict]
+2026-06-05T06:36:24.453791833Z [err]    File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-06-05T06:36:24.453795413Z [err]    File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-06-05T06:36:24.453799503Z [err]    File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-06-05T06:36:24.453804063Z [err]    File "/app/app/main.py", line 14, in <module>
+2026-06-05T06:36:24.453807773Z [err]      from .core.config import settings
+2026-06-05T06:36:24.453811653Z [err]    File "/app/app/core/config.py", line 102, in <module>
+2026-06-05T06:36:24.453815793Z [err]      settings = Settings()
+2026-06-05T06:36:24.453820963Z [err]                 ^^^^^^^^^^
+2026-06-05T06:36:24.453825193Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic_settings/main.py", line 171, in __init__
+2026-06-05T06:36:24.453828713Z [err]      super().__init__(
+2026-06-05T06:36:24.454102228Z [err]      For further information visit https://errors.pydantic.dev/2.10/v/value_error
+2026-06-05T06:36:25.376844716Z [err]  FATAL: Missing required environment variables for production: DATABASE_URL
+2026-06-05T06:36:25.377518844Z [err]  Traceback (most recent call last):
+2026-06-05T06:36:25.377523794Z [err]    File "/usr/local/bin/uvicorn", line 8, in <module>
+2026-06-05T06:36:25.377528464Z [err]      sys.exit(main())
+2026-06-05T06:36:25.377532485Z [err]               ^^^^^^
+2026-06-05T06:36:25.377536165Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1524, in __call__
+2026-06-05T06:36:25.377539625Z [err]      return self.main(*args, **kwargs)
+2026-06-05T06:36:25.377543205Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:25.377546675Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1445, in main
+2026-06-05T06:36:25.378024746Z [err]             ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:25.378028666Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+2026-06-05T06:36:25.378033376Z [err]      return self._loop.run_until_complete(task)
+2026-06-05T06:36:25.378036316Z [err]      rv = self.invoke(ctx)
+2026-06-05T06:36:25.378039576Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:25.378045516Z [err]           ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:25.378045676Z [err]    File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-06-05T06:36:25.378051155Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1308, in invoke
+2026-06-05T06:36:25.378055465Z [err]      return ctx.invoke(self.callback, **ctx.params)
+2026-06-05T06:36:25.378059715Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:25.378064225Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 877, in invoke
+2026-06-05T06:36:25.378068615Z [err]      return callback(*args, **kwargs)
+2026-06-05T06:36:25.378072705Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:25.378076705Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 412, in main
+2026-06-05T06:36:25.378080355Z [err]      run(
+2026-06-05T06:36:25.378084325Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 579, in run
+2026-06-05T06:36:25.378088815Z [err]      server.run()
+2026-06-05T06:36:25.378093035Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 65, in run
+2026-06-05T06:36:25.378096805Z [err]      return asyncio.run(self.serve(sockets=sockets))
+2026-06-05T06:36:25.378100765Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:25.378104974Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+2026-06-05T06:36:25.378108744Z [err]      return runner.run(main)
+2026-06-05T06:36:25.378499887Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 69, in serve
+2026-06-05T06:36:25.378506227Z [err]      await self._serve(sockets)
+2026-06-05T06:36:25.378510747Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 76, in _serve
+2026-06-05T06:36:25.378515017Z [err]      config.load()
+2026-06-05T06:36:25.378519487Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/config.py", line 434, in load
+2026-06-05T06:36:25.378523637Z [err]      self.loaded_app = import_from_string(self.app)
+2026-06-05T06:36:25.378527437Z [err]                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:25.378531137Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+2026-06-05T06:36:25.378535557Z [err]      module = importlib.import_module(module_str)
+2026-06-05T06:36:25.378539977Z [err]               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:25.378544157Z [err]    File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-06-05T06:36:25.378548266Z [err]      return _bootstrap._gcd_import(name[level:], package, level)
+2026-06-05T06:36:25.378551766Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:25.378555476Z [err]    File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-06-05T06:36:25.378559076Z [err]    File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-06-05T06:36:25.378563126Z [err]    File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-06-05T06:36:25.378567036Z [err]    File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-06-05T06:36:25.378570876Z [err]    File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-06-05T06:36:25.378574746Z [err]    File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-06-05T06:36:25.378994699Z [err]    File "/app/app/main.py", line 14, in <module>
+2026-06-05T06:36:25.378998889Z [err]      from .core.config import settings
+2026-06-05T06:36:25.379002969Z [err]    File "/app/app/core/config.py", line 102, in <module>
+2026-06-05T06:36:25.379006649Z [err]      settings = Settings()
+2026-06-05T06:36:25.379010839Z [err]                 ^^^^^^^^^^
+2026-06-05T06:36:25.379015089Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic_settings/main.py", line 171, in __init__
+2026-06-05T06:36:25.379019209Z [err]      super().__init__(
+2026-06-05T06:36:25.379022969Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 214, in __init__
+2026-06-05T06:36:25.379027059Z [err]      validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-06-05T06:36:25.379031259Z [err]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:25.379035789Z [err]  pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+2026-06-05T06:36:25.379040049Z [err]    Value error, Missing required env vars: DATABASE_URL [type=value_error, input_value={'ENVIRONMENT': 'producti...us-projects.vercel.app'}, input_type=dict]
+2026-06-05T06:36:25.379044478Z [err]      For further information visit https://errors.pydantic.dev/2.10/v/value_error
+2026-06-05T06:36:26.320407585Z [err]  FATAL: Missing required environment variables for production: DATABASE_URL
+2026-06-05T06:36:26.320412225Z [err]  Traceback (most recent call last):
+2026-06-05T06:36:26.320417794Z [err]    File "/usr/local/bin/uvicorn", line 8, in <module>
+2026-06-05T06:36:26.320422714Z [err]      sys.exit(main())
+2026-06-05T06:36:26.320427434Z [err]               ^^^^^^
+2026-06-05T06:36:26.320431714Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1524, in __call__
+2026-06-05T06:36:26.320435394Z [err]      return self.main(*args, **kwargs)
+2026-06-05T06:36:26.320439864Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:26.320444284Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1445, in main
+2026-06-05T06:36:26.320448604Z [err]      rv = self.invoke(ctx)
+2026-06-05T06:36:26.320453234Z [err]           ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:26.320457944Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1308, in invoke
+2026-06-05T06:36:26.320965285Z [err]      return ctx.invoke(self.callback, **ctx.params)
+2026-06-05T06:36:26.320971004Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:26.320972884Z [err]      return self._loop.run_until_complete(task)
+2026-06-05T06:36:26.320974964Z [err]    File "/usr/local/lib/python3.11/site-packages/click/core.py", line 877, in invoke
+2026-06-05T06:36:26.320977964Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:26.320979064Z [err]      return callback(*args, **kwargs)
+2026-06-05T06:36:26.320982744Z [err]    File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+2026-06-05T06:36:26.320982974Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:26.320986354Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 69, in serve
+2026-06-05T06:36:26.320986864Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 412, in main
+2026-06-05T06:36:26.320990684Z [err]      run(
+2026-06-05T06:36:26.320991024Z [err]      await self._serve(sockets)
+2026-06-05T06:36:26.320996084Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 579, in run
+2026-06-05T06:36:26.321006134Z [err]      server.run()
+2026-06-05T06:36:26.321010654Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 65, in run
+2026-06-05T06:36:26.321014924Z [err]      return asyncio.run(self.serve(sockets=sockets))
+2026-06-05T06:36:26.321018784Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:26.321023084Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+2026-06-05T06:36:26.321027083Z [err]      return runner.run(main)
+2026-06-05T06:36:26.321030813Z [err]             ^^^^^^^^^^^^^^^^
+2026-06-05T06:36:26.321034893Z [err]    File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+2026-06-05T06:36:26.321317358Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 76, in _serve
+2026-06-05T06:36:26.321320468Z [err]      config.load()
+2026-06-05T06:36:26.321323028Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/config.py", line 434, in load
+2026-06-05T06:36:26.321325388Z [err]      self.loaded_app = import_from_string(self.app)
+2026-06-05T06:36:26.321327588Z [err]                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:26.321329958Z [err]    File "/usr/local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+2026-06-05T06:36:26.321332248Z [err]      module = importlib.import_module(module_str)
+2026-06-05T06:36:26.321335018Z [err]               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:26.321338118Z [err]    File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+2026-06-05T06:36:26.321341248Z [err]      return _bootstrap._gcd_import(name[level:], package, level)
+2026-06-05T06:36:26.321345108Z [err]             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:26.321347758Z [err]    File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+2026-06-05T06:36:26.321350908Z [err]    File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+2026-06-05T06:36:26.321353858Z [err]    File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+2026-06-05T06:36:26.321356978Z [err]    File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+2026-06-05T06:36:26.321359607Z [err]    File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+2026-06-05T06:36:26.321362457Z [err]    File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+2026-06-05T06:36:26.321365987Z [err]    File "/app/app/main.py", line 14, in <module>
+2026-06-05T06:36:26.321370197Z [err]      from .core.config import settings
+2026-06-05T06:36:26.321921598Z [err]    File "/app/app/core/config.py", line 102, in <module>
+2026-06-05T06:36:26.321925728Z [err]      settings = Settings()
+2026-06-05T06:36:26.321929098Z [err]                 ^^^^^^^^^^
+2026-06-05T06:36:26.321932658Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic_settings/main.py", line 171, in __init__
+2026-06-05T06:36:26.321935738Z [err]      super().__init__(
+2026-06-05T06:36:26.321939018Z [err]    File "/usr/local/lib/python3.11/site-packages/pydantic/main.py", line 214, in __init__
+2026-06-05T06:36:26.321942178Z [err]      validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+2026-06-05T06:36:26.321945358Z [err]                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05T06:36:26.321948478Z [err]  pydantic_core._pydantic_core.ValidationError: 1 validation error for Settings
+2026-06-05T06:36:26.321951608Z [err]    Value error, Missing required env vars: DATABASE_URL [type=value_error, input_value={'ENVIRONMENT': 'producti...us-projects.vercel.app'}, input_type=dict]
+2026-06-05T06:36:26.321954728Z [err]      For further information visit https://errors.pydantic.dev/2.10/v/value_error

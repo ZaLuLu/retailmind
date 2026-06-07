@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.responses import StreamingResponse
 from ..api.deps import get_current_user
 from ..models.db import User
-from ..services.gemini import gemini_service
+from ..services.llm import llm_service
 from ..core.limiter import limiter
 from pydantic import BaseModel, field_validator
 from typing import Optional
@@ -103,8 +103,10 @@ class AdvisorResponse(BaseModel):
     answer: str
 
 @router.post("/ask", response_model=AdvisorResponse)
+@limiter.limit("30/minute")
 async def ask_advisor(
-    request: AdvisorRequest,
+    request: Request,
+    advisor_req: AdvisorRequest,
     current_user: User = Depends(get_current_user)
 ):
     """
@@ -112,10 +114,15 @@ async def ask_advisor(
     Question is validated and sanitized before forwarding to Gemini.
     """
     history_dicts = None
-    if request.history:
-        limit = 4 if getattr(current_user, "is_demo", False) else 10
-        history_dicts = [m.model_dump() for m in request.history[-limit:]]
-    answer = await gemini_service.ask_advisor(request.question, request.context, history=history_dicts)
+    if advisor_req.history:
+        limit = 4 if getattr(current_user, "is_demo", False) and getattr(current_user, "plan", "free") != "enterprise" else 10
+        # Validate and sanitize each history item
+        history_dicts = []
+        for m in advisor_req.history[-limit:]:
+            sanitized_content = AdvisorRequest.validate_question(m.content)
+            history_dicts.append({"role": m.role, "content": sanitized_content})
+            
+    answer = await llm_service.ask_advisor(advisor_req.question, advisor_req.context, history=history_dicts)
     return AdvisorResponse(answer=answer)
 
 @router.post("/stream")
@@ -133,9 +140,14 @@ async def stream_advisor(
         try:
             history_dicts = None
             if advisor_req.history:
-                limit = 4 if getattr(current_user, "is_demo", False) else 10
-                history_dicts = [m.model_dump() for m in advisor_req.history[-limit:]]
-            async for chunk in gemini_service.stream_advisor(
+                limit = 4 if getattr(current_user, "is_demo", False) and getattr(current_user, "plan", "free") != "enterprise" else 10
+                # Validate and sanitize each history item
+                history_dicts = []
+                for m in advisor_req.history[-limit:]:
+                    sanitized_content = AdvisorRequest.validate_question(m.content)
+                    history_dicts.append({"role": m.role, "content": sanitized_content})
+                    
+            async for chunk in llm_service.stream_advisor(
                 advisor_req.question,
                 advisor_req.context,
                 history=history_dicts

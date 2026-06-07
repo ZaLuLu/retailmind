@@ -1,66 +1,63 @@
-# RetailMind — AI-Powered Retail Business Intelligence
+# RetailMind — AI-Powered Retail Business Intelligence Terminal
 
-RetailMind is an open-source business intelligence platform for SMB retail store owners.
-Upload your sales data, and get instant AI insights on revenue, margins, demand spikes, dead stock, and customer segments — powered by Google Gemini.
+RetailMind is an elegant, vintage-themed, high-fidelity business intelligence platform designed for SMB retail merchants and store owners. 
 
----
-
-## Features
-
-- 📊 **Intelligence Briefing** — KPI cards, revenue trends, top products
-- 🔮 **Demand Forecasting** — Holt-Winters triple exponential smoothing
-- 🧩 **Portfolio Matrix** — K-Means clustering (Stars, Cash Cows, Hidden Gems, Dead Weight)
-- 👥 **Customer Segments** — Walk-in vs Online vs B2B analytics
-- ⚠️ **Smart Alerts** — Dead stock detection, margin erosion alerts, demand spikes
-- 🤖 **Retail Advisor** — Gemini-powered AI chat for business questions
-- 📁 **CSV / XLSX Upload** — Auto-detects column headers (15+ aliases)
-- 🏬 **Multi-Store Support** — Manage and switch between multiple locations
-- 📤 **CSV Export** — Download filtered ledger data
+By utilizing advanced machine learning pipelines (Holt-Winters time-series forecasting, unsupervised K-Means clustering, and Z-Score anomalies) alongside a secure, guardrailed **Groq Llama-3 AI Retail Advisor**, RetailMind translates raw transaction records into immediate, high-fidelity financial insights, pricing simulations, and teletype briefings.
 
 ---
 
-## Tech Stack
+## Technical Masthead
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 19 + Vite 8 |
-| Backend | FastAPI + SQLAlchemy (async) |
-| Database | PostgreSQL (Neon.tech recommended) |
-| AI | Google Gemini 1.5 Flash |
-| ML | scikit-learn (K-Means), statsmodels (Holt-Winters) |
-| Auth | JWT + Refresh Token Rotation |
-
----
-
-## Demo Account
-
-A pre-seeded demo account is available with a full year of retail sales data:
-
-| | |
-|-|-|
-| **Email** | `demo@retailmind.com` |
-| **Password** | `demo123` |
-| **Store** | RetailMind Demo Store |
-| **Currency** | USD |
-
-> To re-seed from the included Excel file: `python backend/scripts/seed_demo_account.py`
+* **Frontend**: React 19 + Vite 8 (monospaced broadsheet typography, high-contrast, pure SVG charts)
+* **Backend**: FastAPI + SQLAlchemy (async PG driver)
+* **Database**: PostgreSQL (Neon.tech serverless cloud integration)
+* **AI Engine**: Groq Cloud API (Llama-3.3-70b-versatile, 30s timeouts, strict retail guardrails)
+* **ML Layer**: scikit-learn (K-Means customer & product clustering), statsmodels (14-day Holt-Winters triple exponential smoothing forecasts)
+* **Authentication**: JWT + Session Refresh Token Rotation
+* **Styling**: Vanilla CSS, layout variables, custom print sheets (teletype briefings)
 
 ---
 
-## Quick Start
+## Core Features
+
+* 📊 **Financial Telemetry Briefing** — KPI highlights tracking MTD Revenue, COGS, Gross Profit, and MoM trend percentage indices.
+* 🔮 **Demand Forecasting** — Holt-Winters triple exponential smoothing projecting a 14-day future ledger with 95% confidence intervals.
+* 🧩 **Catalog Quadrant Matrix** — Unsupervised K-Means clustering classifying inventory into **Stars**, **Cash Cows**, **Hidden Gems**, and **Dead Weight**.
+* 👥 **Customer Segment Breakdown** — Deep SQL metrics mapping contribution margins, average order values (AOV), and growth rates across **B2B**, **Online**, and **Walk-In** channels.
+* 📈 **Margin & Price Simulator** — Slide price variances from `-30%` to `+30%` to model dynamic elastic volume responses, margin shifts, and net profit differences.
+* 📰 **Teletype Telex Briefing** — View and download plain text dispatches, or print to a clean physical telegram layout via customized print-stylesheets.
+* 📋 **Operations Action Checklists** — Expand alert cards for Spikes, Dead Stock, and Margins to tick off operational action plans with local storage persistence.
+* 🤖 **Groq AI Retail Advisor** — Converse with a world-class analytics expert, fortified with smart domain-scoped guardrails that professionally block off-topic queries.
+* 🏬 **Multi-Store Roster** — Register and switch store contexts instantly; metrics re-cluster and recalculate dynamically.
+
+---
+
+## Showcase Demo Credentials
+
+RetailMind includes a pre-seeded guest demo store containing a full year of retail sales history:
+
+* **Email**: `demo@retailmind.com`
+* **Password**: `demo123`
+* **Active Store**: RetailMind Demo Store
+* **Pre-Seeded Data**: 220+ historical daily ledger logs
+
+> To re-run data seeding manually: `python backend/scripts/seed_demo_account.py`
+
+---
+
+## Local Setup & Configuration
 
 ### Prerequisites
-- Python 3.11+
-- Node.js 20+
-- PostgreSQL database (Neon.tech free tier works great)
-- Google Gemini API key ([Get one here](https://aistudio.google.com/))
+* Python 3.11+
+* Node.js 20+
+* PostgreSQL DB (Neon.tech recommended)
+* Groq Cloud API Key ([Console Signup](https://console.groq.com/))
 
-### Backend Setup
-
+### 1. Backend Ingestion
 ```bash
 cd backend
 
-# Create virtual environment
+# Create & activate virtual env
 python -m venv .venv
 .venv\Scripts\activate  # Windows
 # source .venv/bin/activate  # macOS/Linux
@@ -68,108 +65,77 @@ python -m venv .venv
 # Install dependencies
 pip install -r requirements.txt
 
-# Configure environment
+# Set up Environment Config
 cp .env.example .env
-# Edit .env with your DATABASE_URL, JWT_SECRET, GEMINI_API_KEY
-
-# Initialize database (run schema.sql on your Postgres DB)
-# Then start the server
-uvicorn app.main:app --reload --port 8000
+# Edit .env with your DATABASE_URL, JWT_SECRET, and GROQ_API_KEY
 ```
 
-### Frontend Setup
-
+**Run Database Migrations:**
+Initialize your database by running the schema script:
 ```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Configure environment (optional for local dev)
-cp .env.example .env.local
-# Edit .env.local to set VITE_API_BASE_URL if needed
-
-# Start dev server
-npm run dev
-```
-
-The app will be available at `http://localhost:5173`.
-
----
-
-## Environment Variables
-
-### Backend (`backend/.env`)
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `DATABASE_URL` | PostgreSQL connection string (`postgresql+asyncpg://...`) | ✅ |
-| `JWT_SECRET` | Secret key for JWT signing (min 32 chars) | ✅ |
-| `GEMINI_API_KEY` | Google AI Studio API key | ⚠️ Optional (disables AI features) |
-| `GEMINI_MODEL` | Model name (default: `gemini-2.5-flash`) | No |
-| `ENVIRONMENT` | `development` or `production` | No |
-| `ALLOWED_ORIGINS` | CORS origins (comma-separated) | No |
-| `SENTRY_DSN` | Sentry DSN for error tracking | No |
-
-### Frontend (`frontend/.env.local`)
-
-| Variable | Description |
-|----------|-------------|
-| `VITE_API_BASE_URL` | Backend API URL (e.g., `https://api.yourdomain.com/api/v1`) |
-
----
-
-## Database Setup
-
-Run `schema.sql` on your PostgreSQL database:
-
-```bash
+# Using PostgreSQL Client
 psql your_connection_string < schema.sql
 ```
 
----
+**Launch Server:**
+```bash
+uvicorn app.main:app --reload --port 8000
+```
 
-## Deployment
+### 2. Frontend Development
+```bash
+cd frontend
 
-### Frontend → Vercel
-1. Push this repo to GitHub
-2. Import the repo in [Vercel](https://vercel.com)
-3. Set **Root Directory** to `frontend`
-4. Add environment variable: `VITE_API_BASE_URL` → your backend URL
-5. Deploy ✅
+# Install package modules
+npm install
 
-### Backend → Railway / Render / Fly.io
-The FastAPI backend can be deployed on any platform that supports Python.
-
-**Recommended: [Railway](https://railway.app)**
-1. Create a new project → Deploy from GitHub
-2. Set the start command: `uvicorn app.main:app --host 0.0.0.0 --port 8000`
-3. Add all environment variables from `.env.example`
+# Start Local Dev Server
+npm run dev
+```
+Open `http://localhost:5173` to view your broadsheet terminal.
 
 ---
 
-## CSV Upload Format
+## Verification Suite
 
-| Column | Required | Aliases |
-|--------|----------|---------|
-| `product_name` | ✅ | product, item, item_name, name |
-| `quantity` | ✅ | qty, quantity_sold, units, units_sold |
-| `unit_price` | ✅ | price, selling_price, sale_price, mrp |
-| `date` | ✅ | sale_date, transaction_date, order_date |
-| `sku` | No | product_sku, item_code, barcode |
-| `category` | No | product_category, type |
-| `cogs` | No | cost, cost_price, purchase_price |
-| `customer_segment` | No | — |
-| `currency` | No | — |
+Ensure backend logic compiles and matches structural ML/Advisor schemas:
+```bash
+cd backend
 
-Download the template from the app's **Data Import** section.
+# Run Groq API & Guardrails verification
+.venv\Scripts\python.exe scripts/test_groq.py
+
+# Run Advisor context validation
+.venv\Scripts\python.exe scripts/test_advisor_valid.py
+
+# Run Holt-Winters & K-Means calculations checks
+.venv\Scripts\python.exe scripts/test_ml_layer.py
+```
+
+---
+
+## Project Directory Organization
+
+```text
+documind/
+├── backend/
+│   ├── app/
+│   │   ├── api/            # Route controllers (auth, retail, advisor, admin)
+│   │   ├── core/           # Security, config.py, database configs
+│   │   ├── models/         # ORM entities (User, Store, SaleRecord, Alert)
+│   │   └── services/       # Analytical logic & llm.py (Groq)
+│   └── scripts/            # Database seed and Python test suites
+├── frontend/
+│   ├── src/
+│   │   ├── components/     # UI elements (Dashboard, PricingSimulator, TelexBriefing)
+│   │   ├── services/       # api.js and currency calculators
+│   │   └── App.jsx         # App router
+│   └── index.html          # Entry document
+└── docs/                   # Architectural blueprints & guides
+```
 
 ---
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
-
----
-
-*Built with ❤️ for small business owners who deserve enterprise-grade analytics.*
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

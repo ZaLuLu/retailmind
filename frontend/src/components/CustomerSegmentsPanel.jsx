@@ -1,5 +1,5 @@
-import React from 'react'
 import { formatMoneyCompact } from '../services/currency'
+import DashboardTooltip from './DashboardTooltip'
 
 export default function CustomerSegmentsPanel({ customerSegments = [], currency = 'INR', onAskAdvisor }) {
   // Sort segments by revenue contribution share descending
@@ -38,9 +38,15 @@ export default function CustomerSegmentsPanel({ customerSegments = [], currency 
 
   return (
     <div className="card newsprint-segment-card" style={{ padding: '1.25rem', marginBottom: '1.5rem' }}>
-      <div className="section-kicker" style={{ marginBottom: '0.75rem' }}>
-        <span className="mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>Customer Analytics</span>
-        <div className="kicker-line" style={{ height: '1px', background: 'rgba(0,0,0,0.12)', margin: '4px 0' }} />
+      <div className="section-kicker" style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center' }}>
+        <span className="mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '0.08em', display: 'flex', alignItems: 'center' }}>
+          Customer Analytics
+          <DashboardTooltip 
+            title="Segment Metrics" 
+            content="Breaks down performance metrics (Revenue, Gross Margin, Average Order Value, and MoM Growth) across B2B, Online, and Walk-in customer channels." 
+          />
+        </span>
+        <div className="kicker-line" style={{ height: '1px', background: 'rgba(0,0,0,0.12)', margin: '4px 0', flex: 1, marginLeft: '12px' }} />
       </div>
 
       <h4 className="serif" style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: 800, borderBottom: '3px double var(--ink-black)', paddingBottom: '0.5rem' }}>

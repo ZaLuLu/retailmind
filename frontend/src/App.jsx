@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import OnboardingWizard from './components/OnboardingWizard'
 import AdvisorChat from './components/AdvisorChat'
 import Login from './components/Login'
@@ -8,6 +8,7 @@ import DemoModeBanner from './components/DemoModeBanner'
 import DemoResetUploadModal from './components/DemoResetUploadModal'
 import SplashScreen from './components/SplashScreen'
 import GuidedTour from './components/GuidedTour'
+import AdminConsoleModal from './components/AdminConsoleModal'
 import { api } from './services/api'
 import { useToast } from './components/Toast'
 import { IS_DEMO } from './config'
@@ -26,6 +27,8 @@ function App() {
 
   // ── Modals & Chat state ──────────────────────────────────────────────────
   const [showSettings, setShowSettings] = useState(false)
+  const [showAdmin, setShowAdmin] = useState(false)
+  const [adminPin, setAdminPin] = useState('')
   const [showChat, setShowChat] = useState(false)
   const [chatPrefill, setChatPrefill] = useState('')
 
@@ -50,14 +53,16 @@ function App() {
     setAuthView('login')
   }
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     api.logout()
     setIsAuthenticated(false)
-  }
+    setAdminPin('')
+  }, [])
 
   // Use the custom state hook
   const {
     user,
+    setUser,
     sales,
     summary,
     loading,
@@ -84,19 +89,20 @@ function App() {
     }
     window.addEventListener('auth:logout', handleForcedLogout)
     return () => window.removeEventListener('auth:logout', handleForcedLogout)
-  }, [])
+  }, [handleLogout, showToast])
 
-  // Listen for Escape key to close settings and advisor chat overlays
+  // Listen for Escape key to close settings, admin console, and advisor chat overlays
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
         if (showSettings) setShowSettings(false)
         if (showChat) setShowChat(false)
+        if (showAdmin) setShowAdmin(false)
       }
     }
     window.addEventListener('keydown', handleEscape)
     return () => window.removeEventListener('keydown', handleEscape)
-  }, [showSettings, showChat])
+  }, [showSettings, showChat, showAdmin])
 
   // ── Routing ────────────────────────────────────────────────────────────────
   if (!isAuthenticated) {
@@ -154,6 +160,22 @@ function App() {
         />
       )}
 
+      {showAdmin && (
+        <AdminConsoleModal
+          onClose={() => setShowAdmin(false)}
+          showToast={showToast}
+          currentUser={user}
+          onBypassSuccess={(bypassState) => {
+            setUser(prev => ({ ...prev, plan: bypassState ? 'enterprise' : 'free' }))
+          }}
+          onReseedComplete={() => {
+            fetchUserData(undefined, undefined, undefined, undefined, true)
+          }}
+          adminPin={adminPin}
+          setAdminPin={setAdminPin}
+        />
+      )}
+
       <IntelligenceDashboard
         summary={summary}
         sales={sales}
@@ -171,6 +193,7 @@ function App() {
         isDemoMode={IS_DEMO}
         onShowImport={() => setShowImport(true)}
         onAskAdvisor={handleAskAdvisor}
+        onShowAdmin={() => setShowAdmin(true)}
       />
     </div>
   )

@@ -1,28 +1,28 @@
 // SplashScreen.jsx
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import './SplashScreen.css'
+
+const STEPS = [
+  '[SYS] INITIALIZING RETAIL ANALYTICS ENGINE...',
+  '[SYS] CONFIGURING ENCRYPTED RETAIL DATASTORES...',
+  '[SYS] SYSTEM CORE READY.'
+]
 
 export default function SplashScreen({ onComplete }) {
   const [logs, setLogs] = useState([])
   const [fade, setFade] = useState(false)
 
-  const steps = [
-    '[SYS] INITIALIZING RETAIL ANALYTICS ENGINE...',
-    '[SYS] CONFIGURING ENCRYPTED RETAIL DATASTORES...',
-    '[SYS] SYSTEM CORE READY.'
-  ]
-
   useEffect(() => {
     let t1 = setTimeout(() => {
-      setLogs(prev => [...prev, steps[0]])
+      setLogs(prev => [...prev, STEPS[0]])
     }, 250)
 
     let t2 = setTimeout(() => {
-      setLogs(prev => [...prev, steps[1]])
+      setLogs(prev => [...prev, STEPS[1]])
     }, 650)
 
     let t3 = setTimeout(() => {
-      setLogs(prev => [...prev, steps[2]])
+      setLogs(prev => [...prev, STEPS[2]])
     }, 1100)
 
     let tFade = setTimeout(() => {
@@ -40,7 +40,7 @@ export default function SplashScreen({ onComplete }) {
       clearTimeout(tFade)
       clearTimeout(tComplete)
     }
-  }, [])
+  }, [onComplete])
 
   return (
     <div className={`splash-overlay ${fade ? 'fade-out' : ''}`}>
@@ -56,7 +56,7 @@ export default function SplashScreen({ onComplete }) {
           {logs.map((log, idx) => (
             <div key={idx}>{log}</div>
           ))}
-          {logs.length < steps.length && (
+          {logs.length < STEPS.length && (
             <div>
               [SYS] Connecting...<span className="splash-terminal-cursor"></span>
             </div>

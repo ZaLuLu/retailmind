@@ -34,10 +34,11 @@ class Settings(BaseSettings):
     # ─── Redis (optional) ────────────────────────────────────────────────────
     REDIS_URL: Optional[str] = None
 
-    # ─── Google Gemini ───────────────────────────────────────────────────────
-    GEMINI_API_KEY: Optional[str] = None
-    GEMINI_MODEL: str = "gemini-2.5-flash"
-    GEMINI_TIMEOUT_SECONDS: int = 30
+
+    # ─── Groq ────────────────────────────────────────────────────────────────
+    GROQ_API_KEY: Optional[str] = None
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    GROQ_TIMEOUT_SECONDS: int = 30
 
     # ─── File Uploads ────────────────────────────────────────────────────────
     MAX_FILE_SIZE_MB: int = 20
@@ -60,6 +61,11 @@ class Settings(BaseSettings):
     # ─── Input Limits ────────────────────────────────────────────────────────
     ADVISOR_QUESTION_MAX_LEN: int = 1000
     BULK_SALES_MAX_RECORDS: int = 500
+
+    # ─── Analysis Thresholds ─────────────────────────────────────────────────
+    MARGIN_EROSION_THRESHOLD_PCT: float = 20.0
+    DEAD_STOCK_THRESHOLD_DAYS: int = 30
+    DEAD_STOCK_LOOKBACK_DAYS: int = 90
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

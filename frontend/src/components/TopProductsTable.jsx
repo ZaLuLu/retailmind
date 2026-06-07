@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
-
+import { useState } from 'react'
 import { formatMoneyCompact } from '../services/currency'
+import DashboardTooltip from './DashboardTooltip'
 
 const SORT_KEYS = ['revenue', 'margin_pct', 'quantity']
 const SORT_LABELS = { revenue: 'Revenue', margin_pct: 'Margin %', quantity: 'Qty Sold' }
@@ -34,7 +34,13 @@ const TopProductsTable = ({ products = [], currency = 'INR' }) => {
   return (
     <section className="top-products">
       <div className="section-kicker">
-        <span className="kicker-label">Top Products</span>
+        <span className="kicker-label">
+          Top Products
+          <DashboardTooltip
+            title="Leaderboard Metrics"
+            content="Leaderboard of catalog items ranked dynamically by MTD revenue, gross profit margin %, or total quantity sold."
+          />
+        </span>
         <div className="kicker-line" />
         <div className="sort-controls">
           {SORT_KEYS.map(k => (

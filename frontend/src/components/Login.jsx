@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useState, useEffect } from 'react'
 
 const STORAGE_KEY = 'retailmind_saved_email'
 
@@ -122,8 +123,8 @@ function Login({ onLogin, onDemoLogin, onSwitch }) {
                 <ul style={{ paddingLeft: '1.2rem', margin: '0 0 1.5rem 0', lineHeight: '1.7', fontSize: '0.85rem', color: '#475569' }}>
                   <li><strong>Triple Exponential Smoothing (Holt-Winters)</strong> for multi-store customer demand forecasting.</li>
                   <li><strong>Unsupervised K-Means clustering</strong> for product catalog quadrant analytics.</li>
-                  <li><strong>Multimodal OCR receipt scanning</strong> leveraging Gemini Vision models.</li>
-                  <li><strong>Retrieval-Augmented Generation (RAG)</strong> conversational business advisor agent.</li>
+                  <li><strong>Interactive Pricing Simulator & Margin Elasticity</strong> for category optimization.</li>
+                  <li><strong>Conversational AI Business Advisor</strong> powered by Groq Llama-3.</li>
                 </ul>
 
                 <div style={{ border: '1px dashed var(--ink-black)', padding: '1rem', backgroundColor: 'var(--bg-tint)', marginBottom: '1.5rem' }}>
