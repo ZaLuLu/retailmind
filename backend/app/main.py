@@ -110,6 +110,7 @@ app.include_router(retail_router, prefix="/api/v1")
 app.include_router(analytics_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1")
 
+@app.get("/health")
 @app.get("/health/live")
 async def health_check():
     return {
