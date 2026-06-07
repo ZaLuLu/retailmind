@@ -63,9 +63,9 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS Middleware Configuration
 _raw_origins = settings.ALLOWED_ORIGINS.strip() if settings.ALLOWED_ORIGINS else ""
-# Fallback to specific FRONTEND_URL in production to avoid dangerous wildcard defaults
-if not _raw_origins or _raw_origins == "*":
-    if settings.ENVIRONMENT == "production" and settings.FRONTEND_URL:
+# Only fall back to FRONTEND_URL if ALLOWED_ORIGINS is completely empty
+if not _raw_origins:
+    if settings.FRONTEND_URL:
         _raw_origins = settings.FRONTEND_URL
     else:
         _raw_origins = "*"
@@ -87,6 +87,7 @@ else:
         allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization", "X-CSRF-Token", "X-Admin-Pin"],
     )
+
 
 # Mount Secure Headers Middleware
 app.add_middleware(SecurityHeadersMiddleware)
